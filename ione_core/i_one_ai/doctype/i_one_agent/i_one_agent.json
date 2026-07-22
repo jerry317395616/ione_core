@@ -1,0 +1,44 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:agent_code",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["identity_section", "agent_code", "agent_name", "agent_type", "column_break_identity", "status", "avatar", "description", "model_section", "model_provider", "model_name", "last_active", "permissions_section", "allowed_modules", "allowed_doctypes", "instructions"],
+ "fields": [
+  {"fieldname": "identity_section", "fieldtype": "Section Break", "label": "基本信息"},
+  {"fieldname": "agent_code", "fieldtype": "Data", "label": "智能体编码", "reqd": 1, "unique": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "agent_name", "fieldtype": "Data", "label": "智能体名称", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "agent_type", "fieldtype": "Select", "label": "智能体类型", "options": "综合助理\n财务助理\n销售助理\n人事助理\n客服助理\n知识助理\n运营助理", "default": "综合助理", "in_list_view": 1},
+  {"fieldname": "column_break_identity", "fieldtype": "Column Break"},
+  {"fieldname": "status", "fieldtype": "Select", "label": "状态", "options": "启用\n暂停\n停用", "default": "启用", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "avatar", "fieldtype": "Attach Image", "label": "头像"},
+  {"fieldname": "description", "fieldtype": "Small Text", "label": "职责说明"},
+  {"fieldname": "model_section", "fieldtype": "Section Break", "label": "模型配置"},
+  {"fieldname": "model_provider", "fieldtype": "Data", "label": "模型服务", "default": "OpenClaw"},
+  {"fieldname": "model_name", "fieldtype": "Data", "label": "模型名称", "default": "qwen"},
+  {"fieldname": "last_active", "fieldtype": "Datetime", "label": "最近运行时间", "read_only": 1},
+  {"fieldname": "permissions_section", "fieldtype": "Section Break", "label": "能力边界"},
+  {"fieldname": "allowed_modules", "fieldtype": "Small Text", "label": "允许访问的应用", "description": "每行填写一个应用名称"},
+  {"fieldname": "allowed_doctypes", "fieldtype": "Small Text", "label": "允许访问的单据类型", "description": "每行填写一个 DocType"},
+  {"fieldname": "instructions", "fieldtype": "Long Text", "label": "系统指令"}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "module": "I ONE AI",
+ "name": "I-ONE Agent",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "I-ONE User", "read": 1, "select": 1},
+  {"role": "I-ONE AI Operator", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1},
+  {"role": "I-ONE Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "agent_name",
+ "track_changes": 1
+}
+
