@@ -133,6 +133,26 @@ def _answers_from_record(record):
 	return answers
 
 
+def _align_record_with_flow(flow, record):
+	if not record or cint(record.flow_version) == cint(flow.version):
+		return record
+
+	answers = _answers_from_record(record)
+	steps_with_options = {row.step_code for row in flow.options}
+	for step in sorted(flow.steps, key=lambda row: (row.sequence or 0, row.idx or 0)):
+		if STEP_TYPE_MAP.get(step.step_type) not in {"single", "multiple"}:
+			continue
+		if step.step_code not in steps_with_options or answers.get(step.step_code):
+			continue
+		record.flow_version = flow.version
+		record.status = "进行中"
+		record.current_step = step.step_code
+		record.completed_at = None
+		break
+
+	return record
+
+
 def _profile_from_record(record):
 	if not record:
 		return {
@@ -283,7 +303,8 @@ def _build_report(flow, answers, profile):
 def get_mobile_onboarding():
 	_require_login()
 	flow = _get_active_flow()
-	return _serialize_state(flow, _record_for_user(flow))
+	record = _align_record_with_flow(flow, _record_for_user(flow))
+	return _serialize_state(flow, record)
 
 
 @frappe.whitelist(methods=["POST"])

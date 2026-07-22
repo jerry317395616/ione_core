@@ -2,10 +2,15 @@ import json
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import cint
 
 
 class IONEOnboardingFlow(Document):
 	def validate(self):
+		previous = self.get_doc_before_save()
+		if previous and self.status == "已发布" and cint(self.version) <= cint(previous.version):
+			self.version = max(cint(previous.version), 1) + 1
+
 		step_codes = [row.step_code for row in self.steps]
 		if len(step_codes) != len(set(step_codes)):
 			frappe.throw("步骤编码不能重复")
