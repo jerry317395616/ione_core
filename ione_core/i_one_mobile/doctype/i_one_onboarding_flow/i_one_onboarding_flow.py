@@ -4,12 +4,19 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import cint
 
+from ione_core.onboarding_ordering import normalize_step_order
+
 
 class IONEOnboardingFlow(Document):
 	def validate(self):
 		previous = self.get_doc_before_save()
 		if previous and self.status == "已发布" and cint(self.version) <= cint(previous.version):
 			self.version = max(cint(previous.version), 1) + 1
+
+		self.set(
+			"steps",
+			normalize_step_order(self.steps, previous.steps if previous else None),
+		)
 
 		step_codes = [row.step_code for row in self.steps]
 		if len(step_codes) != len(set(step_codes)):
