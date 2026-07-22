@@ -1,6 +1,5 @@
 import frappe
 
-
 MANAGER_ROLES = {"System Manager", "I-ONE Manager", "I-ONE Auditor"}
 OPERATOR_ROLES = MANAGER_ROLES | {"I-ONE AI Operator"}
 
@@ -91,3 +90,16 @@ def achievement_permission(doc, user=None, permission_type=None):
 		return True
 	return permission_type == "read" and doc.user == user
 
+
+def user_query(user=None):
+	user = user or frappe.session.user
+	if _is_operator(user):
+		return ""
+	return f"`user` = {_escape(user)}"
+
+
+def user_permission(doc, user=None, permission_type=None):
+	user = user or frappe.session.user
+	if _is_operator(user):
+		return True
+	return doc.user == user

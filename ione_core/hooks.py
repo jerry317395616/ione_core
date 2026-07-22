@@ -39,6 +39,7 @@ permission_query_conditions = {
 	"I-ONE Achievement": "ione_core.permissions.achievement_query",
 	"I-ONE Expert Conversation": "ione_core.permissions.owner_user_query",
 	"I-ONE Expert Message": "ione_core.permissions.owner_query",
+	"I-ONE Onboarding Record": "ione_core.permissions.user_query",
 }
 
 has_permission = {
@@ -54,6 +55,7 @@ has_permission = {
 	"I-ONE Achievement": "ione_core.permissions.achievement_permission",
 	"I-ONE Expert Conversation": "ione_core.permissions.owner_user_permission",
 	"I-ONE Expert Message": "ione_core.permissions.owner_permission",
+	"I-ONE Onboarding Record": "ione_core.permissions.user_permission",
 }
 
 scheduler_events = {

@@ -1,6 +1,5 @@
 import frappe
 
-
 ROLES = (
 	("I-ONE User", 1),
 	("I-ONE Manager", 1),
@@ -44,6 +43,17 @@ def ensure_default_agent():
 	).insert(ignore_permissions=True)
 
 
+def ensure_default_onboarding_flow():
+	if not frappe.db.exists("DocType", "I-ONE Onboarding Flow"):
+		return
+	if frappe.db.exists("I-ONE Onboarding Flow", "mobile-default"):
+		return
+
+	from ione_core.onboarding_defaults import get_default_onboarding_flow_data
+
+	frappe.get_doc(get_default_onboarding_flow_data()).insert(ignore_permissions=True)
+
+
 def before_install():
 	ensure_roles()
 
@@ -51,9 +61,10 @@ def before_install():
 def after_install():
 	ensure_roles()
 	ensure_default_agent()
+	ensure_default_onboarding_flow()
 
 
 def after_migrate():
 	ensure_roles()
 	ensure_default_agent()
-
+	ensure_default_onboarding_flow()
