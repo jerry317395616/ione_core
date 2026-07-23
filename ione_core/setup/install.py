@@ -5,13 +5,15 @@ ROLES = (
 	("I-ONE Manager", 1),
 	("I-ONE AI Operator", 1),
 	("I-ONE Auditor", 1),
-	("I-ONE AI Employee", 0),
+	("I-ONE AI Employee", 1),
 )
 
 
 def ensure_roles():
 	for role_name, desk_access in ROLES:
 		if frappe.db.exists("Role", role_name):
+			if frappe.db.get_value("Role", role_name, "desk_access") != desk_access:
+				frappe.db.set_value("Role", role_name, "desk_access", desk_access, update_modified=False)
 			continue
 		frappe.get_doc(
 			{

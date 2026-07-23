@@ -108,6 +108,7 @@ class IONEAgent(Document):
 				"role": ["not in", sorted(managed_roles)],
 			},
 		)
+		frappe.db.set_value("User", user.name, "user_type", "System User", update_modified=False)
 		frappe.clear_cache(user=user.name)
 
 		if self.company and not frappe.db.exists(
@@ -145,7 +146,14 @@ class IONEAgent(Document):
 		flow_agent.model = self.flow_model
 		flow_agent.max_iterations = self.max_iterations
 		flow_agent.instructions = self.build_flow_instructions()
-		flow_agent.set("tools", [{"tool": row.tool} for row in self.tools if row.tool])
+		tools = [row.tool for row in self.tools if row.tool]
+		if not tools:
+			tools = [
+				slug
+				for slug in ("describe", "read", "execute")
+				if frappe.db.exists("Flow Tool", slug)
+			]
+		flow_agent.set("tools", [{"tool": tool} for tool in tools])
 		flow_agent.set(
 			"knowledge_bases",
 			[{"knowledge_base": row.knowledge_base} for row in self.knowledge_bases if row.knowledge_base],
