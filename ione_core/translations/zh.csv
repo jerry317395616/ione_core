@@ -4,3 +4,8 @@ I-ONE AI Run Log,AI 运行日志
 Flow Agent,Flow 执行智能体
 Flow Session,Flow 会话
 Flow Run,Flow 运行记录
+"Consider for Tax Withholding ","考虑用于预提税"
+"Enter the Operation, the table will fetch the Operation details like Hourly Rate, Workstation automatically.\n\n After that, set the Operation Time in minutes and the table will calculate the Operation Costs based on the Hourly Rate and Operation Time.","输入工序，表格将自动获取工序详情，如小时费率、工作站。\n\n之后，设置工序时间（分钟），表格将根据小时费率和工序时间计算工序成本。"
+"Minimum quantity should be as per Stock UOM\n\n","最小数量应符合库存计量单位"
+"Scan job card","扫描工序卡"
+"The Process Loss Qty has been reset as per the job card's Process Loss Qty","加工损耗数量已根据工序卡的加工损耗数量重置"
