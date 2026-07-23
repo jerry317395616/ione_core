@@ -12,7 +12,12 @@ class IONEAITask(Document):
 		if not self.approval_required or self.approval:
 			return
 		settings = frappe.get_single("I-ONE Settings")
-		approver = settings.default_approver or "Administrator"
+		agent_approver = (
+			frappe.db.get_value("I-ONE Agent", self.assigned_agent, "default_approver")
+			if self.assigned_agent
+			else None
+		)
+		approver = agent_approver or settings.default_approver or "Administrator"
 		approval = frappe.get_doc(
 			{
 				"doctype": "I-ONE Approval Request",
@@ -27,4 +32,3 @@ class IONEAITask(Document):
 			}
 		).insert(ignore_permissions=True)
 		self.db_set("approval", approval.name, update_modified=False)
-

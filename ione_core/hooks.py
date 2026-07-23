@@ -58,6 +58,12 @@ has_permission = {
 	"I-ONE Onboarding Record": "ione_core.permissions.user_permission",
 }
 
+doc_events = {
+	"Flow Run": {
+		"on_update": "ione_core.ai.sync_task_from_flow_run",
+	},
+}
+
 scheduler_events = {
 	"hourly": ["ione_core.ai.expire_pending_approvals"],
 }

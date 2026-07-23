@@ -206,7 +206,7 @@ def get_unified_todos(limit=20):
 	if frappe.db.exists("DocType", "I-ONE AI Task") and frappe.has_permission("I-ONE AI Task", "read"):
 		for row in frappe.get_list(
 			"I-ONE AI Task",
-			filters={"status": ["in", ["待审批", "已排队", "执行中"]]},
+			filters={"status": ["in", ["待审批", "已排队", "执行中", "等待确认"]]},
 			fields=["name", "title", "priority", "status", "modified"],
 			order_by="modified desc",
 			limit_page_length=limit,
@@ -255,7 +255,10 @@ def get_dashboard():
 		{"status": "Open", "allocated_to": frappe.session.user, "date": ["<=", today]},
 	)
 	customers = _safe_count("Customer")
-	pending_ai = _safe_count("I-ONE AI Task", {"status": ["in", ["待审批", "已排队", "执行中"]]})
+	pending_ai = _safe_count(
+		"I-ONE AI Task",
+		{"status": ["in", ["待审批", "已排队", "执行中", "等待确认"]]},
+	)
 	today_finance = _finance_summary(today, today, company)
 	month_finance = _finance_summary(month_start, today, company)
 
@@ -333,8 +336,108 @@ def get_bootstrap():
 		"site": frappe.local.site,
 		"apps": get_app_registry(),
 		"features": {
+			"ai_employees": bool(frappe.db.exists("DocType", "I-ONE Agent")),
 			"ai_tasks": bool(frappe.db.exists("DocType", "I-ONE AI Task")),
 			"approvals": bool(frappe.db.exists("DocType", "I-ONE Approval Request")),
 			"background_jobs": True,
 		},
+	}
+
+
+def _task_count_for_agent(agent, statuses=None):
+	filters = {"assigned_agent": agent}
+	if statuses:
+		filters["status"] = ["in", statuses]
+	rows = frappe.get_list(
+		"I-ONE AI Task",
+		filters=filters,
+		fields=[{"COUNT": "name", "as": "value"}],
+		limit_page_length=1,
+	)
+	return int(rows[0].value or 0) if rows else 0
+
+
+@frappe.whitelist()
+def get_ai_employees(limit=50):
+	_require_login()
+	if not frappe.has_permission("I-ONE Agent", "read"):
+		frappe.throw(_("您没有查看 AI 员工的权限。"), frappe.PermissionError)
+	limit = max(1, min(int(limit or 50), 100))
+	rows = frappe.get_list(
+		"I-ONE Agent",
+		fields=[
+			"name",
+			"agent_code",
+			"agent_name",
+			"agent_type",
+			"status",
+			"avatar",
+			"company",
+			"department",
+			"designation",
+			"operating_mode",
+			"last_active",
+		],
+		order_by="status asc, modified desc",
+		limit_page_length=limit,
+	)
+	result = []
+	for row in rows:
+		item = dict(row)
+		item["open_tasks"] = _task_count_for_agent(
+			row.name,
+			["待审批", "已排队", "执行中", "等待确认"],
+		)
+		item["completed_tasks"] = _task_count_for_agent(row.name, ["已完成"])
+		item["route"] = f"/app/i-one-agent/{quote(row.name)}"
+		result.append(item)
+	return result
+
+
+@frappe.whitelist()
+def get_ai_employee(name):
+	_require_login()
+	employee = frappe.get_doc("I-ONE Agent", name)
+	employee.check_permission("read")
+	tasks = frappe.get_list(
+		"I-ONE AI Task",
+		filters={"assigned_agent": employee.name},
+		fields=[
+			"name",
+			"title",
+			"status",
+			"priority",
+			"progress",
+			"due_date",
+			"modified",
+		],
+		order_by="modified desc",
+		limit_page_length=20,
+	)
+	return {
+		"employee": {
+			"name": employee.name,
+			"agent_code": employee.agent_code,
+			"agent_name": employee.agent_name,
+			"agent_type": employee.agent_type,
+			"status": employee.status,
+			"avatar": employee.avatar,
+			"company": employee.company,
+			"department": employee.department,
+			"designation": employee.designation,
+			"supervisor": employee.supervisor,
+			"description": employee.description,
+			"responsibilities": employee.responsibilities,
+			"operating_mode": employee.operating_mode,
+			"last_active": employee.last_active,
+		},
+		"metrics": {
+			"open": _task_count_for_agent(
+				employee.name,
+				["待审批", "已排队", "执行中", "等待确认"],
+			),
+			"completed": _task_count_for_agent(employee.name, ["已完成"]),
+			"failed": _task_count_for_agent(employee.name, ["执行失败"]),
+		},
+		"tasks": [dict(task) for task in tasks],
 	}

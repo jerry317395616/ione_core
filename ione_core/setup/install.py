@@ -5,6 +5,7 @@ ROLES = (
 	("I-ONE Manager", 1),
 	("I-ONE AI Operator", 1),
 	("I-ONE Auditor", 1),
+	("I-ONE AI Employee", 0),
 )
 
 
@@ -34,10 +35,10 @@ def ensure_default_agent():
 			"agent_code": "ione-general",
 			"agent_name": "I-ONE 通用助理",
 			"agent_type": "综合助理",
-			"status": "启用",
+			"status": "草稿",
 			"description": "负责跨应用信息查询、任务拆解和受控业务执行。",
-			"model_provider": "OpenClaw",
-			"model_name": "qwen",
+			"responsibilities": "负责跨应用信息查询、任务拆解和受控业务执行。",
+			"operating_mode": "辅助",
 			"allowed_modules": "ERPNext\nCRM\nHR\nHelpdesk\nDrive\nLearning\nGameplan\nInsights",
 		}
 	).insert(ignore_permissions=True)
@@ -66,5 +67,38 @@ def after_install():
 
 def after_migrate():
 	ensure_roles()
+	migrate_agent_fields()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+
+
+def migrate_agent_fields():
+	if not frappe.db.exists("DocType", "I-ONE Agent"):
+		return
+	frappe.db.sql(
+		"""
+		update `tabI-ONE Agent`
+		set status = case
+			when status = '启用' then '在职'
+			when status = '停用' then '离职'
+			else coalesce(nullif(status, ''), '草稿')
+		end
+		"""
+	)
+	default_model = None
+	if "flow" in frappe.get_installed_apps() and frappe.db.exists("DocType", "Flow Model"):
+		default_model = frappe.db.get_value(
+			"Flow Model",
+			{"enabled": 1},
+			"name",
+			order_by="creation asc",
+		)
+	if default_model:
+		frappe.db.sql(
+			"""
+			update `tabI-ONE Agent`
+			set flow_model = %s
+			where ifnull(flow_model, '') = ''
+			""",
+			default_model,
+		)
