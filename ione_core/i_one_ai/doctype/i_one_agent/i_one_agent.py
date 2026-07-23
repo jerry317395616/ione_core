@@ -100,6 +100,15 @@ class IONEAgent(Document):
 		managed_roles.update(row.role for row in self.roles if row.role)
 		user.set("roles", [{"role": role} for role in sorted(managed_roles)])
 		user.save(ignore_permissions=True)
+		frappe.db.delete(
+			"Has Role",
+			{
+				"parent": user.name,
+				"parenttype": "User",
+				"role": ["not in", sorted(managed_roles)],
+			},
+		)
+		frappe.clear_cache(user=user.name)
 
 		if self.company and not frappe.db.exists(
 			"User Permission",
