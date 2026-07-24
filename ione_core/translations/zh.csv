@@ -4,3 +4,691 @@ I-ONE AI Run Log,AI 运行日志
 Flow Agent,Flow 执行智能体
 Flow Session,Flow 会话
 Flow Run,Flow 运行记录
+%John%,%张三%
+A lead sync source is already enabled for this Facebook Lead Form!,此 Facebook 线索表单已启用线索同步源！
+A {0} cannot report to a {1},{0} 不能向 {1} 汇报
+Accept Call,接听电话
+Access Denied,访问被拒绝
+Access token is required,需要访问令牌
+Account Info & Security,账户信息与安全性
+Activity Timeline,活动时间线
+Add ({0}),添加 ({0})
+Add Attendee,添加参会者
+Add CRM Product,添加 CRM 产品
+Add Chart,添加图表
+Add Condition,添加条件
+Add Condition Group,添加条件组
+Add Description,添加描述
+Add Description.,添加描述。
+Add Email,添加邮箱
+Add Location,添加地点
+Add Mobile Number...,添加手机号码...
+Add Note,添加备注
+Add Notification,添加通知
+Add Organization...,添加组织...
+Add Sample Data,添加示例数据
+Add Task,添加任务
+Add User,添加用户
+Add Users,添加用户
+Add a Condition,添加条件
+Add a Custom Condition,添加自定义条件
+Add a Task,添加任务
+Add a name for your source,为您的同步源添加名称
+Add direct reports,添加直接下属
+Add time targets around support milestones like first response,围绕支持里程碑（如首次响应）添加时间目标
+"Add, edit, and manage sources for automatic lead syncing to your CRM",添加、编辑和管理用于自动同步线索至 CRM 的数据源
+All Day Event Notifications,全天事件通知
+All available priorities have already been added,所有可用的优先级均已添加
+Another CRM,其他 CRM
+Any failed lead syncs will show up here,任何失败的线索同步记录将在此显示
+Appearance,外观
+Are you sure you want to clear demo data? This action cannot be undone.,确定要清除演示数据吗？此操作无法撤销。
+Are you sure you want to remove this tab and all its content?,确定要移除此选项卡及其所有内容吗？
+Assign Condition is required,分配条件为必填项
+Assign Conditions are invalid,分配条件无效
+Assign To Me,分配给我
+Assignment Cleared Successfully,分配已清除
+Assignment Condition,分配条件
+Assignment Days are required,必须选择分派日
+Assignment Rule Created,分配规则已创建
+Assignment Rule Deleted,分配规则已删除
+Assignment Rule Duplicated,分配规则已复制
+Assignment Rule Updated,分配规则已更新
+Assignment Rule {0} Updated,分配规则 {0} 已更新
+Assignment conditions,分配条件
+"Assignment conditions are invalid or corrupt, recreate the conditions.",分配条件无效或已损坏，请重新创建条件。
+At least one priority is required,至少需要一个优先级
+"At least one valid Workday with Workday, Start Time, and End Time is required",至少需要一个包含工作日、开始时间和结束时间的有效工作日
+Attach a File,附加文件
+Attach file…,附加文件…
+Attending status updated,出席状态已更新
+Auto Create Customer,自动创建客户
+Auto update Expected Deal Value,自动更新预期商机价值
+Auto-assign leads/deals to the right sales user based on predefined conditions,根据预定义条件自动将线索/商机分配给合适的销售人员
+Automatically sets Communication Status to “Open” for the lead or deal when a new communication is created. Applies only when SLA is enabled,创建新沟通时，自动将线索或商机的沟通状态设置为“待处理”。仅在启用 SLA 时生效
+Automatically sets Communication Status to “Replied” for the lead or deal when a response is received. Applies only when SLA is enabled,收到回复时，自动将线索或商机的沟通状态设置为“已回复”。仅在启用 SLA 时生效
+Avg Deal Value,平均商机价值
+Avg Ongoing Deal Value,进行中商机平均价值
+Avg Time to Close a Deal,关闭商机平均耗时
+Avg Time to Close a Lead,关闭线索平均耗时
+Avg Won Deal Value,赢单平均价值
+Axis Chart,坐标轴图
+Back to All Logs,返回所有日志
+Back to File Upload,返回文件上传
+Back to previous question,返回上一题
+Background Sync Frequency,后台同步频率
+Bidirectional sync of existing CRM Products and ERPNext Items. Runs in the background.,现有 CRM 产品与 ERPNext 物料之间的双向同步。在后台运行。
+CRM Product Sync Issue,CRM 产品同步问题
+CRM Rolling Response Time,CRM 滚动响应时间
+CRM Sales Hierarchy,CRM 销售层级
+CSV imports,CSV 导入
+Calendar Settings,日历设置
+Call log not found,未找到通话记录
+Can't retry sync for this without source!,没有源无法重试此同步！
+Cannot assign this role,无法分配此角色
+Cannot delete: linked ERPNext Item {0} is referenced by a Quotation. Remove the reference or delete the Item in ERPNext first.,无法删除：链接的 ERPNext 物料 {0} 被报价单引用。请先移除引用或在 ERPNext 中删除该物料。
+Cannot invite for this role,无法为此角色发送邀请
+Cannot move a manager under one of their own reports,无法将经理移动至其下属之下
+Cannot rename: an unrelated {0} '{1}' already exists on the other side. Resolve manually first.,无法重命名：另一端已存在无关的 {0} '{1}'。请先手动解决。
+Capture my first lead,录入我的第一条线索
+Capturing Leads,获取线索
+Change Photo,更换照片
+Change language of the application.,更改应用程序的语言。
+Change timezone of the application.,更改应用程序的时区。
+Change your account password for security.,更改账户密码以确保安全。
+Choose how long this SLA policy will be active.,选择此 SLA 策略的生效时长。
+Choose how you want to use the application by setting your preferences.,通过设置首选项来选择您希望如何使用应用程序。
+Choose the Email Service Provider you want to configure.,选择您要配置的电子邮件服务提供商。
+Choose which leads/deals are affected by this policy.,选择受此策略影响的线索/商机。
+Clear All Filters,清除所有筛选条件
+Close Panel,关闭面板
+Close my first deal,关闭我的首个商机
+Collaborating with my team,与我的团队协作
+Comment sent,评论已发送
+Company in ERPNext site,ERPNext 站点中的公司
+Company name is required,公司名称为必填项
+Configure,配置
+Configure Telephony Settings for your CRM,为您的 CRM 配置电话设置
+"Configure default settings for your CRM system, including default currency, date formats, and other system-wide preferences to ensure consistency across your system.",为您的 CRM 系统配置默认设置，包括默认货币、日期格式及其他系统级偏好，以确保系统的一致性。
+Configure general settings for your application,配置应用程序的常规设置
+"Configure how your dashboard calculates, formats, and displays key metrics, including forecasting, deal values, and currency settings",配置仪表板如何计算、格式化和显示关键指标，包括预测、商机价值和货币设置
+Configure the Exchange Rate Provider for your CRM,为您的 CRM 配置汇率提供商
+"Configure your Brand Name, Logo, and Favicon",配置您的品牌名称、徽标和网站图标
+Configure your Calendar Settings like Default View and Event Notifications here,在此配置您的日历设置，如默认视图和事件通知
+Configure your Exotel Telephony Integration Settings here,在此配置您的 Exotel 电话集成设置
+Configure your Twilio Telephony Integration Settings here,在此配置您的 Twilio 电话集成设置
+Confirm Overwrite,确认覆盖
+Connect ERPNext to Frappe CRM,将 ERPNext 连接到 Frappe CRM
+Connect your Email,连接您的电子邮件
+Contact Added,联系人已添加
+Contact Already Added,联系人已存在
+Contact Image Updated,联系人图片已更新
+Contact Removed,联系人已移除
+Contact Updated,联系人已更新
+Contact already exists with Email: {0},已存在电子邮件为 {0} 的联系人
+"Controls how numbers are displayed (e.g., commas, decimal separators)",控制数字的显示方式（例如，逗号、小数点分隔符）
+Converted Successfully,转换成功
+Copied to Clipboard,已复制到剪贴板
+"Could not create the Frappe CRM custom fields on {0} automatically. If it is running the latest ERPNext, enable <b>Frappe CRM Data Synchronization</b> in its CRM Settings, Otherwise check the Error Log.",无法在 {0} 上自动创建 Frappe CRM 自定义字段。如果它正在运行最新版本的 ERPNext，请在其 CRM 设置中启用 <b>Frappe CRM 数据同步</b>，否则请检查错误日志。
+Could not remove.,无法移除。
+Could not update report to,无法更新汇报关系
+Create Event,创建活动
+Create Lead from Incoming Emails,从传入邮件创建线索
+Create New Holiday List,创建新假日列表
+Create New Template,创建新模板
+Create an Event,创建活动
+Create customer in ERPNext when the deal status is changed,商机状态变更时在 ERPNext 中创建客户
+Create products as Items in ERPNext,在 ERPNext 中将产品创建为物料
+Create quotation button on deal page and auto customer creation on deal status change will be disabled. Are you sure?,将禁用商机页面的报价单按钮，并取消商机状态变更时自动创建客户的功能。确定吗？
+Current Password,当前密码
+Custom Actions,自定义操作
+Custom Branding,自定义品牌
+Custom Fields,自定义字段
+Custom List Actions,自定义列表操作
+Custom Statuses,自定义状态
+Customer Created Successfully,客户创建成功
+Dashboard Currency,仪表盘货币
+"Dashboard number cards & charts will show currency in the selected format. Once set, cannot be edited.",仪表盘数字卡片和图表将按所选格式显示货币。设置后不可编辑。
+Dashboard settings updated successfully,仪表盘设置更新成功
+Deal status is required,商机状态为必填项
+Deals by Ongoing & Won Stage,按进行中和赢单阶段统计商机
+Deals by Salesperson,按销售人员统计商机
+Deals by Source,按来源统计商机
+Deals by Stage,按阶段统计商机
+Deals by Territory,按区域统计商机
+Declined,已拒绝
+Default Calendar View,默认日历视图
+Default Calling Medium for Logged In User,当前用户的默认通话渠道
+Default Event Notifications,默认活动通知
+Default Sending & Inbox,默认发送与收件箱
+"Defines the default currency for all records, can be overridden at the field level",定义所有记录的默认货币，可在字段级别覆盖
+Delete Contact,删除联系人
+Delete Event,删除活动
+Delete Invitation,删除邀请
+Delete Linked Item,删除关联项
+Delete Only User,仅删除用户
+Delete Organization,删除组织
+Delete {0} Item(s),删除 {0} 项
+Deleting note...,正在删除备注...
+Demo data restored successfully.,演示数据已成功恢复。
+Detail,详情
+Detected On,检测时间
+Disable ERPNext Integration,禁用 ERPNext 集成
+Disable Sales Hierarchy,禁用销售层级
+Discard Changes,放弃更改
+Discard Unsaved Changes?,放弃未保存的更改？
+Dismissed,已忽略
+Display format for dates across the system,系统全局日期显示格式
+Doctype is required,必须指定文档类型
+Document Not Found,未找到文档
+Document created successfully,文档创建成功
+Donut Chart,环形图
+Drag & Drop files here or upload from,将文件拖放到此处，或从以下位置上传
+Drag a section or a field here to get started,将区块或字段拖放到此处以开始
+Dropdown items,下拉菜单项
+Duplicate Event,复制事件
+Duplicate SLA Policy,复制 SLA 策略
+Duplicate Template,复制模板
+Duplicate Workday found: {0}. Each Workday should be unique.,发现重复的工作日：{0}。每个工作日必须唯一。
+Duplicate an Event,复制事件
+ERPNext custom fields not created,未创建 ERPNext 自定义字段
+ERPNext integration is active. Create an Item in ERPNext and it will appear in CRM Product automatically.,ERPNext 集成已激活。在 ERPNext 中创建物料，它将自动出现在 CRM 产品中。
+ERPNext integration must be enabled on the same site,必须在同一站点启用 ERPNext 集成
+ERPNext is not installed on this site either install it or enter the URL of your ERPNext site to connect,此站点未安装 ERPNext。请安装它或输入您的 ERPNext 站点 URL 以进行连接
+Edit Event,编辑事件
+Edit Fields Layout,编辑字段布局
+Edit Grid Fields,编辑网格字段
+Edit Response & Resolution,编辑回复与解决方案
+Edit Row,编辑行
+Edit Workday,编辑工作日
+Edit an Event,编辑事件
+Editing Event,正在编辑事件
+Email Account created successfully,邮箱账户创建成功
+Email Account updated successfully,邮箱账户更新成功
+Email Already Exists,邮箱已存在
+Email Communication,邮件沟通
+Email From Lead,来自线索的邮件
+Email already exists,邮箱已存在
+Email sent,邮件已发送
+Email settings updated successfully,邮件设置更新成功
+Emails & Signature,邮箱与签名
+Enable Exotel integration to make and receive calls directly from your CRM,启用 Exotel 集成，以便直接从 CRM 拨打和接听电话
+Enable Sales Hierarchy,启用销售层级
+Enable Sales Hierarchy Permissions,启用销售层级权限
+Enable Twilio integration to make and receive calls directly from your CRM,启用 Twilio 集成，以便直接从 CRM 拨打和接听电话
+Enable call recording for incoming and outgoing calls,启用呼入和呼出通话录音
+Enable the integration to create quotations and auto create customers in ERPNext.,启用集成以创建报价单并在 ERPNext 中自动创建客户。
+End Date cannot be before start date,结束日期不能早于开始日期
+End Time Should Be After Start Time,结束时间应在开始时间之后
+End Time is required,结束时间为必填项
+End Time must be after Start Time,结束时间必须在开始时间之后
+End Time must be after Start Time for: {0},{0} 的结束时间必须在开始时间之后
+Enter Access Key,输入访问密钥
+Enter Access Token,输入访问令牌
+Enter Brand Name,输入品牌名称
+Enter Exotel Number,输入 Exotel 号码
+Enter Personal Mobile No.,输入个人手机号码
+Enter Source Name,输入来源名称
+Enter Twilio Number,输入 Twilio 号码
+Enter your Facebook Access Token,输入您的 Facebook 访问令牌
+Enter your personal mobile number used by Exotel to make calls,输入 Exotel 用于拨打电话的个人手机号码
+Error Syncing Lead,同步线索时出错
+Error creating Lead Sync Source,创建线索同步来源时出错
+Error creating lead: {0},创建线索时出错：{0}
+Error occurred,发生错误
+Error syncing leads,同步线索时出错
+Error updating Lead Sync Source,更新线索同步来源时出错
+Event Notifications,事件通知
+Event Title,事件标题
+Event created successfully,事件创建成功
+Event deleted successfully,事件删除成功
+Every 10 Minutes,每 10 分钟
+Every 15 Minutes,每 15 分钟
+Every 5 Minutes,每 5 分钟
+Exact,具体时间
+Exotel Integration Disabled,Exotel 集成已禁用
+Exotel Settings,Exotel 设置
+Expected closure date is required.,必须填写预期成交日期。
+Expected deal value is required.,必须填写预期商机价值。
+Export all {0} record(s),导出所有 {0} 条记录
+FROM,发件人
+Facebook Form ID,Facebook 表单 ID
+Facebook Lead Form,Facebook 线索表单
+Facebook Lead Form Question,Facebook 线索表单问题
+Facebook Lead ID,Facebook 线索 ID
+Facebook Page,Facebook 页面
+Facebook/Instagram Ads,Facebook/Instagram 广告
+Failed Lead Sync Log,失败的线索同步日志
+Failed to Add Users,添加用户失败
+Failed to add reaction to the message,添加消息反应失败
+"Failed to create Email Account, Invalid credentials",创建邮箱账户失败，凭据无效
+Failed to delete comment,删除评论失败
+Failed to delete lead sync source,删除线索同步源失败
+Failed to delete note,删除笔记失败
+Failed to load fields layout,加载字段布局失败
+Failed to load file-based form controller: {0},加载基于文件的表单控制器失败：{0}
+Failed to save settings,保存设置失败
+Failed to save workday: {0},保存工作日失败：{0}
+Failed to send WhatsApp message,发送 WhatsApp 消息失败
+Failed to send WhatsApp template,发送 WhatsApp 模板失败
+Failed to send comment!,发送评论失败！
+Failed to start sync,启动同步失败
+"Failed to update Email Account, Invalid credentials",更新邮箱账户失败，凭据无效
+Failed to update attending status,更新出席状态失败
+Failed to update comment,更新评论失败
+Failed to update setting,更新设置失败
+Failed to update source,更新源失败
+Failure Logs,失败日志
+Following up consistently,持续跟进
+"For all-day events, <b>set a time</b> to send reminders before the event starts",对于全天活动，请<b>设置时间</b>在活动开始前发送提醒
+Forecasted Revenue,预测收入
+Form Name,表单名称
+From Number,主叫号码
+Funnel Conversion,漏斗转化
+Go to Invite Page,前往邀请页面
+Go to Website,前往网站
+Going?,参加吗？
+Google Ads,Google 广告
+Greater than,大于
+Greater than or equal to,大于或等于
+Hang Up,挂断
+How are you managing your sales today?,您目前如何管理销售业务？
+How do new leads usually come to you?,新线索通常如何获取？
+How many people will use Frappe CRM?,将有多少人使用 Frappe CRM？
+How timestamps are shown in the activity timeline for all users,所有用户在活动时间线中显示的时间戳格式
+HubSpot,HubSpot
+"I understand, Add Conditions",我已知晓，添加条件
+"If enabled, a lead will be automatically created when an incoming email is received from an unknown contact.",启用后，当收到来自未知联系人的邮件时，系统将自动创建线索。
+"If enabled, all replies to your company (eg: replies@yourcompany.com) will come to this account. Note: Only one account can be default incoming.",启用后，所有回复给贵公司（例如：replies@yourcompany.com）的邮件都将转发至此账户。注意：只能设置一个默认收件账户。
+"If enabled, emails will be pulled from this account.",启用后，系统将从此账户拉取邮件。
+Import my existing data,导入现有数据
+Incorrect current password. Please try again.,当前密码不正确，请重试。
+Invalid Email Address,无效的电子邮件地址
+Invalid Email or Password,无效的电子邮件或密码
+Invalid GeoJSON,无效的 GeoJSON
+Invalid Site URL,无效的网站 URL
+Invalid Start Or End Time,无效的起始或结束时间
+Invalid Twilio account,无效的 Twilio 账户
+Invalid Twilio application,无效的 Twilio 应用
+Invalid Website URL,无效的网址
+Invalid access token provided for Facebook.,Facebook 提供的访问令牌无效。
+Invalid email address,无效的电子邮件地址
+Invalid field,无效的字段
+Invalid fields: {0},无效的字段：{0}
+"Invalid format. Try: 1 hour 30 minutes, 2 hours, 45 seconds, 1:30:45, 90s",格式无效。请尝试：1 小时 30 分钟、2 小时、45 秒、1:30:45、90s
+"Invalid format. Try: 1h 30m 45s, 1:30:45, 90s",格式无效。请尝试：1h 30m 45s、1:30:45、90s
+Invalid lead details supplied.,提供的线索详情无效。
+Invalid or expired key,无效或已过期的密钥
+Invitations sent successfully,邀请发送成功
+Invite Agent,邀请销售人员
+Invite As,邀请为
+Invite By Email,通过电子邮件邀请
+Invite Users,邀请用户
+Invite my team,邀请我的团队
+It appears that there are currently no {0} available. You can create more {0} by using the Create button.,当前没有可用的{0}。您可以使用“创建”按钮创建更多{0}。
+Items are required,必须选择记录
+Items must be a list,记录必须为列表
+"John, Jane, Doe",张三、李四、王五
+Just exploring,仅用于探索
+Just me,仅我本人
+Kanban settings,看板设置
+Keeping my pipeline organized,保持我的销售漏斗井然有序
+Kind,类型
+Language & Time,语言与时间
+Last Responded On,最后回复时间
+Last Response Time,最后响应时间
+Lead Data,线索数据
+Lead Sync Source,线索同步源
+Lead Sync Source created successfully,线索同步源创建成功
+Lead Syncing,线索同步
+Lead and deal visibility will no longer be restricted by the reporting tree. Are you sure?,线索和商机的可见性将不再受汇报层级限制。确定吗？
+Lead from call {0},来自通话 {0} 的线索
+Lead sync initiated.,线索同步已启动。
+Lead sync source deleted successfully,线索同步源删除成功
+Leads by Source,按来源统计线索
+Less than,小于
+Less than or equal to,小于或等于
+Linked Item {0} no longer exists,关联的物料 {0} 已不存在
+Log ID,日志 ID
+Login with Different Account,使用其他账户登录
+Lost Deal Reasons,丢单原因
+Lost Details,丢单详情
+"Lost Notes are required when Lost Reason is ""Other""",当丢单原因为“其他”时，必须填写丢单备注
+Lost Reason is required,必须填写丢单原因
+Manage ERPNext integration settings,管理 ERPNext 集成设置
+Manage your account emails and email signature for communication.,管理账户邮箱和邮件签名，用于客户沟通。
+Manage your email signature,管理您的邮件签名
+Manage your profile & login information.,管理您的个人资料和登录信息。
+Manage your service level agreement policies,管理 SLA 策略
+Managing contacts and companies,管理联系人和组织
+Mandatory field(s) {0} must be mapped,必须映射必填字段 {0}
+Mapped to CRM Field,映射到 CRM 字段
+Mark lead/deal as replied on response,收到回复时将线索/商机标记为已回复
+Maybe,待定
+Missed Call,未接来电
+Missing mandatory fields: {0},缺少必填字段：{0}
+Mobile App Installation,移动应用安装
+Mobile No. should be a number,手机号码应为数字
+More than 20,超过 20
+Move Last Column to Next Section,将最后一列移至下一节
+Move Last Column to Next Tab,将最后一列移至下一标签页
+Move Last Column to Previous Section,将最后一列移至上一节
+Move Last Column to Previous Tab,将最后一列移至上一标签页
+Move to Next Tab,移至下一标签页
+Move to Previous Tab,移至上一标签页
+Move to top level,移至顶层
+Move under {0},移至 {0} 下
+Nested Conditions,嵌套条件
+New Lead Sync Source,新建线索同步源
+New SLA Policy,新建 SLA 策略
+New SLA Policy Name,新 SLA 策略名称
+New Template,新建模板
+New password cannot be the same as current password,新密码不能与当前密码相同
+New password cannot be the same as current password. Please choose a different password.,新密码不能与当前密码相同。请选择不同的密码。
+Newest First,最新优先
+Next question,下一题
+No Contacts Added,未添加联系人
+No Details Added,未添加详情
+No Failure Logs Found,未找到失败日志
+No Mobile Number Set,未设置手机号
+No New Notifications,无新通知
+No Primary Contact Set,未设置主要联系人
+No Priorities in the list,列表中无优先级
+No Results Found,未找到结果
+No Templates Found,未找到模板
+No Users Found,未找到用户
+No Website Found,未找到网站
+No Workdays in the List,列表中无工作日
+No companies found in the given site,在给定站点中未找到公司
+No events coming up. Create a new one to keep things on track.,暂无即将发生的事件。创建新事件以保持进度。
+No holiday list found,未找到假日列表
+No matching users,无匹配的用户
+No users in hierarchy,层级中无用户
+No users match the current filter.,没有用户匹配当前筛选条件。
+No {0} available,无可用的 {0}
+Not Synced,未同步
+Not equals,不等于
+Not implemented yet!,尚未实现！
+Not in,不在
+Not like,不包含
+Not permitted to access reference document {0} {1}.,无权访问参考文档 {0} {1}。
+Not permitted to access the referenced WhatsApp message.,无权访问引用的 WhatsApp 消息。
+Not permitted to modify fields layout,无权修改字段布局
+Note deleted,笔记已删除
+Number Chart,数值图表
+Number of decimal places for non-currency numeric fields,非货币数值字段的小数位数
+Number of decimal places used for all currency values,所有货币值使用的小数位数
+Old Conditions,旧条件
+Oldest First,最旧优先
+Ongoing Deals,进行中的商机
+Only System Managers can assign the Sales Manager role,只有系统管理员可以分配销售经理角色
+Only System Managers can assign the System Manager role,只有系统管理员可以分配系统管理员角色
+Only System Managers can modify other System Managers,只有系统管理员可以修改其他系统管理员
+Only sales users can access WhatsApp features.,只有销售用户可以使用 WhatsApp 功能。
+Open Nested Conditions,展开嵌套条件
+Open Website,打开网站
+"Order of activities, emails, comments and calls in the timeline",时间线中活动、邮件、评论和通话的顺序
+"Order of activities, emails, comments and calls in the timeline for all users",所有用户时间线中活动、邮件、评论和通话的顺序
+Organization or a primary Contact is required to create a customer,创建客户需要组织或主要联系人
+Organize my contacts,整理我的联系人
+Other Features,其他功能
+Password Updated Successfully,密码更新成功
+Password is too weak. {0},密码过于简单。{0}
+Password must be at least 8 characters,密码必须至少包含 8 个字符
+"Password must contain lowercase, uppercase, number, and symbol",密码必须包含小写字母、大写字母、数字和符号
+Passwords match,密码一致
+Payment reminder from Frappé - (#{{ name }}),来自 Frappé 的付款提醒 - (#{{ name }})
+Permissions update,权限更新
+Personal Mobile No.,个人手机号
+Phone calls,电话通话
+Pinned View,置顶视图
+Pipedrive,Pipedrive
+Playback Speed,播放速度
+Please check your access token,请检查您的访问令牌
+Please fix the errors in the form,请修复表单中的错误
+Please select a Priority,请选择优先级
+Please select a lead gen form before syncing!,同步前请选择线索生成表单！
+Please set a mobile number to make calls,请设置手机号以拨打电话
+Please set a website to visit,请设置要访问的网站
+Please set an email address to send emails,请设置邮箱地址以发送邮件
+Please specify a reason for losing the lead.,请说明丢失线索的原因。
+Please specify the reason for losing the lead.,请说明丢失该线索的原因。
+Policy Name,策略名称
+Preferences Updated Successfully,偏好设置更新成功
+Primary Contact Set,已设置主要联系人
+Primary email,主要邮箱
+Primary mobile no,主要手机号
+Primary phone,主要电话
+Priorities must be unique,优先级必须唯一
+Priority {0}: Priority Name is required,优先级 {0}：必填优先级名称
+Priority {0}: Response Time is required,优先级 {0}：必填响应时间
+Private or Public,私有或公开
+Product Sync Issues,产品同步问题
+Product sync started. Items will appear shortly.,产品同步已开始，物料将很快显示。
+Profile Updated Successfully,个人资料更新成功
+Public View,公开视图
+Quick Entry Layout,快速录入布局
+Quick filters updated successfully,快速筛选条件更新成功
+Recording URL not found,未找到录音 URL
+Reference document {0} {1} does not exist.,参考文档 {0} {1} 不存在。
+Referenced WhatsApp message does not exist.,引用的 WhatsApp 消息不存在。
+Referrals,转介绍
+Refresh Apps,刷新应用
+Refresh Companies,刷新公司
+Reject Call,拒接电话
+Relative,相对时间
+Reload Columns,重新加载列
+"Reminders will be sent <b>before the event starts</b>, based on the configured time",提醒将在 <b>事件开始前</b> 根据配置的时间发送
+Remove All,移除全部
+Remove Group,移除组
+Remove Image,移除图片
+Remove Last Column,移除最后一列
+Remove Last Column (move fields to previous),移除最后一列（将字段移至前一列）
+Remove Photo,移除照片
+Remove Tab,移除标签页
+Remove this user from the sales hierarchy before changing their role to Sales User,在将其角色更改为销售用户之前，请从销售层级中移除此用户
+Remove {0} from the hierarchy. What should happen to their direct reports?,从层级中移除 {0}。其直接下属应如何处理？
+Removed from hierarchy.,已从层级中移除。
+Reopen lead/deal on new communication,收到新沟通时重新打开线索/商机
+Replacing my current CRM,替换我当前的 CRM
+Reporting & forecasting,报告与预测
+Responded On,回复时间
+Response & Follow Up,回复与跟进
+Response Time,响应时间
+Response Time is required,响应时间为必填项
+Restart the SLA each time the customer replies (status changes to Open) and fulfill it when marked as Replied,每次客户回复（状态变为“待处理”）时重启 SLA，并在标记为“已回复”时完成 SLA
+Restore Demo Data,恢复演示数据
+Restrict Lead and Deal visibility based on the Sales Hierarchy tree. Managers can see all records owned by or assigned to their reports.,基于销售层级树限制线索和商机的可见性。经理可以看到其下属拥有或分配的所有记录。
+Restrict visibility of Leads and Deals based on a reporting tree.,基于汇报树限制线索和商机的可见性。
+Restrict visibility using a reporting tree,使用汇报树限制可见性
+Retry Sync,重试同步
+Rolling Response Due,滚动响应截止时间
+Rolling Responses,滚动响应
+SLA Policies,SLA 策略
+SLA Policy Created,SLA 策略已创建
+SLA Policy Deleted,SLA 策略已删除
+SLA Policy Duplicated,SLA 策略已复制
+SLA Policy Name is required,SLA 策略名称为必填项
+SLA Policy Status Updated,SLA 策略状态已更新
+SLA Policy Updated,SLA 策略已更新
+SLA set as default cannot be disabled,设为默认的 SLA 无法禁用
+Sales Hierarchy,销售层级
+Sales Hierarchy disabled,销售层级已禁用
+Sales Hierarchy enabled,销售层级已启用
+Sales Trend,销售趋势
+Saved View,已保存视图
+Search Template,搜索模板
+Search User,搜索用户
+Search users,搜索用户
+See All Participants,查看所有参与者
+Select Holiday List,选择假日列表
+Select Medium,选择渠道
+Select Priority,选择优先级
+Select Provider,选择提供商
+Select Source Type,选择来源类型
+Select Type,选择类型
+Select Workday,选择工作日
+Select a Twilio App for your CRM,为您的 CRM 选择 Twilio 应用
+Select a Value,选择一个值
+Select all that apply,选择所有适用项
+Select an Option,选择一个选项
+Select the deal status to trigger the auto customer creation in ERPNext,选择触发 ERPNext 自动创建客户的商机状态
+Select the default view for your calendar. This will be the initial view when you open the calendar,选择日历的默认视图。打开日历时将显示此初始视图
+Select whether to display time with or without seconds,选择是否显示带秒数的时间
+Select your ERPNext company to connect with,选择要连接的 ERPNext 公司
+Send an Email,发送邮件
+Sending comment...,正在发送评论...
+Sending email...,正在发送邮件...
+Set As Default,设为默认
+Set Currency,设置货币
+Set Default Priority,设置默认优先级
+Set First Name,设置姓名
+Set Location,设置位置
+Set an Organization,设置组织
+Set as default SLA,设为默认 SLA
+Set location…,设置位置…
+Set once the first admin completes the onboarding persona questionnaire,首次管理员完成入职角色问卷后设置
+Set the Exotel number to be used for outgoing calls.,设置用于外呼的 Exotel 号码。
+Set the Twilio number to be used for outgoing calls.,设置用于外呼的 Twilio 号码。
+Set the name of your brand. Appears in the left sidebar.,设置您的品牌名称。将显示在左侧边栏中。
+Set up my sales pipeline,设置我的销售漏斗
+"Set working days, hours, and holidays by selecting a predefined schedule or creating a new one",通过选择预定义计划或创建新计划来设置工作日、工作时间和节假日
+Setting Up,设置
+Setting disabled successfully,设置已禁用
+Setting enabled successfully,设置已启用
+Setting up Frappe Mail requires you to have an API key and API Secret of your email account. Read more,设置 Frappe Mail 需要电子邮件账户的 API 密钥和 API 密钥口令。了解更多
+Setting up GMail requires you to enable two factor authentication and app specific passwords. Read more,设置 GMail 需要您启用双重身份验证和应用专用密码。了解更多
+Setting up Outlook requires you to enable two factor authentication and app specific passwords. Read more,设置 Outlook 需要您启用双重身份验证和应用专用密码。了解更多
+Setting up Sendgrid requires you to enable two factor authentication and app specific passwords. Read more,设置 Sendgrid 需要您启用双重身份验证和应用专用密码。了解更多
+Setting up Sparkpost requires you to enable two factor authentication and app specific passwords. Read more,设置 Sparkpost 需要您启用双重身份验证和应用专用密码。了解更多
+Setting up Yahoo requires you to enable two factor authentication and app specific passwords. Read more,设置 Yahoo 需要您启用双重身份验证和应用专用密码。了解更多
+Setting up Yandex requires you to enable two factor authentication and app specific passwords. Read more,设置 Yandex 需要您启用双重身份验证和应用专用密码。了解更多
+Setting updated successfully,设置已更新
+Settings saved,设置已保存
+Settings updated successfully,设置已更新
+"Setup the Exchange Rate Provider other than 'Frankfurter' in settings, as default provider does not support currency conversion for {0} to {1}.",请在设置中将汇率提供商配置为 'Frankfurter' 以外的提供商，因为默认提供商不支持从 {0} 到 {1} 的货币转换。
+Show Border,显示边框
+Show Label,显示标签
+Show Less,收起
+Show timestamps in the activity timeline as relative time (5 mins ago) or an exact date & time,在活动时间线中以相对时间（如 5 分钟前）或确切日期和时间显示时间戳
+Site URL,站点 URL
+Site URL is required,站点 URL 为必填项
+Site connection validated,站点连接已验证
+Skip for now,暂且跳过
+Some error occurred while creating SLA Policy,创建 SLA 策略时发生错误
+Some error occurred while renaming SLA policy,重命名 SLA 策略时发生错误
+Some error occurred while updating SLA policy,更新 SLA 策略时发生错误
+Some users could not be added,部分用户无法添加
+"Something went wrong, try again later",发生错误，请稍后重试
+Source disabled successfully,数据源已成功禁用
+Source enabled successfully,数据源已成功启用
+Spreadsheets,电子表格
+Start & End Time Are Required,必须填写开始时间和结束时间
+Start Date cannot be after end date,开始日期不能晚于结束日期
+Start Time is required,必须填写开始时间
+Step {0} of {1},第 {0} 步，共 {1} 步
+"Switch between light, dark, or system theme",在浅色、深色或系统主题之间切换
+Switch between outgoing email accounts when sending emails,发送邮件时在发件邮箱账户之间切换
+Sync Products with ERPNext,与 ERPNext 同步产品
+Sync Successful!,同步成功！
+"Sync Successful, CRM Lead: {0}!",同步成功，CRM 线索：{0}！
+"Sync your Contacts, Email and Calendars",同步您的联系人、邮件和日历
+Synced,已同步
+Syncing started in background,后台同步已开始
+System Defaults,系统默认值
+Template Deleted Successfully,模板已成功删除
+This column contains fields. Are you sure you want to remove it?,此列包含字段。确定要删除它吗？
+This field is required,此字段为必填项
+This is my first CRM,这是我的第一个 CRM
+This section contains fields. Are you sure you want to remove it?,此部分包含字段。确定要删除它吗？
+This will restore the demo data. Are you sure you want to continue?,这将恢复演示数据。确定要继续吗？
+Time before the event when a reminder notification will be sent by default. This will be applied to all events unless a custom notification is set for a specific event.,默认情况下，在事件发生前发送提醒通知的时间。除非为特定事件设置了自定义通知，否则将应用于所有事件。
+Timeline Sort Order,时间线排序顺序
+Timeline Timestamp Format,时间线时间戳格式
+Timeline sort order,时间线排序顺序
+Timeline timestamp format,时间线时间戳格式
+To Number,被叫号码
+Toggle on for Preview,开启后可预览
+Too many failed attempts. Please try again after some time.,失败尝试次数过多。请稍后再试。
+Total Leads,线索总数
+Turn into a Group,转换为组
+Twilio App Name,Twilio 应用名称
+Twilio Apps,Twilio 应用
+Twilio Integration Disabled,Twilio 集成已禁用
+Twilio Settings,Twilio 设置
+Twilio configuration is missing,缺少 Twilio 配置
+Unable to connect to Twilio account to fetch applications.,无法连接 Twilio 账户以获取应用。
+Unassign Conditions are invalid,取消分配条件无效
+Unassignment Condition,取消分配条件
+Ungroup Conditions,取消分组条件
+Unknown telephony medium: {0},未知的通话渠道：{0}
+Unlink & Delete,取消链接并删除
+Unlink & Delete {0} Users,取消链接并删除 {0} 个用户
+Unlink & Delete {0} items,取消链接并删除 {0} 项
+Unlink All,全部取消链接
+Unlink Linked Item,取消关联项的链接
+Unlink {0} Item(s),取消 {0} 个关联项的链接
+Update Configuration,更新配置
+Update the modified timestamp on new email communication & comment for leads & deals,有新邮件沟通和评论时，更新线索和商机的修改时间
+Update the modified timestamp on new email communication & comments for leads & deals,有新邮件沟通和评论时，更新线索和商机的修改时间
+Updated reports to,已更新汇报对象为
+Upload Photo,上传照片
+Use ERPNext to Create Products,使用 ERPNext 创建产品
+User Configuration,用户配置
+User added to hierarchy,用户已添加到层级
+User {0} cannot be removed as it has a Role Profile assigned to it.,无法移除用户 {0}，因为它已分配角色配置文件。
+User {0} has been removed from CRM roles.,用户 {0} 已从 CRM 角色中移除。
+User {0} is already mapped to hierarchy node {1}.,用户 {0} 已映射到层级节点 {1}。
+Users Added Successfully,用户添加成功
+Valid conditions are required,需要有效的条件
+Verify Connection,验证连接
+View Contact,查看联系人
+View Location,查看位置
+View documentation,查看文档
+Walk-ins,上门咨询
+We are changing how permissions work in Frappe CRM,我们正在更改 Frappe CRM 中的权限工作方式
+Website forms,网站表单
+Welcome to Frappe CRM,欢迎使用 Frappe CRM
+What are your biggest challenges with sales today?,您目前面临的最大销售挑战是什么？
+What would you like to accomplish first?,您希望首先完成什么？
+WhatsApp Message,WhatsApp 消息
+Won Deals,赢单
+Work Schedule & Holidays,工作时间表与节假日
+You are not allowed to invite Sales Managers,您无权邀请销售经理
+You are not allowed to invite System Managers,您无权邀请系统管理员
+You are not permitted to access CRM resources.,您无权访问 CRM 资源。
+You are not permitted to create leads.,您无权创建线索。
+You are not permitted to update this call log.,您无权更新此通话记录。
+You can get your Access Key from ,您可以从以下位置获取访问密钥：
+You cannot remove yourself.,您无法移除自己。
+You do not have enough permissions to access Frappe CRM. Please contact your administrator if you believe this is an error.,您没有足够的权限访问 Frappe CRM。如果您认为这是错误，请联系您的管理员。
+You do not have permission to access Frappe CRM,您无权访问 Frappe CRM
+You don't have permission to delete this attachment,您无权删除此附件
+You must be logged in to change your password,您必须登录后才能更改密码
+Your old conditions will be overwritten. Are you sure you want to save?,您的旧条件将被覆盖。确定要保存吗？
+Zoho CRM,Zoho CRM
+before at,前，于
+converted the lead to this deal,将此线索转换为该商机
+created this deal,创建了该商机
+created this lead,创建了该线索
+day before,天前
+days before,天前
+exchangerate-api,exchangerate-api
+fawazahmed-exchange-api,fawazahmed-exchange-api
+hour before,小时前
+hours before,小时前
+minute before,分钟前
+minutes before,分钟前
+old_value,旧值
+unlinked_orphan,未关联的孤立记录
+week before,周前
+weeks before,周前
+{0} (Invalid time format),{0}（无效的时间格式）
+{0} awaiting,{0} 人待确认
+{0} is an Invalid Value,{0} 是无效值
+{0} is an Invalid value,{0} 是无效值
+{0} maybe,{0} 人待定
+{0} no,{0} 人不参加
+{0} users added to hierarchy,{0} 个用户已添加到销售层级
+{0} yes,{0} 人参加
+{0}% complete,{0}% 完成
