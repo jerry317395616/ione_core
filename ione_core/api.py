@@ -31,7 +31,6 @@ def _app_category(app_name):
 		"drive": "服务协作",
 		"insights": "数据分析",
 		"builder": "建设工具",
-		"site_manager": "系统管理",
 		"frappe": "系统管理",
 		"ione_core": "I-ONE",
 	}.get(app_name, "其他")
