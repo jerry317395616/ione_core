@@ -165,6 +165,8 @@ def _execute_with_flow(task, employee):
 
 	from flow.lib.session import new_session
 
+	from ione_core.flow_policy import CHANNEL_AI_EMPLOYEE, prepare_session_execution
+
 	original_user = frappe.session.user
 	try:
 		frappe.set_user(employee.service_user)
@@ -173,12 +175,19 @@ def _execute_with_flow(task, employee):
 			title=f"{employee.agent_name}：{task.title}"[:80],
 			source="Manual",
 		)
+		auto_approve, _decision = prepare_session_execution(
+			session,
+			department=employee.department,
+			channel=CHANNEL_AI_EMPLOYEE,
+			fallback_auto_approve=_should_auto_approve(task, employee),
+			force_confirmation=bool(task.approval_required),
+		)
 		run = session.chat(
 			task.prompt,
 			source="Manual",
 			reference_doctype=task.source_doctype,
 			reference_name=task.source_name,
-			auto_approve=_should_auto_approve(task, employee),
+			auto_approve=auto_approve,
 		)
 	finally:
 		frappe.set_user(original_user)

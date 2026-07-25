@@ -64,6 +64,10 @@ doc_events = {
 	},
 }
 
+override_whitelisted_methods = {
+	"flow.api.api.start_run": "ione_core.flow_policy.start_run",
+}
+
 scheduler_events = {
 	"hourly": ["ione_core.ai.expire_pending_approvals"],
 }

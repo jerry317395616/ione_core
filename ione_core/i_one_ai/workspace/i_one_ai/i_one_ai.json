@@ -12,13 +12,14 @@
  "is_hidden": 0,
  "label": "I-ONE AI",
  "links": [
-  {"type": "Card Break", "label": "AI 员工中心", "hidden": 0, "link_type": "DocType", "link_count": 7, "onboard": 0, "is_query_report": 0},
+  {"type": "Card Break", "label": "AI 员工中心", "hidden": 0, "link_type": "DocType", "link_count": 8, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "智能记录", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Smart Record", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "经营目标", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Operating Target", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "AI 员工", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Agent", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "AI 工作单", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE AI Task", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "运行日志", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE AI Run Log", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "审批请求", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Approval Request", "link_count": 0, "onboard": 0, "is_query_report": 0},
+  {"type": "Link", "label": "Flow 科室策略", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Flow Execution Policy", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "系统设置", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Settings", "link_count": 0, "onboard": 0, "is_query_report": 0},
   {"type": "Card Break", "label": "知识与成长", "hidden": 0, "link_type": "DocType", "link_count": 3, "onboard": 0, "is_query_report": 0},
   {"type": "Link", "label": "成长计划", "hidden": 0, "link_type": "DocType", "link_to": "I-ONE Growth Plan", "link_count": 0, "onboard": 0, "is_query_report": 0},
@@ -58,6 +59,7 @@
   {"type": "Link", "label": "AI 员工", "link_type": "DocType", "link_to": "I-ONE Agent", "icon": "bot", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0},
   {"type": "Link", "label": "AI 工作单", "link_type": "DocType", "link_to": "I-ONE AI Task", "icon": "sparkles", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0},
   {"type": "Link", "label": "审批请求", "link_type": "DocType", "link_to": "I-ONE Approval Request", "icon": "circle-check", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0},
+  {"type": "Link", "label": "Flow 科室策略", "link_type": "DocType", "link_to": "I-ONE Flow Execution Policy", "icon": "shield-check", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0},
   {"type": "Link", "label": "成长计划", "link_type": "DocType", "link_to": "I-ONE Growth Plan", "icon": "trending-up", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0},
   {"type": "Link", "label": "经验共享", "link_type": "DocType", "link_to": "I-ONE Experience", "icon": "lightbulb", "default_workspace": 0, "child": 0, "open_in_new_tab": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0}
  ],
