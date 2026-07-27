@@ -1,14 +1,6 @@
 frappe.ui.form.on("I-ONE Flow Execution Policy", {
-	setup(frm) {
-		frm.set_query("tool", "auto_approved_tools", () => ({
-			filters: {
-				enabled: 1,
-				requires_confirmation: 1,
-			},
-		}));
-	},
-
 	refresh(frm) {
+		set_tool_query(frm);
 		set_policy_intro(frm);
 	},
 
@@ -16,6 +8,19 @@ frappe.ui.form.on("I-ONE Flow Execution Policy", {
 		set_policy_intro(frm);
 	},
 });
+
+function set_tool_query(frm) {
+	if (!frm.fields_dict.auto_approved_tools?.grid) {
+		return;
+	}
+
+	frm.set_query("tool", "auto_approved_tools", () => ({
+		filters: {
+			enabled: 1,
+			requires_confirmation: 1,
+		},
+	}));
+}
 
 function set_policy_intro(frm) {
 	if (frm.doc.execution_mode === "全部自动执行") {
