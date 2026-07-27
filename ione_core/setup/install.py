@@ -72,6 +72,13 @@ def after_migrate():
 	migrate_agent_fields()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	ensure_runtime_config()
+
+
+def ensure_runtime_config():
+	from ione_core.runtime_config import ensure_web_request_timeout
+
+	ensure_web_request_timeout()
 
 
 def migrate_agent_fields():
