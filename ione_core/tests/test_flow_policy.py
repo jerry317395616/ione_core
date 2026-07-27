@@ -1,6 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
+from ione_core import hooks
 from ione_core.flow_policy import (
 	MODE_ALL,
 	MODE_CONFIRM,
@@ -11,6 +12,12 @@ from ione_core.flow_policy import (
 
 
 class TestFlowExecutionPolicy(unittest.TestCase):
+	def test_flow_public_api_uses_policy_entry_point(self):
+		self.assertEqual(
+			hooks.override_whitelisted_methods["flow.api.start_run"],
+			"ione_core.flow_policy.start_run",
+		)
+
 	def _session(self):
 		return SimpleNamespace(
 			_runtime=SimpleNamespace(

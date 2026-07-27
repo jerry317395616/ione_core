@@ -65,6 +65,7 @@ doc_events = {
 }
 
 override_whitelisted_methods = {
+	"flow.api.start_run": "ione_core.flow_policy.start_run",
 	"flow.api.api.start_run": "ione_core.flow_policy.start_run",
 }
 
