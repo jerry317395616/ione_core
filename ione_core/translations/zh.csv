@@ -697,3 +697,19 @@ weeks before,周前
 "Minimum quantity should be as per Stock UOM\n\n","最小数量应符合库存计量单位"
 "Scan job card","扫描工序卡"
 "The Process Loss Qty has been reset as per the job card's Process Loss Qty","加工损耗数量已根据工序卡的加工损耗数量重置"
+A prebuilt Purchasing Overview dashboard is available in Insights,Insights 中提供了预置的采购概览仪表板
+A prebuilt {0} dashboard is available in Insights,Insights 中提供了预置的{0}仪表板
+Purchasing Overview,采购概览
+Purchase Orders Count,采购订单数量
+Average Order Values,平均订单金额
+Reports & Masters,报表与主数据
+Buying Onboarding,采购入门指南
+Buying Setup,采购设置向导
+Create Supplier,创建供应商
+Create supplier,创建供应商
+Create Item,创建物料
+Create Purchase Invoice,创建采购发票
+View Purchase Order Analysis,查看采购订单分析
+Review Buying Settings,检查采购设置
+Jun,六月
+Jul,七月
