@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any, Callable
 
 BATCH_POLICY_MARKER = "[I-ONE BATCH EXECUTION POLICY]"
@@ -38,6 +39,8 @@ Treat one user message as exactly one finite batch:
   unprocessed records. Do not repeatedly read the same first page.
 - Use exact DocType names from Frappe metadata. In ERPNext the payment schedule template
   DocType is "Payment Terms Template", not "Payment Term Template".
+- For transactional date fields, use the current server date supplied in the active
+  turn and derive future schedule dates from it. Never reuse stale example dates.
 - When the user says "继续", resume the first concrete unfinished operation from the
   preceding verified summary and perform a real write in this turn. Do not merely
   repeat counts, plans, or the previous answer. If the operation is complete or safe
@@ -81,53 +84,84 @@ def append_batch_policy(instructions: str | None) -> str:
 	return f"{instructions}\n\n{BATCH_POLICY}".strip()
 
 
-def prepare_continuation_prompt(session: Any, input: str) -> bool:
+def prepare_continuation_prompt(
+	session: Any,
+	input: str,
+	*,
+	current_date: str | None = None,
+) -> bool:
 	"""Use a compact, action-oriented prompt for terse continuation messages."""
 	if not is_continuation_input(input):
 		return False
 
 	original_builder = session._build_prompt_messages
+	current_date = current_date or date.today().isoformat()
 
 	def build_prompt() -> list[dict[str, Any]]:
-		return compact_continuation_messages(original_builder())
+		return compact_continuation_messages(original_builder(), current_date=current_date)
 
 	session._build_prompt_messages = build_prompt
 	return True
 
 
-def compact_continuation_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-	"""Keep the system policy and last verified summary, not the full tool transcript."""
-	system = next((dict(message) for message in messages if message.get("role") == "system"), None)
+def compact_continuation_messages(
+	messages: list[dict[str, Any]],
+	*,
+	current_date: str | None = None,
+) -> list[dict[str, Any]]:
+	"""Compact old content while preserving message count for Flow persistence."""
+	current_date = current_date or date.today().isoformat()
+	system_index = next(
+		(index for index, message in enumerate(messages) if message.get("role") == "system"),
+		None,
+	)
 	current_user_index = next(
 		(index for index in range(len(messages) - 1, -1, -1) if messages[index].get("role") == "user"),
 		None,
 	)
 
 	previous_summary = None
+	previous_summary_index = None
 	if current_user_index is not None:
-		for message in reversed(messages[:current_user_index]):
+		for index in range(current_user_index - 1, -1, -1):
+			message = messages[index]
 			if (
 				message.get("role") == "assistant"
 				and message.get("content")
 				and not message.get("tool_calls")
 			):
 				previous_summary = str(message["content"])[-MAX_CONTINUATION_SUMMARY_CHARS:]
+				previous_summary_index = index
 				break
 
 	compacted: list[dict[str, Any]] = []
-	if system:
-		compacted.append(system)
-	if previous_summary:
-		compacted.extend(
-			[
+	for index, message in enumerate(messages):
+		if index == system_index:
+			compacted.append(dict(message))
+		elif index == previous_summary_index:
+			compacted.append({"role": "assistant", "content": previous_summary})
+		elif index == current_user_index:
+			compacted.append(
 				{
 					"role": "user",
-					"content": "The following is the verified summary from the preceding batch.",
-				},
-				{"role": "assistant", "content": previous_summary},
-			]
-		)
-	compacted.append({"role": "user", "content": CONTINUATION_INSTRUCTION})
+					"content": (
+						f"Current server date: {current_date}.\n"
+						f"{CONTINUATION_INSTRUCTION}"
+					),
+				}
+			)
+		else:
+			role = message.get("role")
+			if role == "tool":
+				role = "assistant"
+			if role not in {"system", "user", "assistant"}:
+				role = "user"
+			compacted.append(
+				{
+					"role": role,
+					"content": "[Earlier transcript entry omitted to keep this turn compact.]",
+				}
+			)
 	return compacted
 
 

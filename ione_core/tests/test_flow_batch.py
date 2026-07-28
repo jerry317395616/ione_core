@@ -191,16 +191,21 @@ class TestFlowBatchGuard(TestCase):
 			{"role": "user", "content": "继续"},
 		]
 
-		compacted = compact_continuation_messages(messages)
-		self.assertEqual([row["role"] for row in compacted], ["system", "user", "assistant", "user"])
+		compacted = compact_continuation_messages(messages, current_date="2026-07-28")
+		self.assertEqual(len(compacted), len(messages))
 		self.assertNotIn("x" * 100, str(compacted))
-		self.assertIn("Created 30 records", compacted[2]["content"])
+		self.assertIn("Created 30 records", compacted[-2]["content"])
 		self.assertIn("one real mutating tool call", compacted[-1]["content"])
+		self.assertIn("Current server date: 2026-07-28", compacted[-1]["content"])
+		new_messages = [{"role": "assistant", "content": "new verified result"}]
+		self.assertEqual((compacted + new_messages)[len(messages) :], new_messages)
 
 	def test_prepare_continuation_prompt_leaves_other_inputs_unchanged(self):
 		session = SimpleNamespace(_build_prompt_messages=lambda: [{"role": "user", "content": "hello"}])
 		self.assertFalse(prepare_continuation_prompt(session, "检查数据"))
-		self.assertTrue(prepare_continuation_prompt(session, "继续"))
+		self.assertTrue(
+			prepare_continuation_prompt(session, "继续", current_date="2026-07-28")
+		)
 		self.assertIn("one real mutating tool call", session._build_prompt_messages()[-1]["content"])
 
 	def test_normalizes_erpnext_payment_terms_template_doctype(self):

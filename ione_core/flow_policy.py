@@ -153,7 +153,11 @@ def start_run(
 		load_session(session, agent=agent, model=model) if session else new_session(agent, model=model)
 	)
 	apply_batch_execution_guard(conversation._runtime)
-	prepare_continuation_prompt(conversation, input)
+	prepare_continuation_prompt(
+		conversation,
+		input,
+		current_date=frappe.utils.today(),
+	)
 	if session:
 		_sync_session_batch_policy(session, append_batch_policy)
 	auto_approve, _decision = prepare_session_execution(
