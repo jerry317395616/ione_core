@@ -57,10 +57,23 @@ CORE_COVERAGE = {
 		"Vehicle",
 		"Driver",
 		"Address",
+		"POS Profile",
+		"POS Opening Entry",
+		"POS Invoice",
+		"POS Closing Entry",
+		"POS Invoice Merge Log",
+		"Subcontracting BOM",
+		"Subcontracting Inward Order",
 	),
 	"生产制造": ("BOM", "Work Order"),
 	"项目管理": ("Project", "Task", "Timesheet"),
-	"资产管理": ("Asset",),
+	"资产管理": (
+		"Asset",
+		"Asset Shift Factor",
+		"Asset Shift Allocation",
+		"Asset Depreciation Schedule",
+		"Finance Book",
+	),
 	"质量与支持": ("Quality Inspection", "Issue", "Contract"),
 	"人力资源": (
 		"Employee",
@@ -648,9 +661,11 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 		submit=True,
 	)
 	_seed_delivery_notes(ctx)
+	from ione_core.advanced_business_seed import seed_inventory_completion
 	from ione_core.inventory_seed import seed_inventory_workspace
 
 	seed_inventory_workspace(ctx)
+	seed_inventory_completion(ctx)
 
 
 def _seed_projects(ctx: SeedContext) -> None:
@@ -866,6 +881,9 @@ def _seed_assets(ctx: SeedContext) -> None:
 			"opening_accumulated_depreciation": 0,
 		},
 	)
+	from ione_core.advanced_business_seed import seed_asset_shift_allocation
+
+	seed_asset_shift_allocation(ctx)
 
 
 def _seed_quality(ctx: SeedContext) -> None:

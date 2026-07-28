@@ -110,8 +110,25 @@ class TestBusinessSeed(TestCase):
 			"Vehicle",
 			"Driver",
 			"Address",
+			"POS Profile",
+			"POS Opening Entry",
+			"POS Invoice",
+			"POS Closing Entry",
+			"POS Invoice Merge Log",
+			"Subcontracting BOM",
+			"Subcontracting Inward Order",
 		):
 			self.assertIn(doctype, CORE_COVERAGE["库存管理"])
+
+	def test_asset_coverage_includes_shift_depreciation(self):
+		for doctype in (
+			"Asset",
+			"Asset Shift Factor",
+			"Asset Shift Allocation",
+			"Asset Depreciation Schedule",
+			"Finance Book",
+		):
+			self.assertIn(doctype, CORE_COVERAGE["资产管理"])
 
 	def test_delivery_quantity_stays_conservative(self):
 		self.assertEqual(_delivery_quantity(13), 1)
