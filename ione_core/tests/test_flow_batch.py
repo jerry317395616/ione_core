@@ -72,6 +72,68 @@ class TestFlowBatchGuard(TestCase):
 		self.assertTrue(last_call["kwargs"]["stream"])
 		self.assertEqual(runtime.max_iterations, MAX_ITERATIONS)
 
+	def test_blocks_other_tools_after_write_in_same_model_response(self):
+		runtime = FakeRuntime()
+		apply_batch_execution_guard(runtime)
+
+		self.assertEqual(
+			runtime._invoke(
+				SimpleNamespace(name="create", arguments={"doctype": "ToDo", "records": [{}]})
+			)["status"],
+			"ok",
+		)
+		blocked = runtime._invoke(
+			SimpleNamespace(name="read", arguments={"doctype": "ToDo", "limit": 20})
+		)
+
+		self.assertEqual(blocked["status"], "tool_phase_finished")
+		self.assertEqual(len(runtime.invocations), 1)
+
+	def test_forced_summary_removes_hallucinated_tool_calls(self):
+		class ToolCallingModel(FakeModel):
+			def chat(self, messages, *, tools=None, **kwargs):
+				self.calls.append({"messages": messages, "tools": tools, "kwargs": kwargs})
+				return SimpleNamespace(content=None, tool_calls=[{"name": "read"}])
+
+		runtime = FakeRuntime()
+		runtime.model = ToolCallingModel()
+		apply_batch_execution_guard(runtime)
+		runtime._invoke(
+			SimpleNamespace(name="create", arguments={"doctype": "ToDo", "records": [{}]})
+		)
+
+		response = runtime.model.chat([], tools=[{"name": "read"}])
+
+		self.assertEqual(response.tool_calls, [])
+		self.assertIn("已停止后续工具调用", response.content)
+
+	def test_forced_stream_summary_removes_tool_call_events_and_result_calls(self):
+		class ToolCallBegin:
+			pass
+
+		def response_stream():
+			yield ToolCallBegin()
+			yield "summary"
+			return SimpleNamespace(content="summary", tool_calls=[{"name": "read"}])
+
+		class StreamingModel(FakeModel):
+			def chat(self, messages, *, tools=None, **kwargs):
+				self.calls.append({"messages": messages, "tools": tools, "kwargs": kwargs})
+				return response_stream()
+
+		runtime = FakeRuntime()
+		runtime.model = StreamingModel()
+		apply_batch_execution_guard(runtime)
+		runtime._invoke(
+			SimpleNamespace(name="create", arguments={"doctype": "ToDo", "records": [{}]})
+		)
+
+		stream = runtime.model.chat([], tools=[{"name": "read"}], stream=True)
+		self.assertEqual(next(stream), "summary")
+		with self.assertRaises(StopIteration) as stopped:
+			next(stream)
+		self.assertEqual(stopped.exception.value.tool_calls, [])
+
 	def test_repeated_read_is_skipped_without_ending_the_turn(self):
 		runtime = FakeRuntime()
 		state = apply_batch_execution_guard(runtime)

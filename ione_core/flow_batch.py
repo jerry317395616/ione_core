@@ -12,6 +12,10 @@ MAX_ITERATIONS = 8
 MAX_TOOL_PHASE_SECONDS = 70
 MAX_MUTATION_ARGUMENT_BYTES = 256 * 1024
 MAX_CONTINUATION_SUMMARY_CHARS = 12_000
+FORCED_SUMMARY_FALLBACK = (
+	"本轮已达到工具执行预算，系统已停止后续工具调用。"
+	"请根据上方已经返回的工具结果确认本轮实际完成内容。"
+)
 
 MUTATING_TOOLS = frozenset({"create", "update", "delete", "run_action", "execute"})
 CONTINUATION_INPUTS = frozenset({"继续", "继续执行", "下一批", "继续下一批"})
@@ -149,6 +153,16 @@ def apply_batch_execution_guard(
 		name = str(getattr(call, "name", "") or "")
 		arguments = _normalize_tool_arguments(call)
 		state.total_calls += 1
+		if state.force_summary or state.total_calls > MAX_TOTAL_CALLS:
+			state.force_summary = True
+			return {
+				"status": "batch_limit" if name in MUTATING_TOOLS else "tool_phase_finished",
+				"message": (
+					"The tool phase is already finished. This call was not executed; "
+					"return the verified summary now."
+				),
+			}
+
 		signature = json.dumps(
 			{"name": name, "arguments": arguments},
 			sort_keys=True,
@@ -215,7 +229,10 @@ def apply_batch_execution_guard(
 			*messages,
 			{"role": "user", "content": _finalize_instruction(state)},
 		]
-		return original_chat(final_messages, tools=None, **kwargs)
+		response = original_chat(final_messages, tools=None, **kwargs)
+		if kwargs.get("stream") and hasattr(response, "__next__"):
+			return _strip_stream_tool_calls(response)
+		return _clear_tool_calls(response)
 
 	runtime._invoke = guarded_invoke
 	runtime.model.chat = guarded_chat
@@ -250,6 +267,26 @@ def _normalize_tool_arguments(call: Any) -> Any:
 	arguments = {**arguments, "doctype": normalized}
 	call.arguments = arguments
 	return arguments
+
+
+def _clear_tool_calls(response: Any) -> Any:
+	if response is None:
+		return response
+	if hasattr(response, "tool_calls"):
+		response.tool_calls = []
+	if hasattr(response, "content") and not response.content:
+		response.content = FORCED_SUMMARY_FALLBACK
+	return response
+
+
+def _strip_stream_tool_calls(chunks: Any):
+	while True:
+		try:
+			item = next(chunks)
+		except StopIteration as stop:
+			return _clear_tool_calls(stop.value)
+		if item.__class__.__name__ != "ToolCallBegin":
+			yield item
 
 
 def _finalize_instruction(state: BatchExecutionState) -> str:
