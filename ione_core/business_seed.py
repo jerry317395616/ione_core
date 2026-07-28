@@ -16,7 +16,7 @@ CORE_COVERAGE = {
 	"通用协作": ("ToDo", "Event", "Note"),
 	"销售管理": ("Lead", "Opportunity", "Quotation", "Sales Order", "Sales Invoice", "Payment Entry"),
 	"采购管理": ("Material Request", "Purchase Order", "Purchase Receipt", "Purchase Invoice"),
-	"库存管理": ("Stock Entry",),
+	"库存管理": ("Stock Entry", "Delivery Note"),
 	"生产制造": ("BOM", "Work Order"),
 	"项目管理": ("Project", "Task", "Timesheet"),
 	"资产管理": ("Asset",),
@@ -219,6 +219,158 @@ def _sales_item(item_code: str, qty: float, rate: float, delivery_date: str | No
 	if delivery_date:
 		row["delivery_date"] = delivery_date
 	return row
+
+
+def _delivery_quantity(actual_qty: float) -> int:
+	"""Keep generated deliveries well below the available stock."""
+	return max(1, min(10, int(actual_qty) // 20))
+
+
+def _available_delivery_items(ctx: SeedContext) -> list[dict[str, Any]]:
+	bins = frappe.get_all(
+		"Bin",
+		filters={"warehouse": ctx.warehouse, "actual_qty": [">", 12]},
+		fields=["item_code", "actual_qty", "valuation_rate"],
+		order_by="actual_qty desc, item_code asc",
+		limit_page_length=8,
+	)
+	if not bins:
+		return []
+
+	item_codes = [row.item_code for row in bins]
+	valid_items = set(
+		frappe.get_all(
+			"Item",
+			filters={
+				"name": ["in", item_codes],
+				"disabled": 0,
+				"is_stock_item": 1,
+				"is_sales_item": 1,
+				"has_batch_no": 0,
+				"has_serial_no": 0,
+			},
+			pluck="name",
+		)
+	)
+
+	items = []
+	for row in bins:
+		if row.item_code not in valid_items:
+			continue
+		rate = frappe.db.get_value(
+			"Item Price",
+			{"item_code": row.item_code, "price_list": "Standard Selling", "selling": 1},
+			"price_list_rate",
+		)
+		if not rate:
+			rate = max(float(row.valuation_rate or 0) * 1.25, 1)
+		items.append(
+			{
+				"item_code": row.item_code,
+				"qty": _delivery_quantity(float(row.actual_qty)),
+				"rate": float(rate),
+			}
+		)
+	return items
+
+
+def _seed_delivery_notes(ctx: SeedContext) -> None:
+	if not _doctype_exists("Delivery Note"):
+		ctx.report.skipped.append("Delivery Note: DocType 未安装")
+		return
+
+	stock_items = _available_delivery_items(ctx)
+	if not stock_items:
+		ctx.report.skipped.append("Delivery Note: 没有可安全出库的销售物料")
+		return
+
+	customers = frappe.get_all(
+		"Customer",
+		filters={"disabled": 0},
+		pluck="name",
+		order_by="creation asc",
+		limit_page_length=6,
+	)
+	if ctx.customer and ctx.customer not in customers:
+		customers.insert(0, ctx.customer)
+	customers = customers[:6]
+	if not customers:
+		ctx.report.skipped.append("Delivery Note: 没有可用客户")
+		return
+
+	from erpnext.selling.doctype.sales_order.mapper import make_delivery_note
+
+	for index, customer in enumerate(customers, start=1):
+		marker = f"IONE-DEMO-DN-{index:02d}"
+		existing_delivery = frappe.db.get_value(
+			"Delivery Note",
+			{"company": ctx.company, "po_no": marker, "docstatus": ["!=", 2]},
+			"name",
+		)
+		if existing_delivery:
+			ctx.report.existing.append(_record_label("Delivery Note", existing_delivery))
+			continue
+
+		selected_items = [
+			stock_items[(index - 1 + offset) % len(stock_items)]
+			for offset in range(min(2, len(stock_items)))
+		]
+		order = _ensure_doc(
+			ctx,
+			"Sales Order",
+			{"company": ctx.company, "po_no": marker, "docstatus": ["!=", 2]},
+			{
+				"company": ctx.company,
+				"customer": customer,
+				"po_no": marker,
+				"po_date": today(),
+				"transaction_date": today(),
+				"delivery_date": today(),
+				"order_type": "Sales",
+				"currency": ctx.currency,
+				"conversion_rate": 1,
+				"selling_price_list": "Standard Selling",
+				"price_list_currency": ctx.currency,
+				"plc_conversion_rate": 1,
+				"items": [
+					{
+						**item,
+						"warehouse": ctx.warehouse,
+						"delivery_date": today(),
+					}
+					for item in selected_items
+				],
+			},
+			submit=True,
+		)
+		if not order:
+			continue
+		if order.docstatus == 0:
+			order.submit()
+		if order.docstatus != 1:
+			ctx.report.skipped.append(f"Delivery Note: 销售订单 {order.name} 未提交")
+			continue
+
+		delivery = make_delivery_note(
+			order.name,
+			kwargs={"for_reserved_stock": False, "skip_item_mapping": False},
+		)
+		if not delivery.items:
+			ctx.report.skipped.append(f"Delivery Note: 销售订单 {order.name} 没有待交付物料")
+			continue
+		delivery.set_posting_time = 1
+		delivery.posting_date = today()
+		delivery.posting_time = f"{8 + index:02d}:00:00"
+		delivery.set_warehouse = ctx.warehouse
+		delivery.po_no = marker
+		delivery.po_date = today()
+		delivery.title = f"{SEED_PREFIX}销售出库 {index:02d}"
+		delivery.instructions = "标准销售订单交付，用于库存销售出库业务演示。"
+		for row in delivery.items:
+			row.warehouse = ctx.warehouse
+		delivery.insert(ignore_permissions=True)
+		delivery.submit()
+		ctx.report.created.append(_record_label("Delivery Note", delivery.name))
 
 
 def _seed_sales(ctx: SeedContext) -> None:
@@ -454,6 +606,7 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 		},
 		submit=True,
 	)
+	_seed_delivery_notes(ctx)
 
 
 def _seed_projects(ctx: SeedContext) -> None:

@@ -22,7 +22,7 @@ except ModuleNotFoundError:
 	sys.modules["frappe"] = frappe
 	sys.modules["frappe.utils"] = frappe.utils
 
-from ione_core.business_seed import CORE_COVERAGE, SeedReport
+from ione_core.business_seed import CORE_COVERAGE, SeedReport, _delivery_quantity
 
 
 class TestBusinessSeed(TestCase):
@@ -58,3 +58,11 @@ class TestBusinessSeed(TestCase):
 			"智能执行",
 		):
 			self.assertIn(domain, CORE_COVERAGE)
+
+	def test_inventory_coverage_includes_delivery_notes(self):
+		self.assertIn("Delivery Note", CORE_COVERAGE["库存管理"])
+
+	def test_delivery_quantity_stays_conservative(self):
+		self.assertEqual(_delivery_quantity(13), 1)
+		self.assertEqual(_delivery_quantity(200), 10)
+		self.assertEqual(_delivery_quantity(2000), 10)
