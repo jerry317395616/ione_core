@@ -599,7 +599,7 @@ def _seed_manufacturing(ctx: SeedContext) -> None:
 	)
 
 
-def _seed_assets_and_quality(ctx: SeedContext) -> None:
+def _seed_assets(ctx: SeedContext) -> None:
 	fixed_account = _find_account(ctx.company, account_type="Fixed Asset")
 	accumulated = _find_account(ctx.company, account_type="Accumulated Depreciation")
 	depreciation = _find_account(ctx.company, account_type="Depreciation")
@@ -640,11 +640,15 @@ def _seed_assets_and_quality(ctx: SeedContext) -> None:
 			"purchase_date": today(),
 			"available_for_use_date": today(),
 			"gross_purchase_amount": 68000,
+			"net_purchase_amount": 68000,
 			"calculate_depreciation": 0,
 			"is_existing_asset": 1,
 			"opening_accumulated_depreciation": 0,
 		},
 	)
+
+
+def _seed_quality_support(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Quality Inspection",
@@ -841,6 +845,8 @@ def _seed_hr(ctx: SeedContext) -> None:
 			"employee": employee.name,
 			"company": ctx.company,
 			"posting_date": today(),
+			"currency": ctx.currency,
+			"exchange_rate": 1,
 			"remark": SEED_PREFIX,
 			"expenses": [
 				{
@@ -1505,7 +1511,8 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("采购与库存", _seed_buying_and_stock),
 	("项目管理", _seed_projects),
 	("生产制造", _seed_manufacturing),
-	("资产质量与支持", _seed_assets_and_quality),
+	("资产管理", _seed_assets),
+	("质量与支持", _seed_quality_support),
 	("人力资源", _seed_hr),
 	("CRM", _seed_crm),
 	("服务台", _seed_helpdesk),
