@@ -139,7 +139,9 @@ def start_run(
 
 	from flow.api import api as flow_api
 	from flow.lib.session import load_session, new_session
+	from ione_core.flow_stream import install_flow_stream_heartbeat
 
+	install_flow_stream_heartbeat()
 	stream = flow_api._is_truthy(stream)
 	files = flow_api._parse_attachments(attachments)
 	conversation = (
