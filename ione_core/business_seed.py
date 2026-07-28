@@ -668,7 +668,7 @@ def _seed_assets(ctx: SeedContext) -> None:
 	)
 
 
-def _seed_quality_support(ctx: SeedContext) -> None:
+def _seed_quality(ctx: SeedContext) -> None:
 	parameter = _ensure_doc(
 		ctx,
 		"Quality Inspection Parameter",
@@ -678,12 +678,26 @@ def _seed_quality_support(ctx: SeedContext) -> None:
 			"description": "检查外观完整性和包装状态。",
 		},
 	)
+	purchase_receipt = _first(
+		"Purchase Receipt Item",
+		{"item_code": ctx.stock_item, "docstatus": 1},
+		field="parent",
+	)
+	if not purchase_receipt:
+		frappe.throw("请先生成并提交 I-ONE 业务样例采购收货单，再生成质检数据。")
 	_ensure_doc(
 		ctx,
 		"Quality Inspection",
-		{"inspection_type": "Incoming", "item_code": ctx.stock_item, "remarks": SEED_PREFIX},
 		{
 			"inspection_type": "Incoming",
+			"reference_type": "Purchase Receipt",
+			"reference_name": purchase_receipt,
+			"item_code": ctx.stock_item,
+		},
+		{
+			"inspection_type": "Incoming",
+			"reference_type": "Purchase Receipt",
+			"reference_name": purchase_receipt,
 			"item_code": ctx.stock_item,
 			"sample_size": 5,
 			"report_date": today(),
@@ -699,6 +713,9 @@ def _seed_quality_support(ctx: SeedContext) -> None:
 			],
 		},
 	)
+
+
+def _seed_support(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Issue",
@@ -946,7 +963,7 @@ def _seed_hr_recruiting(ctx: SeedContext) -> None:
 def _seed_hr_payroll(ctx: SeedContext) -> None:
 	employee_name = frappe.db.exists(
 		"Employee",
-		{"employee_name": f"{SEED_PREFIX}-张敏", "company": ctx.company},
+		{"company_email": "demo.employee1@myyr.top", "company": ctx.company},
 	)
 	if not employee_name:
 		frappe.throw("请先生成 I-ONE 业务样例员工，再生成薪酬数据。")
@@ -1564,7 +1581,8 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("项目管理", _seed_projects),
 	("生产制造", _seed_manufacturing),
 	("资产管理", _seed_assets),
-	("质量与支持", _seed_quality_support),
+	("质量管理", _seed_quality),
+	("客户支持", _seed_support),
 	("人力资源基础", _seed_hr_people),
 	("招聘管理", _seed_hr_recruiting),
 	("薪酬管理", _seed_hr_payroll),
