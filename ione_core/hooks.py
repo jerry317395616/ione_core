@@ -72,3 +72,7 @@ override_whitelisted_methods = {
 scheduler_events = {
 	"hourly": ["ione_core.ai.expire_pending_approvals"],
 }
+
+website_route_rules = [
+	{"from_route": "/ione-mobile/", "to_route": "ione-mobile"},
+]

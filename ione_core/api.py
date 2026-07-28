@@ -2,7 +2,7 @@ from urllib.parse import quote
 
 import frappe
 from frappe import _
-from frappe.utils import flt, get_first_day, getdate, nowdate
+from frappe.utils import add_days, flt, get_first_day, getdate, nowdate
 
 
 def _require_login():
@@ -70,6 +70,40 @@ def get_app_registry():
 def _safe_count(doctype, filters=None):
 	if not frappe.db.exists("DocType", doctype) or not frappe.has_permission(doctype, "read"):
 		return None
+
+
+def _safe_sum(doctype, fieldname, filters=None):
+	if not frappe.db.exists("DocType", doctype) or not frappe.has_permission(doctype, "read"):
+		return None
+	try:
+		rows = frappe.get_list(
+			doctype,
+			filters=filters or {},
+			fields=[{"SUM": fieldname, "as": "value"}],
+			limit_page_length=1,
+		)
+		return flt(rows[0].value) if rows else 0
+	except Exception:
+		return None
+
+
+def _safe_rows(doctype, fields, filters=None, order_by="modified desc", limit=50):
+	if not frappe.db.exists("DocType", doctype) or not frappe.has_permission(doctype, "read"):
+		return []
+	try:
+		return [
+			dict(row)
+			for row in frappe.get_list(
+				doctype,
+				filters=filters or {},
+				fields=fields,
+				order_by=order_by,
+				limit_page_length=max(1, min(int(limit or 50), 200)),
+			)
+		]
+	except Exception:
+		frappe.log_error(title=f"I-ONE Mobile {doctype}", message=frappe.get_traceback())
+		return []
 	try:
 		rows = frappe.get_list(
 			doctype,
@@ -333,6 +367,7 @@ def get_bootstrap():
 			"roles": frappe.get_roles(user),
 		},
 		"site": frappe.local.site,
+		"csrf_token": frappe.sessions.get_csrf_token(),
 		"apps": get_app_registry(),
 		"features": {
 			"ai_employees": bool(frappe.db.exists("DocType", "I-ONE Agent")),
@@ -340,6 +375,86 @@ def get_bootstrap():
 			"approvals": bool(frappe.db.exists("DocType", "I-ONE Approval Request")),
 			"background_jobs": True,
 		},
+	}
+
+
+@frappe.whitelist()
+def get_mobile_settings():
+	_require_login()
+	if not frappe.has_permission("I-ONE Settings", "read"):
+		return {
+			"can_write": False,
+			"provider": "",
+			"model_name": "",
+			"llm_base_url": "",
+			"api_key_configured": False,
+		}
+	settings = frappe.get_single("I-ONE Settings")
+	return {
+		"can_write": frappe.has_permission("I-ONE Settings", "write"),
+		"provider": settings.provider,
+		"model_name": settings.model_name,
+		"llm_base_url": settings.llm_base_url,
+		"api_key_configured": bool(settings.get_password("api_key", raise_exception=False)),
+		"require_confirmation_for_writes": bool(settings.require_confirmation_for_writes),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def update_mobile_settings(model_name=None, llm_base_url=None, api_key=None):
+	_require_login()
+	if not frappe.has_permission("I-ONE Settings", "write"):
+		frappe.throw(_("您没有修改模型设置的权限。"), frappe.PermissionError)
+	settings = frappe.get_single("I-ONE Settings")
+	if model_name is not None:
+		settings.model_name = str(model_name or "").strip()[:140] or "qwen"
+	if llm_base_url is not None:
+		base_url = str(llm_base_url or "").strip().rstrip("/")
+		if not base_url.startswith(("http://", "https://")):
+			frappe.throw(_("模型服务地址必须以 http:// 或 https:// 开头。"))
+		settings.llm_base_url = base_url[:500]
+	if api_key:
+		settings.api_key = str(api_key)
+	settings.save()
+	return get_mobile_settings()
+
+
+@frappe.whitelist(methods=["POST"])
+def test_mobile_model():
+	_require_login()
+	if not frappe.has_permission("I-ONE Settings", "read"):
+		frappe.throw(_("您没有查看模型设置的权限。"), frappe.PermissionError)
+	from ione_core.ai import call_openai_compatible
+
+	reply, _raw = call_openai_compatible(
+		"只回复“连接正常”。",
+		system_prompt="你正在执行 I-ONE 模型服务连接测试。",
+		temperature=0,
+	)
+	return {"available": True, "reply": str(reply or "").strip()[:200]}
+
+
+@frappe.whitelist()
+def get_ai_task(name):
+	_require_login()
+	task = frappe.get_doc("I-ONE AI Task", name)
+	task.check_permission("read")
+	return {
+		"name": task.name,
+		"title": task.title,
+		"status": task.status,
+		"priority": task.priority,
+		"progress": task.progress,
+		"due_date": task.due_date,
+		"modified": task.modified,
+		"assigned_agent": task.assigned_agent,
+		"prompt": task.prompt,
+		"result_summary": task.result_summary,
+		"error_message": task.error_message,
+		"approval_required": task.approval_required,
+		"risk_level": task.risk_level,
+		"started_at": task.started_at,
+		"completed_at": task.completed_at,
 	}
 
 
@@ -440,3 +555,472 @@ def get_ai_employee(name):
 		},
 		"tasks": [dict(task) for task in tasks],
 	}
+
+
+@frappe.whitelist()
+def get_mobile_task_center(limit=30):
+	"""Return the user's actionable work, growth plans, and earned achievements."""
+	_require_login()
+	limit = max(1, min(int(limit or 30), 100))
+	plans = _safe_rows(
+		"I-ONE Growth Plan",
+		["name", "title", "category", "status", "progress", "start_date", "end_date", "objective", "modified"],
+		filters={"owner_user": frappe.session.user},
+		limit=limit,
+	)
+	for plan in plans:
+		plan["route"] = f"/app/i-one-growth-plan/{quote(plan['name'])}"
+
+	achievements = _safe_rows(
+		"I-ONE Achievement",
+		[
+			"name",
+			"achievement_code",
+			"title",
+			"achievement_type",
+			"points",
+			"gold",
+			"awarded_at",
+			"description",
+		],
+		filters={"user": frappe.session.user},
+		order_by="awarded_at desc",
+		limit=limit,
+	)
+	return {
+		"todos": get_unified_todos(limit),
+		"plans": plans,
+		"achievements": achievements,
+	}
+
+
+def _account_balances(company, to_date, limit=20):
+	if not company or not _can_view_finance():
+		return []
+	use_permissions = frappe.has_permission("GL Entry", "read")
+	getter = frappe.get_list if use_permissions else frappe.get_all
+	try:
+		rows = getter(
+			"GL Entry",
+			filters={
+				"company": company,
+				"posting_date": ["<=", str(to_date)],
+				"is_cancelled": 0,
+			},
+			fields=[
+				"account",
+				{"SUM": "debit", "as": "debit"},
+				{"SUM": "credit", "as": "credit"},
+			],
+			group_by="account",
+			order_by="modified desc",
+			limit_page_length=200,
+		)
+	except Exception:
+		return []
+
+	accounts = {
+		row.name: row
+		for row in frappe.get_all(
+			"Account",
+			filters={"company": company, "is_group": 0},
+			fields=["name", "account_number", "account_name", "root_type"],
+		)
+	}
+	result = []
+	for row in rows:
+		account = accounts.get(row.account)
+		if not account:
+			continue
+		balance = flt(row.credit) - flt(row.debit) if account.root_type in ("Income", "Liability", "Equity") else flt(row.debit) - flt(row.credit)
+		if not balance:
+			continue
+		result.append(
+			{
+				"name": account.name,
+				"code": account.account_number or "",
+				"label": account.account_name or account.name,
+				"root_type": account.root_type,
+				"balance": balance,
+				"route": f"/app/account/{quote(account.name)}",
+			}
+		)
+	result.sort(key=lambda item: abs(item["balance"]), reverse=True)
+	return result[: max(1, min(int(limit or 20), 50))]
+
+
+@frappe.whitelist()
+def get_mobile_finance():
+	"""Return permission-aware ERPNext finance data for the mobile finance page."""
+	_require_login()
+	today = getdate(nowdate())
+	month_start = get_first_day(today)
+	company = _default_company()
+	currency = frappe.db.get_value("Company", company, "default_currency") if company else None
+	currency = currency or frappe.db.get_single_value("Global Defaults", "default_currency") or "CNY"
+
+	available = bool(company and _can_view_finance())
+	balance = {"assets": None, "liabilities": None, "equity": None}
+	if available:
+		try:
+			balance = {
+				"assets": _sum_gl("Asset", company, "1900-01-01", today, frappe.has_permission("GL Entry", "read")),
+				"liabilities": -_sum_gl("Liability", company, "1900-01-01", today, frappe.has_permission("GL Entry", "read")),
+				"equity": -_sum_gl("Equity", company, "1900-01-01", today, frappe.has_permission("GL Entry", "read")),
+			}
+		except Exception:
+			available = False
+			frappe.log_error(title="I-ONE Mobile Finance Balance", message=frappe.get_traceback())
+
+	month = _finance_summary(month_start, today, company)
+	receivable = _safe_sum(
+		"Sales Invoice",
+		"outstanding_amount",
+		{"docstatus": 1, "company": company},
+	)
+	payable = _safe_sum(
+		"Purchase Invoice",
+		"outstanding_amount",
+		{"docstatus": 1, "company": company},
+	)
+	receivable_count = _safe_count(
+		"Sales Invoice",
+		{"docstatus": 1, "company": company, "outstanding_amount": [">", 0]},
+	)
+	payable_count = _safe_count(
+		"Purchase Invoice",
+		{"docstatus": 1, "company": company, "outstanding_amount": [">", 0]},
+	)
+
+	weekly = []
+	for offset in range(6, -1, -1):
+		day = add_days(today, -offset)
+		summary = _finance_summary(day, day, company)
+		weekly.append(
+			{
+				"date": str(day),
+				"income": summary["income"] if summary["available"] else None,
+			}
+		)
+
+	return {
+		"available": available,
+		"company": company,
+		"currency": currency,
+		"as_of_date": str(today),
+		"balance": balance,
+		"month": month,
+		"receivable": {"amount": receivable, "count": receivable_count},
+		"payable": {"amount": payable, "count": payable_count},
+		"weekly_income": weekly,
+		"accounts": _account_balances(company, today),
+		"routes": {
+			"accounting": "/app/accounting",
+			"receivable": "/app/query-report/Accounts%20Receivable",
+			"payable": "/app/query-report/Accounts%20Payable",
+		},
+	}
+
+
+@frappe.whitelist()
+def get_mobile_activity(limit=40):
+	"""Return live AI work and run logs instead of a simulated timeline."""
+	_require_login()
+	limit = max(1, min(int(limit or 40), 100))
+	tasks = _safe_rows(
+		"I-ONE AI Task",
+		[
+			"name",
+			"title",
+			"status",
+			"priority",
+			"progress",
+			"assigned_agent",
+			"started_at",
+			"completed_at",
+			"modified",
+			"error_message",
+		],
+		order_by="modified desc",
+		limit=limit,
+	)
+	logs = _safe_rows(
+		"I-ONE AI Run Log",
+		[
+			"name",
+			"task",
+			"agent",
+			"event_type",
+			"level",
+			"duration_ms",
+			"message",
+			"model_name",
+			"creation",
+		],
+		order_by="creation desc",
+		limit=limit,
+	)
+	for task in tasks:
+		task["route"] = f"/app/i-one-ai-task/{quote(task['name'])}"
+	return {
+		"tasks": tasks,
+		"logs": logs,
+		"stats": {
+			"total": len(tasks),
+			"completed": sum(1 for task in tasks if task.get("status") == "已完成"),
+			"running": sum(1 for task in tasks if task.get("status") in ("已排队", "执行中", "等待确认")),
+			"failed": sum(1 for task in tasks if task.get("status") == "执行失败"),
+		},
+	}
+
+
+@frappe.whitelist()
+def get_mobile_profile():
+	"""Return the signed-in user's company, application, and achievement profile."""
+	_require_login()
+	bootstrap = get_bootstrap()
+	company_name = _default_company()
+	company = {}
+	if company_name and frappe.db.exists("DocType", "Company") and frappe.has_permission("Company", "read"):
+		meta = frappe.get_meta("Company")
+		candidate_fields = [
+			"name",
+			"company_name",
+			"abbr",
+			"default_currency",
+			"country",
+			"tax_id",
+			"date_of_establishment",
+			"domain",
+		]
+		fields = [field for field in candidate_fields if field == "name" or meta.has_field(field)]
+		company = frappe.db.get_value("Company", company_name, fields, as_dict=True) or {}
+
+	achievements = _safe_rows(
+		"I-ONE Achievement",
+		["name", "title", "achievement_type", "points", "gold", "awarded_at", "description"],
+		filters={"user": frappe.session.user},
+		order_by="awarded_at desc",
+		limit=20,
+	)
+	return {
+		"user": bootstrap["user"],
+		"company": dict(company),
+		"employee_count": _safe_count("Employee", {"status": "Active"}),
+		"department_count": _safe_count("Department", {"is_group": 0}),
+		"apps": bootstrap["apps"],
+		"achievements": achievements,
+		"totals": {
+			"points": sum(int(item.get("points") or 0) for item in achievements),
+			"gold": sum(int(item.get("gold") or 0) for item in achievements),
+		},
+	}
+
+
+@frappe.whitelist()
+def get_mobile_notifications(limit=50):
+	"""Return real user ToDos and approval requests as proactive notifications."""
+	_require_login()
+	limit = max(1, min(int(limit or 50), 100))
+	items = []
+	for row in _safe_rows(
+		"ToDo",
+		["name", "description", "status", "priority", "date", "reference_type", "reference_name", "modified"],
+		filters={"allocated_to": frappe.session.user, "status": "Open"},
+		order_by="date asc, modified desc",
+		limit=limit,
+	):
+		items.append(
+			{
+				"id": f"todo:{row['name']}",
+				"title": row.get("description") or row.get("reference_name") or "待办事项",
+				"message": f"{row.get('reference_type') or 'Frappe'} 待办",
+				"priority": row.get("priority") or "Medium",
+				"status": "待处理",
+				"due_date": row.get("date"),
+				"source": "Frappe ToDo",
+				"route": f"/app/todo/{quote(row['name'])}",
+			}
+		)
+
+	for row in _safe_rows(
+		"I-ONE Approval Request",
+		["name", "request_summary", "risk_level", "status", "task", "expires_at", "modified"],
+		filters={"approver": frappe.session.user, "status": "待审批"},
+		order_by="modified desc",
+		limit=limit,
+	):
+		items.append(
+			{
+				"id": f"approval:{row['name']}",
+				"title": row.get("request_summary") or "AI 执行审批",
+				"message": f"关联任务：{row.get('task') or '-'}",
+				"priority": row.get("risk_level") or "中",
+				"status": row.get("status"),
+				"due_date": row.get("expires_at"),
+				"source": "I-ONE 审批",
+				"route": f"/app/i-one-approval-request/{quote(row['name'])}",
+			}
+		)
+	return {"notifications": items[:limit]}
+
+
+@frappe.whitelist()
+def get_mobile_channels(limit=50):
+	_require_login()
+	channels = _safe_rows(
+		"I-ONE Channel",
+		[
+			"name",
+			"channel_name",
+			"channel_type",
+			"status",
+			"account_name",
+			"last_published_at",
+			"modified",
+		],
+		limit=limit,
+	)
+	jobs = _safe_rows(
+		"I-ONE Publish Job",
+		["name", "title", "channel", "status", "scheduled_at", "published_at", "result_url", "modified"],
+		limit=limit,
+	)
+	return {"channels": channels, "jobs": jobs}
+
+
+@frappe.whitelist(methods=["POST"])
+def create_mobile_channel(channel_name, channel_type, account_name=None):
+	_require_login()
+	if not frappe.has_permission("I-ONE Channel", "create"):
+		frappe.throw(_("您没有创建渠道的权限。"), frappe.PermissionError)
+	doc = frappe.get_doc(
+		{
+			"doctype": "I-ONE Channel",
+			"channel_name": str(channel_name or "").strip(),
+			"channel_type": str(channel_type or "").strip(),
+			"account_name": str(account_name or "").strip(),
+			"status": "启用",
+		}
+	)
+	doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+def create_mobile_publish_jobs(content, channels):
+	_require_login()
+	if not frappe.has_permission("I-ONE Publish Job", "create"):
+		frappe.throw(_("您没有创建发布任务的权限。"), frappe.PermissionError)
+	channel_names = frappe.parse_json(channels) if isinstance(channels, str) else channels
+	if not isinstance(channel_names, list) or not channel_names:
+		frappe.throw(_("请至少选择一个发布渠道。"))
+	result = []
+	for channel in channel_names[:20]:
+		doc = frappe.get_doc(
+			{
+				"doctype": "I-ONE Publish Job",
+				"title": str(content or "").strip()[:80] or _("移动端发布任务"),
+				"channel": channel,
+				"status": "待发布",
+				"content": str(content or "").strip(),
+			}
+		)
+		doc.insert()
+		result.append(doc.name)
+	return {"jobs": result}
+
+
+def _evaluation_dimensions(value):
+	try:
+		data = frappe.parse_json(value) if value else {}
+	except Exception:
+		data = {}
+	if not isinstance(data, dict):
+		data = {}
+	return [
+		{"dimension": key, "score": flt(data.get(key))}
+		for key in ("accuracy", "completeness", "speed", "satisfaction")
+	]
+
+
+@frappe.whitelist()
+def get_mobile_evaluations(limit=100):
+	_require_login()
+	rows = _safe_rows(
+		"I-ONE Evaluation",
+		["name", "task", "agent", "evaluator", "score", "grade", "evaluated_at", "dimensions_json", "comments"],
+		order_by="evaluated_at desc",
+		limit=limit,
+	)
+	task_names = list({row.get("task") for row in rows if row.get("task")})
+	agent_ids = list({row.get("agent") for row in rows if row.get("agent")})
+	task_titles = {
+		row["name"]: row.get("title")
+		for row in _safe_rows(
+			"I-ONE AI Task",
+			fields=["name", "title"],
+			filters={"name": ["in", task_names]},
+			limit=len(task_names),
+		)
+	} if task_names else {}
+	agent_names = {
+		row["name"]: row.get("agent_name")
+		for row in _safe_rows(
+			"I-ONE Agent",
+			fields=["name", "agent_name"],
+			filters={"name": ["in", agent_ids]},
+			limit=len(agent_ids),
+		)
+	} if agent_ids else {}
+	for row in rows:
+		row["task_title"] = task_titles.get(row.get("task")) or row.get("task")
+		row["agent_name"] = agent_names.get(row.get("agent")) or row.get("agent") or "未分配"
+		row["dimensions"] = _evaluation_dimensions(row.pop("dimensions_json", None))
+	return {"evaluations": rows}
+
+
+@frappe.whitelist()
+def get_mobile_experiences(limit=50, category=None):
+	_require_login()
+	filters = {"status": "已发布"}
+	if category:
+		filters["category"] = category
+	rows = _safe_rows(
+		"I-ONE Experience",
+		["name", "title", "category", "author_user", "status", "useful_count", "content", "tags", "modified"],
+		filters=filters,
+		limit=limit,
+	)
+	for row in rows:
+		row["route"] = f"/app/i-one-experience/{quote(row['name'])}"
+	return {"experiences": rows}
+
+
+@frappe.whitelist(methods=["POST"])
+def create_mobile_experience(title, content, category=None, tags=None):
+	_require_login()
+	if not frappe.has_permission("I-ONE Experience", "create"):
+		frappe.throw(_("您没有发布经验的权限。"), frappe.PermissionError)
+	doc = frappe.get_doc(
+		{
+			"doctype": "I-ONE Experience",
+			"title": str(title or "").strip(),
+			"content": str(content or "").strip(),
+			"category": str(category or "").strip(),
+			"tags": str(tags or "").strip(),
+			"author_user": frappe.session.user,
+			"status": "已发布",
+		}
+	)
+	doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+def mark_experience_useful(name):
+	_require_login()
+	doc = frappe.get_doc("I-ONE Experience", name)
+	doc.check_permission("read")
+	frappe.db.set_value("I-ONE Experience", doc.name, "useful_count", int(doc.useful_count or 0) + 1)
+	return {"useful_count": int(doc.useful_count or 0) + 1}

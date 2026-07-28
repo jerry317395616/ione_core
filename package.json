@@ -1,0 +1,34 @@
+{
+  "name": "ione_core",
+  "private": true,
+  "version": "17.0.0",
+  "type": "module",
+  "description": "I-ONE mobile workbench bundled as a Frappe application",
+  "scripts": {
+    "dev": "vite --config frontend/vite.config.ts",
+    "build": "vite build --config frontend/vite.config.ts",
+    "lint": "eslint frontend/src --config frontend/eslint.config.js",
+    "typecheck": "tsc -p frontend/tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "antd-mobile": "^5.42.3",
+    "antd-mobile-icons": "^0.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.3.3",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.11.0",
+    "vite": "^5.4.10"
+  }
+}

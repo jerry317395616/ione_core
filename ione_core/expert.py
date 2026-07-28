@@ -3,8 +3,8 @@ import re
 import frappe
 from frappe.utils import cint, now_datetime
 
+from ione_core.ai import call_openai_compatible
 from ione_core.permissions import _is_operator
-
 
 MAX_QUESTION_CHARS = 12000
 MAX_REPLY_CHARS = 100000
@@ -131,6 +131,76 @@ def create_expert_request(question, conversation_id=None):
 		"userMessage": _serialize_message(user_message),
 		"assistantMessage": _serialize_message(assistant_message),
 	}
+
+
+@frappe.whitelist()
+def submit_expert_request(question, conversation_id=None):
+	"""Create and execute an expert request entirely inside the Frappe app."""
+	result = create_expert_request(question, conversation_id)
+	assistant = result["assistantMessage"]
+	job = frappe.enqueue(
+		"ione_core.expert.run_expert_request",
+		queue="long",
+		timeout=900,
+		job_name=f"ione-expert-{assistant['id']}",
+		message_id=assistant["id"],
+		question=question,
+	)
+	result["conversationId"] = result["conversation"]["id"]
+	result["jobId"] = assistant["id"]
+	result["queueJobId"] = getattr(job, "id", None)
+	result["status"] = assistant["status"]
+	return result
+
+
+def run_expert_request(message_id, question):
+	message = frappe.get_doc(MESSAGE_DOCTYPE, message_id)
+	conversation = frappe.get_doc(CONVERSATION_DOCTYPE, message.conversation)
+	if message.status not in {"排队中", "处理中"}:
+		return
+
+	message.db_set("status", "处理中", update_modified=True)
+	try:
+		reply, _raw = call_openai_compatible(
+			question,
+			system_prompt=(
+				"你是 I-ONE 企业专家。请结合中国企业经营环境，给出准确、审慎、"
+				"可以落地执行的中文建议。涉及法律、医疗或财税风险时必须提示用户进行专业复核。"
+			),
+			temperature=0.3,
+		)
+		completed_at = now_datetime()
+		message.db_set(
+			{
+				"content": _clean_text(reply, MAX_REPLY_CHARS, "专家回复"),
+				"status": "已完成",
+				"source": "I-ONE 模型服务",
+				"completed_at": completed_at,
+				"error_message": None,
+			},
+			update_modified=True,
+		)
+		conversation.db_set(
+			{
+				"provider": "I-ONE 模型服务",
+				"status": "活动",
+				"last_message_at": completed_at,
+				"last_error": None,
+			},
+			update_modified=True,
+		)
+	except Exception as exc:
+		error = str(exc)[:4000] or "专家模型调用失败"
+		completed_at = now_datetime()
+		message.db_set(
+			{"status": "失败", "error_message": error, "completed_at": completed_at},
+			update_modified=True,
+		)
+		conversation.db_set(
+			{"status": "服务异常", "last_error": error, "last_message_at": completed_at},
+			update_modified=True,
+		)
+		frappe.log_error(frappe.get_traceback(), f"I-ONE expert request {message_id}")
 
 
 @frappe.whitelist()
@@ -276,6 +346,57 @@ def get_expert_conversation(conversation_id):
 def get_expert_service_access():
 	_require_login()
 	return {
-		"provider": "DeepSeek Web",
+		"provider": "I-ONE 模型服务",
 		"canManage": bool(_is_operator(frappe.session.user)),
+		"loggedIn": True,
+		"requiresLogin": False,
+		"requiresMobileVerification": False,
+		"blocked": False,
+		"busy": bool(
+			frappe.db.exists(MESSAGE_DOCTYPE, {"status": ["in", ["排队中", "处理中"]]})
+		),
+		"queueDepth": frappe.db.count(
+			MESSAGE_DOCTYPE, {"status": ["in", ["排队中", "处理中"]]}
+		),
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+def save_expert_evidence(content, conversation_id=None):
+	_require_login()
+	content = _clean_text(content, MAX_REPLY_CHARS, "专家内容")
+	if not frappe.has_permission("I-ONE Evidence", "create"):
+		frappe.throw("您没有创建经营档案的权限", frappe.PermissionError)
+	doc = frappe.get_doc(
+		{
+			"doctype": "I-ONE Evidence",
+			"title": content[:120],
+			"source_type": "AI 推理",
+			"confidence": 80,
+			"source_doctype": CONVERSATION_DOCTYPE if conversation_id else None,
+			"source_name": conversation_id,
+			"summary": content[:500],
+			"excerpt": content,
+		}
+	).insert()
+	return {"name": doc.name, "route": f"/app/i-one-evidence/{doc.name}"}
+
+
+@frappe.whitelist(methods=["POST"])
+def add_expert_growth_plan(content, conversation_id=None):
+	_require_login()
+	content = _clean_text(content, MAX_REPLY_CHARS, "专家内容")
+	if not frappe.has_permission("I-ONE Growth Plan", "create"):
+		frappe.throw("您没有创建成长计划的权限", frappe.PermissionError)
+	doc = frappe.get_doc(
+		{
+			"doctype": "I-ONE Growth Plan",
+			"title": content[:120],
+			"category": "公司战略",
+			"owner_user": frappe.session.user,
+			"status": "草稿",
+			"objective": content,
+			"notes": f"来源专家对话：{conversation_id}" if conversation_id else "",
+		}
+	).insert()
+	return {"name": doc.name, "route": f"/app/i-one-growth-plan/{doc.name}"}
