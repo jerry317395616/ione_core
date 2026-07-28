@@ -16,7 +16,48 @@ CORE_COVERAGE = {
 	"通用协作": ("ToDo", "Event", "Note"),
 	"销售管理": ("Lead", "Opportunity", "Quotation", "Sales Order", "Sales Invoice", "Payment Entry"),
 	"采购管理": ("Material Request", "Purchase Order", "Purchase Receipt", "Purchase Invoice"),
-	"库存管理": ("Stock Entry", "Delivery Note"),
+	"库存管理": (
+		"Item",
+		"Item Group",
+		"Product Bundle",
+		"Price List",
+		"Item Price",
+		"Shipping Rule",
+		"Pricing Rule",
+		"Item Standard Cost",
+		"Item Alternative",
+		"Item Manufacturer",
+		"Manufacturer",
+		"Customs Tariff Number",
+		"Material Request",
+		"Stock Entry",
+		"Delivery Note",
+		"Purchase Receipt",
+		"Pick List",
+		"Delivery Trip",
+		"Stock Reconciliation",
+		"Landed Cost Voucher",
+		"Packing Slip",
+		"Quality Inspection",
+		"Quality Inspection Template",
+		"Quality Inspection Parameter",
+		"Serial No",
+		"Batch",
+		"Installation Note",
+		"Serial and Batch Bundle",
+		"Stock Ledger Entry",
+		"Bin",
+		"Stock Settings",
+		"Warehouse",
+		"UOM",
+		"Item Variant Settings",
+		"Brand",
+		"Item Attribute",
+		"UOM Conversion Factor",
+		"Vehicle",
+		"Driver",
+		"Address",
+	),
 	"生产制造": ("BOM", "Work Order"),
 	"项目管理": ("Project", "Task", "Timesheet"),
 	"资产管理": ("Asset",),
@@ -607,6 +648,9 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 		submit=True,
 	)
 	_seed_delivery_notes(ctx)
+	from ione_core.inventory_seed import seed_inventory_workspace
+
+	seed_inventory_workspace(ctx)
 
 
 def _seed_projects(ctx: SeedContext) -> None:
@@ -1915,7 +1959,7 @@ def get_business_data_coverage() -> dict[str, Any]:
 				rows[doctype] = None
 				continue
 			try:
-				rows[doctype] = frappe.db.count(doctype)
+				rows[doctype] = 1 if frappe.get_meta(doctype).issingle else frappe.db.count(doctype)
 			except Exception:
 				rows[doctype] = None
 		coverage[domain] = {

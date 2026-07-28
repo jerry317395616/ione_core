@@ -10,6 +10,7 @@ except ModuleNotFoundError:
 	frappe.db = MagicMock()
 	frappe.db.exists.return_value = False
 	frappe.defaults = MagicMock()
+	frappe.get_meta = MagicMock()
 	frappe.session = types.SimpleNamespace(user="Administrator")
 	frappe.utils = types.ModuleType("frappe.utils")
 	frappe.utils.add_days = MagicMock()
@@ -22,7 +23,12 @@ except ModuleNotFoundError:
 	sys.modules["frappe"] = frappe
 	sys.modules["frappe.utils"] = frappe.utils
 
-from ione_core.business_seed import CORE_COVERAGE, SeedReport, _delivery_quantity
+from ione_core.business_seed import (
+	CORE_COVERAGE,
+	SeedReport,
+	_delivery_quantity,
+	get_business_data_coverage,
+)
 
 
 class TestBusinessSeed(TestCase):
@@ -62,7 +68,66 @@ class TestBusinessSeed(TestCase):
 	def test_inventory_coverage_includes_delivery_notes(self):
 		self.assertIn("Delivery Note", CORE_COVERAGE["库存管理"])
 
+	def test_inventory_coverage_includes_every_workspace_business_surface(self):
+		for doctype in (
+			"Item",
+			"Item Group",
+			"Product Bundle",
+			"Price List",
+			"Item Price",
+			"Shipping Rule",
+			"Pricing Rule",
+			"Item Standard Cost",
+			"Item Alternative",
+			"Item Manufacturer",
+			"Manufacturer",
+			"Customs Tariff Number",
+			"Material Request",
+			"Stock Entry",
+			"Delivery Note",
+			"Purchase Receipt",
+			"Pick List",
+			"Delivery Trip",
+			"Stock Reconciliation",
+			"Landed Cost Voucher",
+			"Packing Slip",
+			"Quality Inspection",
+			"Quality Inspection Template",
+			"Quality Inspection Parameter",
+			"Serial No",
+			"Batch",
+			"Installation Note",
+			"Serial and Batch Bundle",
+			"Stock Ledger Entry",
+			"Bin",
+			"Stock Settings",
+			"Warehouse",
+			"UOM",
+			"Item Variant Settings",
+			"Brand",
+			"Item Attribute",
+			"UOM Conversion Factor",
+			"Vehicle",
+			"Driver",
+			"Address",
+		):
+			self.assertIn(doctype, CORE_COVERAGE["库存管理"])
+
 	def test_delivery_quantity_stays_conservative(self):
 		self.assertEqual(_delivery_quantity(13), 1)
 		self.assertEqual(_delivery_quantity(200), 10)
 		self.assertEqual(_delivery_quantity(2000), 10)
+
+	def test_coverage_counts_single_doctypes_as_configured(self):
+		def meta_for(doctype):
+			return types.SimpleNamespace(issingle=doctype in {"Stock Settings", "Item Variant Settings"})
+
+		with (
+			patch("ione_core.business_seed._doctype_exists", return_value=True),
+			patch("ione_core.business_seed.frappe.get_meta", side_effect=meta_for),
+			patch("ione_core.business_seed.frappe.db.count", return_value=2),
+		):
+			coverage = get_business_data_coverage()
+
+		self.assertEqual(coverage["库存管理"]["records"]["Stock Settings"], 1)
+		self.assertEqual(coverage["库存管理"]["records"]["Item Variant Settings"], 1)
