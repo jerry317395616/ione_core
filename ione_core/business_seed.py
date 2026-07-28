@@ -252,7 +252,12 @@ def _seed_sales(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Quotation",
-		{"party_name": ctx.customer, "order_type": "Sales", "remarks": SEED_PREFIX},
+		{
+			"party_name": ctx.customer,
+			"order_type": "Sales",
+			"company": ctx.company,
+			"transaction_date": today(),
+		},
 		{
 			"naming_series": "SAL-QTN-.YYYY.-",
 			"quotation_to": "Customer",
@@ -366,7 +371,12 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 	order = _ensure_doc(
 		ctx,
 		"Purchase Order",
-		{"supplier": ctx.supplier, "remarks": SEED_PREFIX},
+		{
+			"supplier": ctx.supplier,
+			"company": ctx.company,
+			"transaction_date": today(),
+			"schedule_date": add_days(today(), 7),
+		},
 		{
 			"naming_series": "PUR-ORD-.YYYY.-",
 			"company": ctx.company,
@@ -628,6 +638,15 @@ def _seed_assets(ctx: SeedContext) -> None:
 		fixed_asset=True,
 		asset_category=category.name,
 	)
+	location = _ensure_doc(
+		ctx,
+		"Location",
+		{"location_name": f"{SEED_PREFIX}办公室"},
+		{
+			"location_name": f"{SEED_PREFIX}办公室",
+			"is_group": 0,
+		},
+	)
 	_ensure_doc(
 		ctx,
 		"Asset",
@@ -641,6 +660,7 @@ def _seed_assets(ctx: SeedContext) -> None:
 			"available_for_use_date": today(),
 			"gross_purchase_amount": 68000,
 			"net_purchase_amount": 68000,
+			"location": location.name,
 			"calculate_depreciation": 0,
 			"is_existing_asset": 1,
 			"opening_accumulated_depreciation": 0,
@@ -649,6 +669,15 @@ def _seed_assets(ctx: SeedContext) -> None:
 
 
 def _seed_quality_support(ctx: SeedContext) -> None:
+	parameter = _ensure_doc(
+		ctx,
+		"Quality Inspection Parameter",
+		{"parameter": f"{SEED_PREFIX}外观与包装"},
+		{
+			"parameter": f"{SEED_PREFIX}外观与包装",
+			"description": "检查外观完整性和包装状态。",
+		},
+	)
 	_ensure_doc(
 		ctx,
 		"Quality Inspection",
@@ -663,7 +692,7 @@ def _seed_quality_support(ctx: SeedContext) -> None:
 			"remarks": SEED_PREFIX,
 			"readings": [
 				{
-					"specification": "外观与包装",
+					"specification": parameter.name,
 					"value": "符合要求",
 					"status": "Accepted",
 				}
@@ -715,7 +744,7 @@ def _ensure_expense_claim_account(ctx: SeedContext, expense_type: str) -> None:
 	doc.save(ignore_permissions=True)
 
 
-def _seed_hr(ctx: SeedContext) -> None:
+def _seed_hr_people(ctx: SeedContext) -> None:
 	department = _first("Department", {"company": ctx.company, "is_group": 0})
 	designation = _first("Designation")
 	gender = "Female" if frappe.db.exists("Gender", "Female") else _first("Gender")
@@ -859,6 +888,10 @@ def _seed_hr(ctx: SeedContext) -> None:
 			],
 		},
 	)
+
+
+def _seed_hr_recruiting(ctx: SeedContext) -> None:
+	designation = _first("Designation")
 	opening = _ensure_doc(
 		ctx,
 		"Job Opening",
@@ -873,6 +906,15 @@ def _seed_hr(ctx: SeedContext) -> None:
 			"description": "负责 I-ONE AI 产品规划、需求分析与交付。",
 		},
 	)
+	applicant_source = _ensure_doc(
+		ctx,
+		"Job Applicant Source",
+		{"source_name": f"{SEED_PREFIX}网站"},
+		{
+			"source_name": f"{SEED_PREFIX}网站",
+			"details": "I-ONE 官网与人才推荐渠道。",
+		},
+	)
 	applicant = _ensure_doc(
 		ctx,
 		"Job Applicant",
@@ -883,7 +925,7 @@ def _seed_hr(ctx: SeedContext) -> None:
 			"phone_number": "13800000008",
 			"job_title": opening.name,
 			"status": "Open",
-			"source": "Website",
+			"source": applicant_source.name,
 		},
 	)
 	_ensure_doc(
@@ -899,6 +941,16 @@ def _seed_hr(ctx: SeedContext) -> None:
 			"status": "Awaiting Response",
 		},
 	)
+
+
+def _seed_hr_payroll(ctx: SeedContext) -> None:
+	employee_name = frappe.db.exists(
+		"Employee",
+		{"employee_name": f"{SEED_PREFIX}-张敏", "company": ctx.company},
+	)
+	if not employee_name:
+		frappe.throw("请先生成 I-ONE 业务样例员工，再生成薪酬数据。")
+	employee = frappe.get_doc("Employee", employee_name)
 	basic = _ensure_doc(
 		ctx,
 		"Salary Component",
@@ -1513,7 +1565,9 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("生产制造", _seed_manufacturing),
 	("资产管理", _seed_assets),
 	("质量与支持", _seed_quality_support),
-	("人力资源", _seed_hr),
+	("人力资源基础", _seed_hr_people),
+	("招聘管理", _seed_hr_recruiting),
+	("薪酬管理", _seed_hr_payroll),
 	("CRM", _seed_crm),
 	("服务台", _seed_helpdesk),
 	("学习", _seed_learning),
