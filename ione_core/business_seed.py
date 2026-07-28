@@ -708,10 +708,12 @@ def _seed_quality(ctx: SeedContext) -> None:
 				{
 					"specification": parameter.name,
 					"value": "符合要求",
+					"manual_inspection": 1,
 					"status": "Accepted",
 				}
 			],
 		},
+		submit=True,
 	)
 
 
