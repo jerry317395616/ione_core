@@ -53,6 +53,7 @@ class TestBusinessSeed(TestCase):
 			"Gameplan",
 			"内容协作",
 			"数据分析",
+			"Drive",
 			"智能执行",
 		):
 			self.assertIn(domain, CORE_COVERAGE)

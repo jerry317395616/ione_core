@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import frappe
@@ -41,6 +42,7 @@ CORE_COVERAGE = {
 	"Gameplan": ("GP Team", "GP Project", "GP Task", "GP Discussion", "GP Page"),
 	"内容协作": ("Writer Document", "Wiki Space", "Wiki Document"),
 	"数据分析": ("Insights Data Source", "Insights Workbook", "Insights Dashboard"),
+	"Drive": ("Drive Team",),
 	"网站建设": ("Builder Page",),
 	"智能执行": ("Flow Agent", "Flow Session", "I-ONE Agent", "I-ONE AI Task"),
 	"I-ONE 经营": ("I-ONE Growth Plan", "I-ONE Experience", "I-ONE Achievement"),
@@ -1538,6 +1540,99 @@ def _seed_insights(ctx: SeedContext) -> None:
 	)
 
 
+def _seed_drive(ctx: SeedContext) -> None:
+	if not _doctype_exists("Drive Team"):
+		ctx.report.skipped.append("Drive Team: DocType not installed")
+		return
+
+	from drive.utils import create_drive_file, get_home_folder, update_file_size
+	from drive.utils.files import storage_key
+
+	settings = frappe.get_single("Drive Disk Settings")
+	if not settings.root_folder:
+		settings.root_folder = "drive"
+		settings.save(ignore_permissions=True)
+
+	team_title = "I-ONE 业务资料"
+	team_name = frappe.db.get_value("Drive Team", {"title": team_title}, "name")
+	if team_name:
+		team = frappe.get_doc("Drive Team", team_name)
+		ctx.report.existing.append(_record_label("Drive Team", team.name))
+	else:
+		team = frappe.get_doc(
+			{
+				"doctype": "Drive Team",
+				"title": team_title,
+				"storage": 5120,
+				"quota": 5120,
+			}
+		)
+		team.insert(ignore_permissions=True)
+		ctx.report.created.append(_record_label("Drive Team", team.name))
+
+	root = get_home_folder(team.name)
+	root_path = Path(frappe.get_site_path()) / storage_key(root.file_url)
+	root_path.mkdir(parents=True, exist_ok=True)
+
+	folder_name = "经营管理样例"
+	folder_name_id = frappe.db.get_value(
+		"File",
+		{
+			"team": team.name,
+			"folder": root.name,
+			"file_name": folder_name,
+			"is_folder": 1,
+		},
+		"name",
+	)
+	if folder_name_id:
+		folder = frappe.get_doc("File", folder_name_id)
+		ctx.report.existing.append(_record_label("File", folder.name))
+	else:
+		folder_url = root.file_url.rstrip("/") + "/" + folder_name
+		folder_path = Path(frappe.get_site_path()) / storage_key(folder_url)
+		folder_path.mkdir(parents=True, exist_ok=True)
+		folder = create_drive_file(team.name, folder_name, root.name, "Folder", folder_url)
+		ctx.report.created.append(_record_label("File", folder.name))
+
+	file_name = "I-ONE业务数据说明.txt"
+	content = (
+		"I-ONE 业务数据说明\n\n"
+		"本目录用于展示 Frappe Drive 的真实业务文件能力。\n"
+		"manager.myyr.top 已配置销售、采购、库存、生产、项目、人力资源、CRM、"
+		"服务台、学习、借贷、协作与智能执行等业务样例数据。\n"
+		"数据为可关联、可查询的业务演示数据，不包含伪造的第三方支付流水或电话通话记录。\n"
+	).encode()
+	file_name_id = frappe.db.get_value(
+		"File",
+		{
+			"team": team.name,
+			"folder": folder.name,
+			"file_name": file_name,
+			"is_folder": 0,
+		},
+		"name",
+	)
+	if file_name_id:
+		ctx.report.existing.append(_record_label("File", file_name_id))
+		return
+
+	file_url = folder.file_url.rstrip("/") + "/" + file_name
+	file_doc = create_drive_file(
+		team.name,
+		file_name,
+		folder.name,
+		"Text",
+		file_url,
+		mime_type="text/plain",
+		file_size=len(content),
+	)
+	file_path = Path(frappe.get_site_path()) / storage_key(file_url)
+	file_path.write_bytes(content)
+	update_file_size(folder.name, len(content))
+	ctx.report.created.append(_record_label("File", file_doc.name))
+
+
 def _seed_ione(ctx: SeedContext) -> None:
 	agent = _ensure_doc(
 		ctx,
@@ -1628,6 +1723,7 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("Writer", _seed_writer),
 	("Wiki", _seed_wiki),
 	("Insights", _seed_insights),
+	("Drive", _seed_drive),
 	("I-ONE AI", _seed_ione),
 )
 
