@@ -139,6 +139,7 @@ def start_run(
 
 	from flow.api import api as flow_api
 	from flow.lib.session import load_session, new_session
+	from ione_core.flow_batch import apply_batch_execution_guard, append_batch_policy
 	from ione_core.flow_stream import install_flow_stream_heartbeat, keepalive_events
 
 	install_flow_stream_heartbeat()
@@ -147,6 +148,9 @@ def start_run(
 	conversation = (
 		load_session(session, agent=agent, model=model) if session else new_session(agent, model=model)
 	)
+	apply_batch_execution_guard(conversation._runtime)
+	if session:
+		_sync_session_batch_policy(session, append_batch_policy)
 	auto_approve, _decision = prepare_session_execution(
 		conversation,
 		user=frappe.session.user,
@@ -165,6 +169,23 @@ def start_run(
 	response.headers["Cache-Control"] = "no-cache, no-transform"
 	response.headers["Content-Encoding"] = "identity"
 	return response
+
+
+def _sync_session_batch_policy(session: str, policy_builder: Any) -> None:
+	"""Bring existing sessions forward without requiring users to start a new chat."""
+	row = frappe.db.get_value(
+		"Flow Session Message",
+		{"parent": session, "role": "system"},
+		["name", "content"],
+		order_by="idx asc",
+		as_dict=True,
+	)
+	if not row:
+		return
+
+	content = policy_builder(row.content)
+	if content != row.content:
+		frappe.db.set_value("Flow Session Message", row.name, "content", content)
 
 
 def _user_department(user: str | None) -> str | None:
