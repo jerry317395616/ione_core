@@ -39,7 +39,7 @@ CORE_COVERAGE = {
 	"学习": ("LMS Course", "Course Chapter", "Course Lesson", "LMS Quiz", "LMS Enrollment"),
 	"借贷": ("Loan Product", "Loan Application"),
 	"Gameplan": ("GP Team", "GP Project", "GP Task", "GP Discussion", "GP Page"),
-	"内容协作": ("Writer Document", "Wiki Space", "Wiki Page"),
+	"内容协作": ("Writer Document", "Wiki Space", "Wiki Document"),
 	"数据分析": ("Insights Data Source", "Insights Workbook", "Insights Dashboard"),
 	"网站建设": ("Builder Page",),
 	"智能执行": ("Flow Agent", "Flow Session", "I-ONE Agent", "I-ONE AI Task"),
@@ -149,12 +149,18 @@ def _make_context(report: SeedReport) -> SeedContext:
 
 def _run_domain(ctx: SeedContext, domain: str, callback: Callable[[SeedContext], None]) -> None:
 	savepoint = f"ione_seed_{len(ctx.report.errors)}_{len(ctx.report.created)}"
+	created_count = len(ctx.report.created)
+	existing_count = len(ctx.report.existing)
+	skipped_count = len(ctx.report.skipped)
 	frappe.db.savepoint(savepoint)
 	try:
 		callback(ctx)
 		frappe.db.commit()
 	except Exception:
 		frappe.db.rollback(save_point=savepoint)
+		del ctx.report.created[created_count:]
+		del ctx.report.existing[existing_count:]
+		del ctx.report.skipped[skipped_count:]
 		ctx.report.errors[domain] = frappe.get_traceback()
 
 
@@ -388,12 +394,13 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 		submit=True,
 	)
 	if order:
-		from erpnext.buying.doctype.purchase_order.mapper import make_purchase_invoice
+		from erpnext.buying.doctype.purchase_order.mapper import (
+			make_purchase_invoice,
+			make_purchase_receipt,
+		)
 
 		receipt = frappe.db.exists("Purchase Receipt Item", {"purchase_order": order.name})
 		if not receipt:
-			from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
-
 			receipt_doc = make_purchase_receipt(order.name)
 			receipt_doc.posting_date = today()
 			receipt_doc.set_warehouse = ctx.warehouse
@@ -507,7 +514,15 @@ def _ensure_item_group(ctx: SeedContext) -> str:
 	return group.name
 
 
-def _ensure_item(ctx: SeedContext, code: str, name: str, *, stock: bool = True, fixed_asset: bool = False) -> Any:
+def _ensure_item(
+	ctx: SeedContext,
+	code: str,
+	name: str,
+	*,
+	stock: bool = True,
+	fixed_asset: bool = False,
+	asset_category: str | None = None,
+) -> Any:
 	values = {
 		"item_code": code,
 		"item_name": name,
@@ -518,7 +533,13 @@ def _ensure_item(ctx: SeedContext, code: str, name: str, *, stock: bool = True, 
 		"is_purchase_item": 1,
 	}
 	if fixed_asset:
-		values.update({"is_fixed_asset": 1, "auto_create_assets": 0})
+		values.update(
+			{
+				"is_fixed_asset": 1,
+				"auto_create_assets": 0,
+				"asset_category": asset_category,
+			}
+		)
 	return _ensure_doc(ctx, "Item", {"item_code": code}, values)
 
 
@@ -605,8 +626,8 @@ def _seed_assets_and_quality(ctx: SeedContext) -> None:
 		"I-ONE AI 推理服务器",
 		stock=False,
 		fixed_asset=True,
+		asset_category=category.name,
 	)
-	asset_item.db_set("asset_category", category.name, update_modified=False)
 	_ensure_doc(
 		ctx,
 		"Asset",
@@ -671,6 +692,23 @@ def _seed_assets_and_quality(ctx: SeedContext) -> None:
 			"status": "Active",
 		},
 	)
+
+
+def _ensure_expense_claim_account(ctx: SeedContext, expense_type: str) -> None:
+	expense_account = _find_account(ctx.company, root_type="Expense")
+	if not expense_account:
+		frappe.throw(f"{ctx.company} 没有可用的费用科目。")
+	doc = frappe.get_doc("Expense Claim Type", expense_type)
+	if any(row.company == ctx.company and row.default_account for row in doc.accounts):
+		return
+	doc.append(
+		"accounts",
+		{
+			"company": ctx.company,
+			"default_account": expense_account,
+		},
+	)
+	doc.save(ignore_permissions=True)
 
 
 def _seed_hr(ctx: SeedContext) -> None:
@@ -794,6 +832,7 @@ def _seed_hr(ctx: SeedContext) -> None:
 			)
 
 	employee = employees[0]
+	_ensure_expense_claim_account(ctx, "Travel")
 	_ensure_doc(
 		ctx,
 		"Expense Claim",
@@ -1009,6 +1048,28 @@ def _seed_crm(ctx: SeedContext) -> None:
 
 
 def _seed_helpdesk(ctx: SeedContext) -> None:
+	_ensure_doc(
+		ctx,
+		"HD Agent",
+		{"user": ctx.user},
+		{
+			"user": ctx.user,
+			"agent_name": frappe.db.get_value("User", ctx.user, "full_name") or ctx.user,
+			"is_active": 1,
+			"availability": _first("HD Agent Status"),
+		},
+	)
+	team_name = _first("HD Team", {"disabled": 0})
+	team = frappe.get_doc("HD Team", team_name)
+	if not any(row.user == ctx.user for row in team.users):
+		team.append("users", {"user": ctx.user})
+		team.save(ignore_permissions=True)
+	if team.assignment_rule:
+		rule = frappe.get_doc("Assignment Rule", team.assignment_rule)
+		if not any(row.user == ctx.user for row in rule.users):
+			rule.append("users", {"user": ctx.user})
+			rule.save(ignore_permissions=True)
+
 	customer = _ensure_doc(
 		ctx,
 		"HD Customer",
@@ -1038,7 +1099,7 @@ def _seed_helpdesk(ctx: SeedContext) -> None:
 				"status": status,
 				"priority": priority,
 				"ticket_type": "Question",
-				"agent_group": _first("HD Team"),
+				"agent_group": team.name,
 				"description": f"<p>{subject}，请协助排查并反馈处理进展。</p>",
 			},
 		)
@@ -1068,19 +1129,118 @@ def _seed_helpdesk(ctx: SeedContext) -> None:
 
 
 def _seed_learning(ctx: SeedContext) -> None:
-	if not frappe.db.exists("LMS Course", {"title": "A guide to Frappe Learning"}):
-		from lms.demo.demo_data import create_demo_data
-
-		create_demo_data()
-		ctx.report.created.append("Learning: 官方课程、章节、课时、测验、学员与进度")
-	else:
-		ctx.report.existing.append("Learning: 官方演示课程")
+	category = _ensure_doc(
+		ctx,
+		"LMS Category",
+		{"category": f"{SEED_PREFIX}课程"},
+		{"category": f"{SEED_PREFIX}课程"},
+	)
+	course = _ensure_doc(
+		ctx,
+		"LMS Course",
+		{"title": f"{SEED_PREFIX}：AI 业务应用入门"},
+		{
+			"title": f"{SEED_PREFIX}：AI 业务应用入门",
+			"category": category.name,
+			"status": "Approved",
+			"published": 1,
+			"published_on": today(),
+			"card_gradient": "Blue",
+			"short_introduction": "学习如何在 I-ONE 中使用业务应用和 AI 员工。",
+			"description": "<p>课程覆盖客户管理、销售采购、项目协作和 AI 自动化。</p>",
+			"instructors": [{"instructor": ctx.user}],
+		},
+	)
+	chapter = _ensure_doc(
+		ctx,
+		"Course Chapter",
+		{"course": course.name, "title": "第一章：认识 I-ONE"},
+		{
+			"course": course.name,
+			"title": "第一章：认识 I-ONE",
+		},
+	)
+	question = _ensure_doc(
+		ctx,
+		"LMS Question",
+		{"question": "I-ONE AI 的核心用途是什么？"},
+		{
+			"question": "I-ONE AI 的核心用途是什么？",
+			"type": "Choices",
+			"option_1": "连接业务数据并协助执行工作",
+			"is_correct_1": 1,
+			"option_2": "只用于修改页面颜色",
+			"is_correct_2": 0,
+		},
+	)
+	quiz = _ensure_doc(
+		ctx,
+		"LMS Quiz",
+		{"title": f"{SEED_PREFIX}：入门测验"},
+		{
+			"title": f"{SEED_PREFIX}：入门测验",
+			"course": course.name,
+			"total_marks": 10,
+			"passing_percentage": 60,
+			"show_answers": 1,
+			"questions": [{"question": question.name, "marks": 10}],
+		},
+	)
+	lesson = _ensure_doc(
+		ctx,
+		"Course Lesson",
+		{"chapter": chapter.name, "title": "I-ONE 业务工作台"},
+		{
+			"course": course.name,
+			"chapter": chapter.name,
+			"title": "I-ONE 业务工作台",
+			"include_in_preview": 1,
+			"body": "本节介绍首页、今日待办、快捷入口以及 AI 员工的基本使用方法。",
+			"quiz_id": quiz.name,
+		},
+	)
+	course.reload()
+	if not any(row.chapter == chapter.name for row in course.chapters):
+		course.append("chapters", {"chapter": chapter.name})
+		course.save(ignore_permissions=True)
+	chapter.reload()
+	if not any(row.lesson == lesson.name for row in chapter.lessons):
+		chapter.append("lessons", {"lesson": lesson.name})
+		chapter.save(ignore_permissions=True)
+	_ensure_doc(
+		ctx,
+		"LMS Enrollment",
+		{"course": course.name, "member": ctx.user},
+		{
+			"course": course.name,
+			"member": ctx.user,
+			"member_type": "Student",
+			"role": "Member",
+			"current_lesson": lesson.name,
+			"progress": 25,
+		},
+	)
 
 
 def _seed_lending(ctx: SeedContext) -> None:
 	cash = _find_account(ctx.company, account_type="Cash") or _find_account(ctx.company, root_type="Asset")
 	receivable = _find_account(ctx.company, account_type="Receivable") or cash
 	income = _find_account(ctx.company, root_type="Income")
+	offset_order = _ensure_doc(
+		ctx,
+		"Loan Demand Offset Order",
+		{"title": f"{SEED_PREFIX}回收顺序"},
+		{
+			"title": f"{SEED_PREFIX}回收顺序",
+			"components": [
+				{"demand_type": "Penalty"},
+				{"demand_type": "Charges"},
+				{"demand_type": "Additional Interest"},
+				{"demand_type": "Interest"},
+				{"demand_type": "Principal"},
+			],
+		},
+	)
 	product = _ensure_doc(
 		ctx,
 		"Loan Product",
@@ -1094,6 +1254,10 @@ def _seed_lending(ctx: SeedContext) -> None:
 			"is_term_loan": 1,
 			"repayment_schedule_type": "Monthly as per repayment start date",
 			"repayment_date_on": "Start of the next month",
+			"collection_offset_sequence_for_standard_asset": offset_order.name,
+			"collection_offset_sequence_for_sub_standard_asset": offset_order.name,
+			"collection_offset_sequence_for_written_off_asset": offset_order.name,
+			"collection_offset_sequence_for_settlement_collection": offset_order.name,
 			"disbursement_account": cash,
 			"payment_account": cash,
 			"loan_account": receivable,
@@ -1196,7 +1360,7 @@ def _seed_gameplan(ctx: SeedContext) -> None:
 	)
 
 
-def _seed_content_and_analytics(ctx: SeedContext) -> None:
+def _seed_writer(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Writer Document",
@@ -1205,6 +1369,20 @@ def _seed_content_and_analytics(ctx: SeedContext) -> None:
 			"html": f"<h1>{SEED_PREFIX}经营月报</h1><p>本月销售、交付与客户成功工作稳步推进。</p>",
 			"settings": json.dumps({"title": f"{SEED_PREFIX}经营月报"}, ensure_ascii=False),
 			"collab": 1,
+		},
+	)
+
+
+def _seed_wiki(ctx: SeedContext) -> None:
+	root = _ensure_doc(
+		ctx,
+		"Wiki Document",
+		{"title": f"{SEED_PREFIX}业务手册", "is_group": 1},
+		{
+			"title": f"{SEED_PREFIX}业务手册",
+			"slug": "ione-business-handbook",
+			"is_group": 1,
+			"is_published": 1,
 		},
 	)
 	space = _ensure_doc(
@@ -1217,22 +1395,27 @@ def _seed_content_and_analytics(ctx: SeedContext) -> None:
 			"is_published": 1,
 			"show_in_switcher": 1,
 			"allow_contributions": 1,
+			"root_group": root.name,
 		},
 	)
 	_ensure_doc(
 		ctx,
-		"Wiki Page",
-		{"route": "ione-business-handbook/quick-start"},
+		"Wiki Document",
+		{"title": f"{SEED_PREFIX}：业务快速开始", "parent_wiki_document": root.name},
 		{
 			"title": f"{SEED_PREFIX}：业务快速开始",
-			"route": "ione-business-handbook/quick-start",
-			"published": 1,
-			"allow_guest": 0,
+			"slug": "quick-start",
+			"is_published": 1,
+			"is_group": 0,
+			"parent_wiki_document": root.name,
+			"wiki_space": space.name,
 			"content": "# I-ONE 业务快速开始\n\n本页介绍销售、采购、人事、服务和 AI 员工的协作流程。",
 			"meta_description": "I-ONE 业务系统快速开始指南",
-			"space": space.name,
 		},
 	)
+
+
+def _seed_insights(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Insights Dashboard",
@@ -1329,7 +1512,9 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("学习", _seed_learning),
 	("借贷", _seed_lending),
 	("Gameplan", _seed_gameplan),
-	("内容与分析", _seed_content_and_analytics),
+	("Writer", _seed_writer),
+	("Wiki", _seed_wiki),
+	("Insights", _seed_insights),
 	("I-ONE AI", _seed_ione),
 )
 

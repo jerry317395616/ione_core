@@ -1,9 +1,11 @@
 import sys
 import types
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-if "frappe" not in sys.modules:
+try:
+	import frappe  # type: ignore[import-not-found]
+except ModuleNotFoundError:
 	frappe = types.ModuleType("frappe")
 	frappe.db = MagicMock()
 	frappe.db.exists.return_value = False
@@ -32,7 +34,8 @@ class TestBusinessSeed(TestCase):
 			errors={"CRM": "failed"},
 		)
 
-		data = report.as_dict()
+		with patch("ione_core.business_seed.get_business_data_coverage", return_value={}):
+			data = report.as_dict()
 
 		self.assertEqual(data["created"], ["ToDo: sample"])
 		self.assertEqual(data["errors"]["CRM"], "failed")
