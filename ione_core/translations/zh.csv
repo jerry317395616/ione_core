@@ -714,3 +714,19 @@ View Purchase Order Analysis,查看采购订单分析
 Review Buying Settings,检查采购设置
 Jun,六月
 Jul,七月
+Stock Value by Item Group,按物料组统计库存价值
+Total Warehouses,仓库总数
+Total Stock Value,库存总价值
+Total Active Items,启用物料总数
+Masters & Reports,主数据与报表
+"<span class=""h4""><b>Masters &amp; Reports</b></span>","<span class=""h4""><b>主数据与报表</b></span>"
+Stock Onboarding,库存入门指南
+Stock Setup,库存设置向导
+Setup Warehouse,设置仓库
+Create Warehouses,创建仓库
+Create Purchase Receipt,创建采购入库
+Create Transfer Entry,创建库存调拨单
+Create Delivery Note,创建交货单
+View Stock Balance Report,查看库存余额报表
+View Stock Balance,查看库存余额
+Review Stock Settings,检查库存设置
