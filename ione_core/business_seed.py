@@ -732,7 +732,12 @@ def _seed_support(ctx: SeedContext) -> None:
 	_ensure_doc(
 		ctx,
 		"Contract",
-		{"party_type": "Customer", "party_name": ctx.customer, "contract_terms": SEED_PREFIX},
+		{
+			"party_type": "Customer",
+			"party_name": ctx.customer,
+			"start_date": today(),
+			"end_date": add_months(today(), 12),
+		},
 		{
 			"party_type": "Customer",
 			"party_name": ctx.customer,
