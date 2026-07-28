@@ -140,3 +140,18 @@ class TestFlowBatchGuard(TestCase):
 		self.assertFalse(prepare_continuation_prompt(session, "检查数据"))
 		self.assertTrue(prepare_continuation_prompt(session, "继续"))
 		self.assertIn("one real mutating tool call", session._build_prompt_messages()[-1]["content"])
+
+	def test_normalizes_erpnext_payment_terms_template_doctype(self):
+		runtime = FakeRuntime()
+		apply_batch_execution_guard(runtime)
+		call = SimpleNamespace(
+			name="read",
+			arguments={"doctype": "Payment Term Template", "fields": ["name"]},
+		)
+
+		self.assertEqual(runtime._invoke(call)["status"], "ok")
+		self.assertEqual(call.arguments["doctype"], "Payment Terms Template")
+		self.assertEqual(
+			runtime.invocations[0].arguments["doctype"],
+			"Payment Terms Template",
+		)

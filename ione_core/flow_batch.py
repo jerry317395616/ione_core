@@ -15,6 +15,9 @@ MAX_CONTINUATION_SUMMARY_CHARS = 12_000
 
 MUTATING_TOOLS = frozenset({"create", "update", "delete", "run_action", "execute"})
 CONTINUATION_INPUTS = frozenset({"继续", "继续执行", "下一批", "继续下一批"})
+DOCTYPE_ALIASES = {
+	"Payment Term Template": "Payment Terms Template",
+}
 
 BATCH_POLICY = f"""
 {BATCH_POLICY_MARKER}
@@ -29,6 +32,8 @@ Treat one user message as exactly one finite batch:
 - Do not start another module or another batch after that call is complete.
 - Keep discovery focused: use filters, ordering, and pagination to find only the next
   unprocessed records. Do not repeatedly read the same first page.
+- Use exact DocType names from Frappe metadata. In ERPNext the payment schedule template
+  DocType is "Payment Terms Template", not "Payment Term Template".
 - When the user says "继续", resume the first concrete unfinished operation from the
   preceding verified summary and perform a real write in this turn. Do not merely
   repeat counts, plans, or the previous answer. If the operation is complete or safe
@@ -142,7 +147,7 @@ def apply_batch_execution_guard(
 
 	def guarded_invoke(call: Any) -> Any:
 		name = str(getattr(call, "name", "") or "")
-		arguments = getattr(call, "arguments", None)
+		arguments = _normalize_tool_arguments(call)
 		state.total_calls += 1
 		signature = json.dumps(
 			{"name": name, "arguments": arguments},
@@ -225,6 +230,26 @@ def _argument_size(arguments: Any) -> int:
 		return len(json.dumps(arguments, ensure_ascii=False, default=str).encode("utf-8"))
 	except (TypeError, ValueError):
 		return MAX_MUTATION_ARGUMENT_BYTES + 1
+
+
+def _normalize_tool_arguments(call: Any) -> Any:
+	arguments = getattr(call, "arguments", None)
+	if isinstance(arguments, str):
+		try:
+			arguments = json.loads(arguments)
+		except (TypeError, ValueError):
+			return arguments
+	if not isinstance(arguments, dict):
+		return arguments
+
+	doctype = arguments.get("doctype")
+	normalized = DOCTYPE_ALIASES.get(doctype)
+	if not normalized:
+		return arguments
+
+	arguments = {**arguments, "doctype": normalized}
+	call.arguments = arguments
+	return arguments
 
 
 def _finalize_instruction(state: BatchExecutionState) -> str:
