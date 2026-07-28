@@ -5,6 +5,7 @@ from ione_core.flow_batch import (
 	BATCH_POLICY_MARKER,
 	MAX_ITERATIONS,
 	MAX_MUTATING_CALLS,
+	MAX_RECORDS_PER_BATCH,
 	apply_batch_execution_guard,
 	append_batch_policy,
 )
@@ -43,14 +44,19 @@ class TestFlowBatchGuard(TestCase):
 		runtime = FakeRuntime()
 		state = apply_batch_execution_guard(runtime)
 
-		for index in range(MAX_MUTATING_CALLS):
-			result = runtime._invoke(
-				SimpleNamespace(name="create", arguments={"doctype": "ToDo", "index": index})
+		result = runtime._invoke(
+			SimpleNamespace(
+				name="create",
+				arguments={
+					"doctype": "ToDo",
+					"records": [{"description": str(index)} for index in range(MAX_RECORDS_PER_BATCH)],
+				},
 			)
-			self.assertEqual(result["status"], "ok")
+		)
+		self.assertEqual(result["status"], "ok")
 
 		skipped = runtime._invoke(
-			SimpleNamespace(name="create", arguments={"doctype": "ToDo", "index": 99})
+			SimpleNamespace(name="create", arguments={"doctype": "ToDo", "records": [{}]})
 		)
 		self.assertEqual(skipped["status"], "batch_limit")
 		self.assertEqual(len(runtime.invocations), MAX_MUTATING_CALLS)
@@ -71,4 +77,17 @@ class TestFlowBatchGuard(TestCase):
 		self.assertEqual(runtime._invoke(call)["status"], "ok")
 		self.assertEqual(runtime._invoke(call)["status"], "skipped_duplicate")
 		self.assertEqual(len(runtime.invocations), 1)
+		self.assertTrue(state.force_summary)
+
+	def test_rejects_more_than_ten_records_without_writing(self):
+		runtime = FakeRuntime()
+		state = apply_batch_execution_guard(runtime)
+		call = SimpleNamespace(
+			name="update",
+			arguments={"doctype": "Customer", "names": [str(i) for i in range(11)]},
+		)
+
+		result = runtime._invoke(call)
+		self.assertEqual(result["status"], "record_limit")
+		self.assertEqual(runtime.invocations, [])
 		self.assertTrue(state.force_summary)

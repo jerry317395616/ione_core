@@ -5,23 +5,26 @@ from dataclasses import dataclass, field
 from typing import Any
 
 BATCH_POLICY_MARKER = "[I-ONE BATCH EXECUTION POLICY]"
-MAX_MUTATING_CALLS = 10
-MAX_TOTAL_CALLS = 14
-MAX_ITERATIONS = 16
+MAX_RECORDS_PER_BATCH = 10
+MAX_MUTATING_CALLS = 1
+MAX_TOTAL_CALLS = 6
+MAX_ITERATIONS = 8
 
 MUTATING_TOOLS = frozenset({"create", "update", "delete", "run_action", "execute"})
 
 BATCH_POLICY = f"""
 {BATCH_POLICY_MARKER}
 Treat one user message as exactly one finite batch:
-- Process at most {MAX_MUTATING_CALLS} records or mutating tool calls in this turn.
+- Execute at most {MAX_MUTATING_CALLS} mutating tool call in this turn.
+- That call may create, update, delete, or act on at most {MAX_RECORDS_PER_BATCH} records.
 - Use at most {MAX_TOTAL_CALLS} tool calls in total, including discovery and reads.
 - Never repeat a tool call with identical arguments.
-- Do not start another module or another batch after this batch is complete.
+- Immediately stop using tools after the first successful mutating call.
+- Do not start another module or another batch after that call is complete.
 - When the batch limit is reached, stop using tools and report verified successes,
   skips, and failures. Tell the user to send "继续" for the next batch.
 - A broad request such as "continue all modules" does not authorize an endless loop.
-- Never use execute to bypass these limits or to create more than 10 records.
+- Never use execute to bypass these limits or to create more than {MAX_RECORDS_PER_BATCH} records.
 """.strip()
 
 FINALIZE_INSTRUCTION = """
@@ -43,7 +46,7 @@ class BatchExecutionState:
 def append_batch_policy(instructions: str | None) -> str:
 	instructions = (instructions or "").strip()
 	if BATCH_POLICY_MARKER in instructions:
-		return instructions
+		instructions = instructions.split(BATCH_POLICY_MARKER, 1)[0].rstrip()
 	return f"{instructions}\n\n{BATCH_POLICY}".strip()
 
 
@@ -77,6 +80,17 @@ def apply_batch_execution_guard(runtime: Any) -> BatchExecutionState:
 		state.seen_calls.add(signature)
 		state.total_calls += 1
 
+		record_count = _record_count(arguments)
+		if name in MUTATING_TOOLS and record_count > MAX_RECORDS_PER_BATCH:
+			state.force_summary = True
+			return {
+				"status": "record_limit",
+				"message": (
+					f"This call contains {record_count} records; the per-turn limit is "
+					f"{MAX_RECORDS_PER_BATCH}. No records were changed."
+				),
+			}
+
 		if name in MUTATING_TOOLS and state.mutating_calls >= MAX_MUTATING_CALLS:
 			state.force_summary = True
 			return {
@@ -87,8 +101,7 @@ def apply_batch_execution_guard(runtime: Any) -> BatchExecutionState:
 		result = original_invoke(call)
 		if name in MUTATING_TOOLS:
 			state.mutating_calls += 1
-			if state.mutating_calls >= MAX_MUTATING_CALLS:
-				state.force_summary = True
+			state.force_summary = True
 		if state.total_calls >= MAX_TOTAL_CALLS:
 			state.force_summary = True
 		return result
@@ -106,3 +119,19 @@ def apply_batch_execution_guard(runtime: Any) -> BatchExecutionState:
 	runtime.max_iterations = min(runtime.max_iterations, MAX_ITERATIONS)
 	runtime._ione_batch_guard_state = state
 	return state
+
+
+def _record_count(arguments: Any) -> int:
+	if isinstance(arguments, str):
+		try:
+			arguments = json.loads(arguments)
+		except (TypeError, ValueError):
+			return 1
+	if not isinstance(arguments, dict):
+		return 1
+
+	for key in ("records", "names"):
+		value = arguments.get(key)
+		if isinstance(value, list):
+			return len(value)
+	return 1
