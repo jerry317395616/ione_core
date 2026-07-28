@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import contextvars
+import queue
+import threading
 from typing import Any
+
+FLOW_HEARTBEAT_INTERVAL = 5.0
 
 
 def install_flow_stream_heartbeat() -> bool:
@@ -76,3 +81,61 @@ def _consume_stream_with_heartbeat(chunks: Any, model_module: Any | None = None)
 		finish_reason=finish_reason,
 		usage=usage,
 	)
+
+
+def keepalive_events(
+	events: Any,
+	*,
+	interval: float = FLOW_HEARTBEAT_INTERVAL,
+	heartbeat_factory: Any | None = None,
+):
+	"""Consume a Flow run off-thread and keep its SSE response active.
+
+	The producer is allowed to finish when the HTTP consumer disconnects. The
+	request thread waits for it during generator close so Flow can persist the
+	final run state before Frappe tears down the request context.
+	"""
+	if heartbeat_factory is None:
+		from flow.lib.agent import TextChunk
+
+		heartbeat_factory = lambda: TextChunk("")
+
+	items: queue.Queue[tuple[str, Any]] = queue.Queue()
+	context = contextvars.copy_context()
+
+	def consume() -> None:
+		try:
+			for event in events:
+				items.put(("event", event))
+		except BaseException as error:
+			items.put(("error", error))
+		finally:
+			items.put(("done", None))
+
+	producer = threading.Thread(
+		target=context.run,
+		args=(consume,),
+		name="ione-flow-stream",
+		daemon=True,
+	)
+	producer.start()
+
+	try:
+		while True:
+			try:
+				kind, payload = items.get(timeout=interval)
+			except queue.Empty:
+				yield heartbeat_factory()
+				continue
+
+			if kind == "event":
+				yield payload
+			elif kind == "error":
+				raise payload
+			else:
+				return
+	finally:
+		# If the browser closes the SSE connection, finish the active Flow turn
+		# before request-local database resources are released.
+		while producer.is_alive():
+			producer.join(timeout=0.5)

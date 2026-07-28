@@ -139,7 +139,7 @@ def start_run(
 
 	from flow.api import api as flow_api
 	from flow.lib.session import load_session, new_session
-	from ione_core.flow_stream import install_flow_stream_heartbeat
+	from ione_core.flow_stream import install_flow_stream_heartbeat, keepalive_events
 
 	install_flow_stream_heartbeat()
 	stream = flow_api._is_truthy(stream)
@@ -158,7 +158,13 @@ def start_run(
 		auto_approve=auto_approve,
 		stream=stream,
 	)
-	return flow_api._sse_response(output) if stream else flow_api._summarize(output)
+	if not stream:
+		return flow_api._summarize(output)
+
+	response = flow_api._sse_response(keepalive_events(output))
+	response.headers["Cache-Control"] = "no-cache, no-transform"
+	response.headers["Content-Encoding"] = "identity"
+	return response
 
 
 def _user_department(user: str | None) -> str | None:

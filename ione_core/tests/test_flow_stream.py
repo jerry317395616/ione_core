@@ -1,6 +1,8 @@
+import threading
+import time
 from unittest import TestCase
 
-from ione_core.flow_stream import _consume_stream_with_heartbeat
+from ione_core.flow_stream import _consume_stream_with_heartbeat, keepalive_events
 
 
 class AttrObject:
@@ -57,6 +59,43 @@ class TestFlowStreamHeartbeat(TestCase):
 		self.assertIsInstance(first, FakeModelModule.ToolCallBegin)
 		self.assertEqual([second, third], ["", ""])
 		self.assertEqual(stopped.exception.value.finish_reason, "tool_calls")
+
+	def test_keeps_entire_flow_run_alive_between_events(self):
+		release = threading.Event()
+
+		def delayed_events():
+			release.wait()
+			yield "finished"
+
+		stream = keepalive_events(
+			delayed_events(),
+			interval=0.01,
+			heartbeat_factory=lambda: "heartbeat",
+		)
+
+		self.assertEqual(next(stream), "heartbeat")
+		release.set()
+		self.assertEqual(next(stream), "finished")
+		with self.assertRaises(StopIteration):
+			next(stream)
+
+	def test_finishes_producer_when_browser_closes_stream(self):
+		finished = threading.Event()
+
+		def delayed_events():
+			time.sleep(0.04)
+			finished.set()
+			yield "finished"
+
+		stream = keepalive_events(
+			delayed_events(),
+			interval=0.01,
+			heartbeat_factory=lambda: "heartbeat",
+		)
+
+		self.assertEqual(next(stream), "heartbeat")
+		stream.close()
+		self.assertTrue(finished.is_set())
 
 
 def _chunk(id="", name="", arguments="", finish_reason=None):
