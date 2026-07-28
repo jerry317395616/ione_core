@@ -139,7 +139,11 @@ def start_run(
 
 	from flow.api import api as flow_api
 	from flow.lib.session import load_session, new_session
-	from ione_core.flow_batch import apply_batch_execution_guard, append_batch_policy
+	from ione_core.flow_batch import (
+		apply_batch_execution_guard,
+		append_batch_policy,
+		prepare_continuation_prompt,
+	)
 	from ione_core.flow_stream import install_flow_stream_heartbeat, keepalive_events
 
 	install_flow_stream_heartbeat()
@@ -149,6 +153,7 @@ def start_run(
 		load_session(session, agent=agent, model=model) if session else new_session(agent, model=model)
 	)
 	apply_batch_execution_guard(conversation._runtime)
+	prepare_continuation_prompt(conversation, input)
 	if session:
 		_sync_session_batch_policy(session, append_batch_policy)
 	auto_approve, _decision = prepare_session_execution(
