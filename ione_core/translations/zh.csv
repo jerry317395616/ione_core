@@ -698,11 +698,12 @@ weeks before,周前
 "Scan job card","扫描工序卡"
 "The Process Loss Qty has been reset as per the job card's Process Loss Qty","加工损耗数量已根据工序卡的加工损耗数量重置"
 A prebuilt Purchasing Overview dashboard is available in Insights,Insights 中提供了预置的采购概览仪表板
-A prebuilt {0} dashboard is available in Insights,Insights 中提供了预置的{0}仪表板
+A prebuilt {0} dashboard is available in Insights,Insights 中提供了预置的概览仪表板
 Purchasing Overview,采购概览
 Purchase Orders Count,采购订单数量
 Average Order Values,平均订单金额
 Reports & Masters,报表与主数据
+"<span class=""h4""><b>Reports &amp; Masters</b></span>","<span class=""h4""><b>报表与主数据</b></span>"
 Buying Onboarding,采购入门指南
 Buying Setup,采购设置向导
 Create Supplier,创建供应商
