@@ -1,0 +1,30 @@
+from unittest import TestCase
+
+from ione_core import hooks
+from ione_core.dashboard_labels import localize_chart_config, localize_period_label
+
+
+class TestDashboardLabels(TestCase):
+	def test_monthly_label_is_localized_for_chinese(self):
+		self.assertEqual(localize_period_label("Jul 2026", "zh"), "2026年7月")
+
+	def test_quarterly_label_is_localized_for_chinese(self):
+		self.assertEqual(localize_period_label("Quarter 3 2026", "zh-CN"), "2026年第3季度")
+
+	def test_non_chinese_label_is_unchanged(self):
+		self.assertEqual(localize_period_label("Jul 2026", "en"), "Jul 2026")
+
+	def test_chart_config_is_copied_before_localizing(self):
+		config = {"labels": ["Jul 2025", "Jan 2026"], "datasets": [{"values": [1, 2]}]}
+
+		localized = localize_chart_config(config, "zh")
+
+		self.assertEqual(localized["labels"], ["2025年7月", "2026年1月"])
+		self.assertEqual(config["labels"], ["Jul 2025", "Jan 2026"])
+		self.assertIsNot(localized, config)
+
+	def test_dashboard_chart_api_uses_localizing_wrapper(self):
+		self.assertEqual(
+			hooks.override_whitelisted_methods["frappe.desk.doctype.dashboard_chart.dashboard_chart.get"],
+			"ione_core.dashboard.get_dashboard_chart",
+		)

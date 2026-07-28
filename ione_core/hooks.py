@@ -67,6 +67,7 @@ doc_events = {
 override_whitelisted_methods = {
 	"flow.api.start_run": "ione_core.flow_policy.start_run",
 	"flow.api.api.start_run": "ione_core.flow_policy.start_run",
+	"frappe.desk.doctype.dashboard_chart.dashboard_chart.get": "ione_core.dashboard.get_dashboard_chart",
 }
 
 scheduler_events = {
