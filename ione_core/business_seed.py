@@ -678,26 +678,26 @@ def _seed_quality(ctx: SeedContext) -> None:
 			"description": "检查外观完整性和包装状态。",
 		},
 	)
-	purchase_receipt = _first(
-		"Purchase Receipt Item",
+	stock_entry = _first(
+		"Stock Entry Detail",
 		{"item_code": ctx.stock_item, "docstatus": 1},
 		field="parent",
 	)
-	if not purchase_receipt:
-		frappe.throw("请先生成并提交 I-ONE 业务样例采购收货单，再生成质检数据。")
+	if not stock_entry:
+		frappe.throw("请先生成并提交 I-ONE 业务样例库存入库单，再生成质检数据。")
 	_ensure_doc(
 		ctx,
 		"Quality Inspection",
 		{
 			"inspection_type": "Incoming",
-			"reference_type": "Purchase Receipt",
-			"reference_name": purchase_receipt,
+			"reference_type": "Stock Entry",
+			"reference_name": stock_entry,
 			"item_code": ctx.stock_item,
 		},
 		{
 			"inspection_type": "Incoming",
-			"reference_type": "Purchase Receipt",
-			"reference_name": purchase_receipt,
+			"reference_type": "Stock Entry",
+			"reference_name": stock_entry,
 			"item_code": ctx.stock_item,
 			"sample_size": 5,
 			"report_date": today(),
@@ -767,10 +767,11 @@ def _seed_hr_people(ctx: SeedContext) -> None:
 	gender = "Female" if frappe.db.exists("Gender", "Female") else _first("Gender")
 	employees = []
 	for index, employee_name in enumerate(("张敏", "李强", "王芳"), 1):
+		company_email = f"demo.employee{index}@myyr.top"
 		employee = _ensure_doc(
 			ctx,
 			"Employee",
-			{"employee_name": f"{SEED_PREFIX}-{employee_name}", "company": ctx.company},
+			{"company_email": company_email, "company": ctx.company},
 			{
 				"first_name": employee_name,
 				"employee_name": f"{SEED_PREFIX}-{employee_name}",
@@ -783,7 +784,7 @@ def _seed_hr_people(ctx: SeedContext) -> None:
 				"designation": designation,
 				"employment_type": "Full-time",
 				"cell_number": f"1380000000{index + 1}",
-				"company_email": f"demo.employee{index}@myyr.top",
+				"company_email": company_email,
 			},
 		)
 		employees.append(employee)
@@ -817,6 +818,22 @@ def _seed_hr_people(ctx: SeedContext) -> None:
 		name=f"{SEED_PREFIX}标准班次",
 	)
 	for employee in employees:
+		_ensure_doc(
+			ctx,
+			"Holiday List Assignment",
+			{
+				"applicable_for": "Employee",
+				"assigned_to": employee.name,
+				"from_date": f"{today()[:4]}-01-01",
+			},
+			{
+				"applicable_for": "Employee",
+				"assigned_to": employee.name,
+				"holiday_list": holiday_list.name,
+				"from_date": f"{today()[:4]}-01-01",
+			},
+			submit=True,
+		)
 		_ensure_doc(
 			ctx,
 			"Shift Assignment",
@@ -1006,7 +1023,7 @@ def _seed_hr_payroll(ctx: SeedContext) -> None:
 		name=f"{SEED_PREFIX}月薪结构",
 		submit=True,
 	)
-	assignment = _ensure_doc(
+	_ensure_doc(
 		ctx,
 		"Salary Structure Assignment",
 		{"employee": employee.name, "salary_structure": structure.name},
@@ -1020,27 +1037,36 @@ def _seed_hr_payroll(ctx: SeedContext) -> None:
 		},
 		submit=True,
 	)
-	if assignment:
-		_ensure_doc(
-			ctx,
-			"Salary Slip",
-			{
-				"employee": employee.name,
-				"start_date": get_first_day(today()),
-				"end_date": get_last_day(today()),
-			},
-			{
-				"employee": employee.name,
-				"company": ctx.company,
-				"posting_date": today(),
-				"start_date": get_first_day(today()),
-				"end_date": get_last_day(today()),
-				"salary_structure": structure.name,
-				"payroll_frequency": "Monthly",
-				"currency": ctx.currency,
-				"exchange_rate": 1,
-			},
-		)
+
+
+def _seed_hr_salary_slip(ctx: SeedContext) -> None:
+	employee_name = frappe.db.exists(
+		"Employee",
+		{"company_email": "demo.employee1@myyr.top", "company": ctx.company},
+	)
+	structure_name = frappe.db.exists("Salary Structure", f"{SEED_PREFIX}月薪结构")
+	if not employee_name or not structure_name:
+		frappe.throw("请先生成 I-ONE 业务样例员工和薪酬结构，再生成工资单。")
+	_ensure_doc(
+		ctx,
+		"Salary Slip",
+		{
+			"employee": employee_name,
+			"start_date": get_first_day(today()),
+			"end_date": get_last_day(today()),
+		},
+		{
+			"employee": employee_name,
+			"company": ctx.company,
+			"posting_date": today(),
+			"start_date": get_first_day(today()),
+			"end_date": get_last_day(today()),
+			"salary_structure": structure_name,
+			"payroll_frequency": "Monthly",
+			"currency": ctx.currency,
+			"exchange_rate": 1,
+		},
+	)
 
 
 def _seed_crm(ctx: SeedContext) -> None:
@@ -1586,6 +1612,7 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("人力资源基础", _seed_hr_people),
 	("招聘管理", _seed_hr_recruiting),
 	("薪酬管理", _seed_hr_payroll),
+	("工资单", _seed_hr_salary_slip),
 	("CRM", _seed_crm),
 	("服务台", _seed_helpdesk),
 	("学习", _seed_learning),
