@@ -3,5 +3,3 @@ __pycache__/
 .DS_Store
 node_modules/
 frontend/dist/
-ione_core/public/mobile/
-ione_core/www/ione-mobile.html
