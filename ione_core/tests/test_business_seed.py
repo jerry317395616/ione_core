@@ -54,6 +54,7 @@ class TestBusinessSeed(TestCase):
 			"内容协作",
 			"数据分析",
 			"Drive",
+			"Telephony",
 			"智能执行",
 		):
 			self.assertIn(domain, CORE_COVERAGE)

@@ -43,6 +43,7 @@ CORE_COVERAGE = {
 	"内容协作": ("Writer Document", "Wiki Space", "Wiki Document"),
 	"数据分析": ("Insights Data Source", "Insights Workbook", "Insights Dashboard"),
 	"Drive": ("Drive Team",),
+	"Telephony": ("Telephony Call Type",),
 	"网站建设": ("Builder Page",),
 	"智能执行": ("Flow Agent", "Flow Session", "I-ONE Agent", "I-ONE AI Task"),
 	"I-ONE 经营": ("I-ONE Growth Plan", "I-ONE Experience", "I-ONE Achievement"),
@@ -1540,6 +1541,17 @@ def _seed_insights(ctx: SeedContext) -> None:
 	)
 
 
+def _seed_telephony(ctx: SeedContext) -> None:
+	for call_type in ("客户咨询", "客户回访", "售后服务"):
+		_ensure_doc(
+			ctx,
+			"Telephony Call Type",
+			{"call_type": call_type},
+			{"call_type": call_type},
+			submit=True,
+		)
+
+
 def _seed_drive(ctx: SeedContext) -> None:
 	if not _doctype_exists("Drive Team"):
 		ctx.report.skipped.append("Drive Team: DocType not installed")
@@ -1723,6 +1735,7 @@ DOMAIN_SEEDERS: tuple[tuple[str, Callable[[SeedContext], None]], ...] = (
 	("Writer", _seed_writer),
 	("Wiki", _seed_wiki),
 	("Insights", _seed_insights),
+	("Telephony", _seed_telephony),
 	("Drive", _seed_drive),
 	("I-ONE AI", _seed_ione),
 )
