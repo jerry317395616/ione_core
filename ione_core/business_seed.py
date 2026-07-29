@@ -577,6 +577,15 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 		},
 		submit=True,
 	)
+	request_item = None
+	if request:
+		for item in request.items:
+			remaining_qty = float(item.get("stock_qty") or item.get("qty") or 0) - float(
+				item.get("ordered_qty") or 0
+			)
+			if item.item_code == ctx.stock_item and remaining_qty >= 20:
+				request_item = item
+				break
 	order = _ensure_doc(
 		ctx,
 		"Purchase Order",
@@ -605,8 +614,8 @@ def _seed_buying_and_stock(ctx: SeedContext) -> None:
 					"rate": 50,
 					"schedule_date": add_days(today(), 7),
 					"warehouse": ctx.warehouse,
-					"material_request": request.name if request else None,
-					"material_request_item": request.items[0].name if request else None,
+					"material_request": request.name if request_item else None,
+					"material_request_item": request_item.name if request_item else None,
 				}
 			],
 		},
