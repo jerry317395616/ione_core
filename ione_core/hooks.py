@@ -8,6 +8,8 @@ app_license = "mit"
 app_home = "/desk/i-one-ai"
 app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 
+app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js"]
+
 add_to_apps_screen = [
 	{
 		"name": app_name,
