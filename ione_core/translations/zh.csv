@@ -685,7 +685,7 @@ You are not allowed to invite System Managers,您无权邀请系统管理员
 You are not permitted to access CRM resources.,您无权访问 CRM 资源。
 You are not permitted to create leads.,您无权创建线索。
 You are not permitted to update this call log.,您无权更新此通话记录。
-You can get your Access Key from ,您可以从以下位置获取访问密钥：
+"You can get your Access Key from ","您可以从以下位置获取访问密钥："
 You cannot remove yourself.,您无法移除自己。
 You do not have enough permissions to access Frappe CRM. Please contact your administrator if you believe this is an error.,您没有足够的权限访问 Frappe CRM。如果您认为这是错误，请联系您的管理员。
 You do not have permission to access Frappe CRM,您无权访问 Frappe CRM
@@ -718,7 +718,7 @@ weeks before,周前
 {0} users added to hierarchy,{0} 个用户已添加到销售层级
 {0} yes,{0} 人参加
 {0}% complete,{0}% 完成
-Consider for Tax Withholding ,考虑用于预提税
+"Consider for Tax Withholding ","考虑用于预提税"
 "Enter the Operation, the table will fetch the Operation details like Hourly Rate, Workstation automatically.\n\n After that, set the Operation Time in minutes and the table will calculate the Operation Costs based on the Hourly Rate and Operation Time.",输入工序，表格将自动获取工序详情，如小时费率、工作站。\n\n之后，设置工序时间（分钟），表格将根据小时费率和工序时间计算工序成本。
 Minimum quantity should be as per Stock UOM\n\n,最小数量应符合库存计量单位
 Scan job card,扫描工序卡
@@ -771,17 +771,17 @@ Sep,九月
 Oct,十月
 Nov,十一月
 Dec,十二月
- App Name,应用名称
- on the last day,在最后一天
- on the last {0},在最后一个{0}
- on the {0},在{0}
- on the {0} {1},在{0} {1}
- on {0},在{0}
- Online PassKey,在线通行证
- Save ,保存
- Save as Draft,保存为草稿
- Search...,搜索...
- to ,至
+" App Name","应用名称"
+" on the last day","在最后一天"
+" on the last {0}","在最后一个{0}"
+" on the {0}","在{0}"
+" on the {0} {1}","在{0} {1}"
+" on {0}","在{0}"
+" Online PassKey","在线通行证"
+" Save ","保存"
+" Save as Draft","保存为草稿"
+" Search...","搜索..."
+" to ","至"
 """amended_from"" field must be present to do an amendment.",必须存在“amended_from”字段才能进行修改。
 """Company History""",“公司历史”
 """Parent"" signifies the parent table in which this row must be added",“父表”表示必须在此行中添加的行所在的父表
@@ -1367,9 +1367,9 @@ A monotonically increasing number representing the version of the event.,表示�
 A multi-line condition must set a <code>result</code> variable.,多行条件必须设置 <code>result</code> 变量。
 A new account has been created for you at {0}.,已在 {0} 为您创建了新账户。
 A new batch '{0}' has been published that might interest you. Check it out!,已发布新的批次 '{0}'，可能会引起您的兴趣。快来看看吧！
-A new batch has been published on ,新的批次已发布在 
+"A new batch has been published on ","新的批次已发布在 "
 A new course '{0}' has been published that might interest you. Check it out!,已发布新的课程 '{0}'，可能会引起您的兴趣。快来看看吧！
-A new course has been published on ,新的课程已发布在 
+"A new course has been published on ","新的课程已发布在 "
 A new course has been published on {0},新的课程已发布在 {0}
 "A patch encoding the change between the data in the event property, and the data after the update.",编码事件属性中的数据与更新后数据之间变化的补丁。
 A prefix that will be added to the keys of all objects stored in the blob store.,将添加到存储在 blob 存储中的所有对象的键的前缀。
@@ -1610,7 +1610,7 @@ Add Tags,添加标签
 Add Template,添加模板
 Add the following records to your domain's DNS settings.,将以下记录添加到您域名的 DNS 设置中。
 Add To,添加到
-Add to ,添加到
+"Add to ","添加到"
 Add to Address Book,添加到通讯录
 Add to Dashboard,添加到仪表板
 Add to First EMI,添加到首期等额本息还款
@@ -1647,7 +1647,7 @@ Additional email addresses (one per line) added as aliases to the account.,其�
 Additional free-text details about the event.,关于活动的其他自由文本详情。
 Additional headers to include in HTTP requests.,HTTP 请求中包含的其他标头。
 Additional Interest,额外利息
-Additional Interest Accounts ,额外利息账户
+"Additional Interest Accounts ","额外利息账户"
 Additional Interest Accrued,额外利息应计
 Additional Interest Amount,额外利息金额
 Additional Interest Income,额外利息收入
@@ -2084,7 +2084,7 @@ Append To,追加到
 Append To can be one of {0},追加到可以是 {0} 之一
 Applicable Document Types,适用的文档类型
 Applicable Items,适用的项目
-Applicant ,申请人
+"Applicant ","申请人"
 Applicant (Borrower),申请人（借款人）
 Applicant Details,申请人详情
 Applicant Email,申请人电子邮件
@@ -2201,7 +2201,7 @@ Are you sure you want to clear the assignments?,确定要清除所有分配吗�
 "Are you sure you want to clear the demo data? This would delete the course ""A guide  to Frappe Learning"" along with all its associated data. This action cannot be undone.",确定要清除演示数据吗？这将删除课程“Frappe Learning 指南”及其所有关联数据。此操作无法撤销。
 Are you sure you want to convert {0} lead(s) to deal(s)?,确定要将 {0} 个潜在客户转换为交易吗？
 "Are you sure you want to delete ""{0}"" view?","确定要删除视图 ""{0}"" 吗？"
-Are you sure you want to delete '{0}'? ,确定要删除 '{0}' 吗？
+"Are you sure you want to delete '{0}'? ","确定要删除 '{0}' 吗？"
 Are you sure you want to delete '{0}'? Mails in this folder will be permanently removed.,确定要删除 '{0}' 吗？此文件夹中的邮件将被永久删除。
 Are you sure you want to delete all {0} rows?,确定要删除所有 {0} 行吗？
 Are you sure you want to delete the attachment?,确定要删除附件吗？
@@ -2300,7 +2300,7 @@ Assigned To Snapshot,分配给快照
 Assigned To/Owner,分配给/所有者
 Assigning...,正在分配...
 Assignment Completed,分配完成
-Assignment Date: ,分配日期：
+"Assignment Date: ","分配日期："
 Assignment for {0} {1},{0} {1} 的分配
 Assignment Key,分配键
 Assignment must be a string.,分配必须为字符串。
@@ -2440,7 +2440,7 @@ Auto Repeat User,自动重复用户
 Auto Reply,自动回复
 Auto Reply Message,自动回复消息
 Auto Sync,自动同步
-Auto Write Off Amount ,自动核销金额
+"Auto Write Off Amount ","自动核销金额"
 Auto-Allow Deterministic Pass,自动允许确定性通过
 Auto-close tickets that remain in a status for the specified number of days.,自动关闭在指定天数内保持某种状态的工单。
 Auto-enrich new Organizations,自动丰富新组织
@@ -2803,7 +2803,7 @@ Cancel action item,取消行动项
 Cancel All,全部取消
 Cancel All Documents,取消所有文档
 Cancel All Messages,取消所有消息
-Cancel Future Accruals and Demands ,取消未来的应计和扣款
+"Cancel Future Accruals and Demands ","取消未来的应计和扣款"
 Cancel future EMI Demands,取消未来的 EMI 扣款
 Cancel Import,取消导入
 Cancel meeting,取消会议
@@ -3647,7 +3647,7 @@ Create Job Offer,创建录用通知
 Create Letter Head,创建信头
 Create Log,创建日志
 Create Missing Link,创建缺失链接
-Create New Assets ,创建新资产
+"Create New Assets ","创建新资产"
 Create new business holiday,创建新的业务假日
 Create New DocType,创建新 DocType
 Create New Group,创建新组
@@ -8456,7 +8456,7 @@ Move cursor to next column,将光标移至下一列
 Move cursor to previous column,将光标移至上一列
 Move sections to new tab,将部分移动到新选项卡
 Move the sender's future emails to Junk automatically,自动将发件人的未来邮件移至垃圾邮件
-Move to ,移至
+"Move to ","移至"
 Move to Inbox,移至收件箱
 Move to Junk,移至垃圾邮件
 Move to next step when clicked inside highlighted area.,点击高亮区域内部时移至下一步。
@@ -9294,7 +9294,7 @@ Other services this one depends on.,本项所依赖的其他服务。
 OTP App,OTP 应用
 OTP Generated at,OTP 生成于
 OTP Issuer Name,OTP 发行者名称
-OTP placeholder should be defined as <code>{{ otp }}</code> ,OTP 占位符应定义为 <code>{{ otp }}</code> 
+"OTP placeholder should be defined as <code>{{ otp }}</code> ","OTP 占位符应定义为 <code>{{ otp }}</code> "
 OTP Secret has been reset. Re-registration will be required on next login.,OTP 密钥已重置。下次登录时需要重新注册。
 OTP Secret Reset - {0},OTP 密钥重置 - {0}
 OTP setup using OTP App was not completed. Please contact Administrator.,使用 OTP 应用进行的 OTP 设置未完成。请联系管理员。
@@ -9566,7 +9566,7 @@ Penalty Charges Accounts,罚息费用账户
 Penalty Charges Rate,罚息费率
 Penalty Income Account is mandatory,罚息收入账户为必填项
 Penalty Interest Rate (%),罚息利率 (%)
-Penalty Interest Rate is levied on the pending amount on a daily basis in case of delayed repayment ,若还款延迟，罚息将按日对未结金额计收。
+"Penalty Interest Rate is levied on the pending amount on a daily basis in case of delayed repayment ","若还款延迟，罚息将按日对未结金额计收。"
 Penalty Overdue,罚息逾期
 Penalty Receivable Account,罚息应收账户
 Penalty Receivable Account is mandatory,罚息应收账户为必填项
@@ -10662,7 +10662,7 @@ Remove field,移除字段
 Remove filter,移除筛选器
 Remove Filter,移除筛选器
 Remove From,从...移除
-Remove from ,从...移除
+"Remove from ","从...移除"
 Remove from Address Books,从地址簿中移除
 Remove from Recents,从最近使用中移除
 Remove last column,移除最后一列
@@ -10696,7 +10696,7 @@ Reopen,重新打开
 Reordered,已重新排序
 Repayment,还款
 Repayment Account,还款账户
-Repayment Amount must be greater than ,还款金额必须大于
+"Repayment Amount must be greater than ","还款金额必须大于"
 Repayment cannot be made for closed loan,无法对已关闭的贷款进行还款
 Repayment Date On,还款日期
 Repayment Frequency,还款频率
@@ -11754,7 +11754,7 @@ Setting up Filebeat Stream...,正在设置 Filebeat 流...
 Setting up Global Search documents.,正在设置全局搜索文档。
 Setting up SSL...,正在设置 SSL...
 Setting up your system,正在设置您的系统
-Settings - ,设置 - 
+"Settings - ","设置 - "
 Settings Dropdown,设置下拉菜单
 Settings for Contact Us Page,联系我们页面设置
 Settings for the About Us Page,关于我们页面设置
@@ -12004,7 +12004,7 @@ SLA 秒数,SLA 秒数
 SLA 策略,SLA 策略
 Slack Channel,Slack 频道
 Slack Webhook Error,Slack Webhook 错误
-SLAs align your team and customers with defined timelines for a reliable experience. Learn more about SLA ,SLA 帮助您的团队和客户根据定义的时间表获得可靠的体验。了解有关 SLA 的更多信息
+"SLAs align your team and customers with defined timelines for a reliable experience. Learn more about SLA ","SLA 帮助您的团队和客户根据定义的时间表获得可靠的体验。了解有关 SLA 的更多信息"
 Slide,幻灯片
 Slides,幻灯片
 Slideshow,幻灯片放映
@@ -12734,7 +12734,7 @@ The JMAP account ID this document represents. The document is named by this valu
 The JMAP Push Subscription Private Key does not correspond to the P256DH public key.,JMAP 推送订阅私钥与 P256DH 公钥不对应。
 The JMAP Push Subscription {0} key must be URL-safe base64 encoded.,JMAP 推送订阅 {0} 密钥必须是 URL 安全的 base64 编码。
 The last day to schedule your evaluation is {0}.,安排评估的最后一天是 {0}。
-The last day to schedule your evaluations is ,安排评估的最后一天是
+"The last day to schedule your evaluations is ","安排评估的最后一天是"
 "The length of the event expressed as a duration (e.g., PT30M, P1D).",以持续时间表示的事件长度（例如，PT30M，P1D）。
 The lesson does not exist.,课程不存在。
 The link to the CalendarEvent that this notification is about.,此通知所关于的 CalendarEvent 的链接。
@@ -13251,7 +13251,7 @@ Total EMI Charges,EMI 费用总额
 Total Errors (last 1 day),错误总数（最近 1 天）
 Total Exchange Gain/Loss,汇兑损益总额
 Total Images,图片总数
-Total Installments Overdue ,逾期分期总额
+"Total Installments Overdue ","逾期分期总额"
 Total Installments Paid,已付分期总额
 Total Installments Raised,已开出分期总额
 Total Interest Paid,已付利息总额
@@ -14080,7 +14080,7 @@ Wildcard Filter,通配符过滤器
 Will be deleted,将被删除
 Will be included in all public Wiki pages,将包含在所有公共 Wiki 页面中
 Will be your login ID,将成为您的登录 ID
-Will do a deduplication check and auto create a customer when a lead is converted to applicaiton  ,将执行去重检查，并在潜在客户转换为申请时自动创建客户
+"Will do a deduplication check and auto create a customer when a lead is converted to applicaiton  ","将执行去重检查，并在潜在客户转换为申请时自动创建客户"
 Will run scheduled jobs only once a day for inactive sites. Set it to 0 to avoid automatically disabling the scheduler.,仅对非活动站点每天运行一次计划任务。将其设置为 0 以避免自动禁用调度程序。
 Window Days,窗口天数
 Window End,窗口结束
