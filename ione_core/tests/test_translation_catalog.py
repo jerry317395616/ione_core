@@ -7,6 +7,7 @@ from unittest.mock import patch
 from ione_core.translation_catalog import (
 	_translate_batch_resilient,
 	_translation_from_row,
+	audit_translation_values,
 	html_tags,
 	is_translation_candidate,
 	merge_translations_into_csv,
@@ -91,6 +92,24 @@ class TestTranslationCatalog(TestCase):
 		self.assertEqual(translated, {"Save": "保存", "Search": "搜索"})
 		self.assertEqual(failures, {})
 		self.assertEqual(request.call_args_list[1].args[-1], ["Search"])
+
+	def test_audit_reports_missing_invalid_and_extra_messages(self):
+		result = audit_translation_values(
+			["Save", "Search", "Frappe", "$dayjs"],
+			{
+				"Save": "保存",
+				"Search": "Search",
+				"Frappe": "Frappe",
+				"Unused": "未使用",
+			},
+		)
+
+		self.assertEqual(result["candidate_messages"], 2)
+		self.assertEqual(result["translated_messages"], 1)
+		self.assertEqual(result["missing_messages"], 0)
+		self.assertEqual(result["invalid_messages"], 1)
+		self.assertEqual(result["extra_messages"], 2)
+		self.assertIn("Search", result["invalid_sample"])
 
 	def test_merges_checkpoint_into_frappe_csv(self):
 		with TemporaryDirectory() as directory:

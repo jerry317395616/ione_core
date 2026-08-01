@@ -339,6 +339,38 @@ def _write_json_dict(path: Path, values: dict[str, str]) -> None:
 	temporary.replace(path)
 
 
+def audit_translation_values(
+	messages: list[str],
+	translations: dict[str, str],
+) -> dict[str, Any]:
+	candidates = {message for message in messages if is_translation_candidate(message)}
+	missing = sorted(candidates - translations.keys())
+	invalid = {
+		source: errors
+		for source in sorted(candidates & translations.keys())
+		if (errors := validate_translation(source, translations[source]))
+	}
+	extra = sorted(translations.keys() - candidates)
+	return {
+		"candidate_messages": len(candidates),
+		"translated_messages": len(candidates & translations.keys()) - len(invalid),
+		"missing_messages": len(missing),
+		"invalid_messages": len(invalid),
+		"extra_messages": len(extra),
+		"missing_sample": missing[:20],
+		"invalid_sample": dict(list(invalid.items())[:20]),
+		"extra_sample": extra[:20],
+	}
+
+
+def audit_translation_checkpoint(input_file: str) -> dict[str, Any]:
+	"""Audit a live checkpoint against every installed-app translation candidate."""
+	return audit_translation_values(
+		collect_missing_messages(),
+		_load_json_dict(Path(input_file)),
+	)
+
+
 def merge_translations_into_csv(
 	input_file: str,
 	csv_file: str,
