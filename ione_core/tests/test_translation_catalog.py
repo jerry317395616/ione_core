@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -13,6 +14,7 @@ from ione_core.translation_catalog import (
 	merge_translations_into_csv,
 	placeholders,
 	requires_chinese_text,
+	translate_missing_catalog,
 	validate_translation,
 )
 
@@ -193,6 +195,34 @@ class TestTranslationCatalog(TestCase):
 			},
 		)
 		self.assertEqual(request.call_count, 3)
+
+	@patch("ione_core.translation_catalog.collect_missing_messages", return_value=["Save"])
+	def test_complete_checkpoint_is_normalized_without_loading_a_model(self, _messages):
+		with TemporaryDirectory() as directory:
+			checkpoint = Path(directory) / "translations.json"
+			failure_file = checkpoint.with_suffix(".json.failures")
+			checkpoint.write_text(
+				json.dumps(
+					{"Save": "\u4fdd\u5b58", "Unused": "\u672a\u4f7f\u7528"},
+					ensure_ascii=False,
+				),
+				encoding="utf-8",
+			)
+			failure_file.write_text(
+				json.dumps({"Unused": "old failure"}),
+				encoding="utf-8",
+			)
+
+			with patch.dict(sys.modules, {"frappe": object(), "requests": object()}):
+				result = translate_missing_catalog(output_file=str(checkpoint))
+
+			self.assertEqual(result["remaining_messages"], 0)
+			self.assertEqual(result["failed_messages"], 0)
+			self.assertEqual(
+				json.loads(checkpoint.read_text(encoding="utf-8")),
+				{"Save": "\u4fdd\u5b58"},
+			)
+			self.assertEqual(json.loads(failure_file.read_text(encoding="utf-8")), {})
 
 	def test_audit_reports_missing_invalid_and_extra_messages(self):
 		result = audit_translation_values(

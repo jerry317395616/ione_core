@@ -314,6 +314,16 @@ def translate_missing_catalog(
 	pending = [message for message in messages if message not in completed]
 	if limit:
 		pending = pending[:limit]
+	_write_json_dict(output_path, completed)
+	_write_json_dict(failure_path, failures)
+	if not pending:
+		return {
+			"catalog_messages": len(messages),
+			"translated_messages": len(completed),
+			"remaining_messages": max(0, len(messages) - len(completed)),
+			"failed_messages": len(failures),
+			"discarded_checkpoint_messages": discarded,
+		}
 
 	model = _get_flow_model(model_name)
 	api_key = model.get_password("api_key")
