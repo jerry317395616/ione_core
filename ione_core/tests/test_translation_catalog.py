@@ -125,6 +125,7 @@ class TestTranslationCatalog(TestCase):
 			"Stalwart/JMAP",
 			"Supabase",
 			"Teachmint",
+			"Thinkific",
 			"Vercel",
 			"Xero",
 			"Zapier",

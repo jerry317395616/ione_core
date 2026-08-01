@@ -96,6 +96,7 @@ TECHNICAL_PASSTHROUGH = {
 	"Supabase",
 	"Teachmint",
 	"Telegram",
+	"Thinkific",
 	"Trello",
 	"Twilio",
 	"Unsplash",
