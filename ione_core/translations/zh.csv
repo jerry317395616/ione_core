@@ -17,6 +17,7 @@ Subcontracting,委外
 Flow Agent,Flow 执行智能体
 Flow Session,Flow 会话
 Flow Run,Flow 运行记录
+"Grouped by <span style='font-weight:600;'>{0}</b>","按 <span style='font-weight:600;'>{0}</b> 分组"
 %John%,%张三%
 A lead sync source is already enabled for this Facebook Lead Form!,此 Facebook 线索表单已启用线索同步源！
 A {0} cannot report to a {1},{0} 不能向 {1} 汇报
