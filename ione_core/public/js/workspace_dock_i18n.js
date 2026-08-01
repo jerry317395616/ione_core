@@ -168,17 +168,16 @@
 		}, 100);
 
 		const observer = new MutationObserver(schedule_translation);
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-			attributeFilter: [
-				"title",
-				"aria-label",
-				"data-original-title",
-				"placeholder",
-			],
-		});
+		observer.observe(document.body, { childList: true, subtree: true });
+
+		let flow_attempts = 0;
+		const flow_timer = window.setInterval(() => {
+			flow_attempts += 1;
+			translate_flow_panel();
+			if (flow_attempts >= 100) {
+				window.clearInterval(flow_timer);
+			}
+		}, 200);
 	}
 
 	if (document.readyState === "loading") {
