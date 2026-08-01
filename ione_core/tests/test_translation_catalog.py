@@ -33,6 +33,13 @@ class TestTranslationCatalog(TestCase):
 			["placeholders changed"],
 		)
 
+	def test_literal_double_braces_are_not_treated_as_jinja_placeholders(self):
+		source = "Special Characters except '{{' and '}}' are not allowed in {0}"
+		translation = "{0} 中不允许使用 '{{' 和 '}}' 特殊字符"
+
+		self.assertEqual(placeholders(source), placeholders(translation))
+		self.assertEqual(validate_translation(source, translation), [])
+
 	def test_preserves_html_tags(self):
 		source = "<strong>Warning</strong><br>Try again"
 		translation = "<strong>警告</strong><br>请重试"
@@ -121,6 +128,7 @@ class TestTranslationCatalog(TestCase):
 			"Office 365",
 			"Outlook.com",
 			"Plausible",
+			"Pipedrive",
 			"REST API",
 			"REST JSON",
 			"Robots.txt",
@@ -142,6 +150,7 @@ class TestTranslationCatalog(TestCase):
 			"Websocket",
 			"X (Twitter)",
 			"Xero",
+			"Zoho CRM",
 			"Zapier",
 			"Microsoft Teams",
 			"PayPal",
@@ -156,6 +165,8 @@ class TestTranslationCatalog(TestCase):
 			"YYYY-MM-DD",
 			"dd/mm/yyyy",
 			"vscode",
+			"exchangerate-api",
+			"fawazahmed-exchange-api",
 		):
 			with self.subTest(source=source):
 				self.assertFalse(requires_chinese_text(source))

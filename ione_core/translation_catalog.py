@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 PLACEHOLDER_PATTERN = re.compile(
-	r"(?:\{\{[^{}]+\}\}|\$\{[^{}]+\}|%\([^)]+\)[#0 +\-]?(?:\d+|\*)?(?:\.\d+)?[diouxXeEfFgGcrs%]|"
+	r"(?:\{\{\s*[a-zA-Z_][^{}]*\}\}|\$\{[^{}]+\}|%\([^)]+\)[#0 +\-]?(?:\d+|\*)?(?:\.\d+)?[diouxXeEfFgGcrs%]|"
 	r"%[sdif]|\{\d+\}|\{[a-zA-Z_][\w.]*\})"
 )
 HTML_TAG_PATTERN = re.compile(r"</?[a-zA-Z][^>]*>")
@@ -70,6 +70,7 @@ TECHNICAL_PASSTHROUGH = {
 	"Oracle",
 	"Outlook.com",
 	"PayPal",
+	"Pipedrive",
 	"Plausible",
 	"PostgreSQL",
 	"Pusher",
@@ -115,6 +116,7 @@ TECHNICAL_PASSTHROUGH = {
 	"YouTube",
 	"Xero",
 	"X (Twitter)",
+	"Zoho CRM",
 	"Zapier",
 	"Zoom",
 	"Arial",
@@ -142,6 +144,8 @@ TECHNICAL_PASSTHROUGH = {
 	"VS Code",
 	"VSCode",
 	"wkhtmltopdf",
+	"exchangerate-api",
+	"fawazahmed-exchange-api",
 }
 TECHNICAL_PASSTHROUGH_CASEFOLDED = frozenset(
 	value.casefold() for value in TECHNICAL_PASSTHROUGH
