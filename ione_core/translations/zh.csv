@@ -91,6 +91,8 @@ Back to File Upload,返回文件上传
 Back to previous question,返回上一题
 Background Sync Frequency,后台同步频率
 Bidirectional sync of existing CRM Products and ERPNext Items. Runs in the background.,现有 CRM 产品与 ERPNext 物料之间的双向同步。在后台运行。
+Blob ID,二进制对象 ID
+Blobs,二进制对象
 CRM Product Sync Issue,CRM 产品同步问题
 CRM Rolling Response Time,CRM 滚动响应时间
 CRM Sales Hierarchy,CRM 销售层级
