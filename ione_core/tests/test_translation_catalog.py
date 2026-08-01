@@ -159,6 +159,25 @@ class TestTranslationCatalog(TestCase):
 		self.assertEqual(failures, {})
 		self.assertEqual(request.call_args_list[1].args[-1], ["Search"])
 
+	@patch("ione_core.translation_catalog.time.sleep")
+	@patch("ione_core.translation_catalog._request_translations")
+	def test_resilient_batch_does_not_split_validation_failures(self, request, _sleep):
+		request.return_value = {"Search": "Search", "Save": "Save"}
+
+		translated, failures = _translate_batch_resilient(
+			object(), "http://model", "secret", "model", ["Search", "Save"]
+		)
+
+		self.assertEqual(translated, {})
+		self.assertEqual(
+			failures,
+			{
+				"Search": "translation contains no Chinese text",
+				"Save": "translation contains no Chinese text",
+			},
+		)
+		self.assertEqual(request.call_count, 3)
+
 	def test_audit_reports_missing_invalid_and_extra_messages(self):
 		result = audit_translation_values(
 			["Save", "Search", "Frappe", "$dayjs"],

@@ -321,12 +321,15 @@ def _translate_batch_resilient(
 	translated: dict[str, str] = {}
 	pending = list(messages)
 	last_errors: dict[str, str] = {}
+	last_attempt_was_request_error = False
 	for attempt in range(3):
 		try:
 			result = _request_translations(session, base_url, api_key, model_id, pending)
 		except Exception as exc:
+			last_attempt_was_request_error = True
 			last_errors = {source: str(exc) for source in pending}
 		else:
+			last_attempt_was_request_error = False
 			next_pending: list[str] = []
 			last_errors = {}
 			for source in pending:
@@ -341,6 +344,8 @@ def _translate_batch_resilient(
 				return translated, {}
 		time.sleep(2**attempt)
 
+	if pending and not last_attempt_was_request_error:
+		return translated, last_errors
 	if len(pending) == 1:
 		return translated, {pending[0]: last_errors.get(pending[0], "translation failed")}
 	if pending:
