@@ -9,6 +9,7 @@ logo,标志
 Slack Webhook URL,Slack Webhook 地址
 TOS URI,服务条款 URI
 Webhook URL,Webhook 地址
+{0} of {1},"第 {0} 项，共 {1} 项"
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,首页
 Accounting,会计

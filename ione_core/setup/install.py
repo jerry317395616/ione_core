@@ -65,6 +65,7 @@ def after_install():
 	ensure_roles()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	sync_translation_overrides()
 
 
 def after_migrate():
@@ -73,6 +74,13 @@ def after_migrate():
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
 	ensure_runtime_config()
+	sync_translation_overrides()
+
+
+def sync_translation_overrides():
+	from ione_core.translation_overrides import sync_translation_overrides as sync
+
+	return sync()
 
 
 def ensure_runtime_config():
