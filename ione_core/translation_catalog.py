@@ -1,0 +1,306 @@
+from __future__ import annotations
+
+import csv
+import json
+import re
+import time
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+PLACEHOLDER_PATTERN = re.compile(
+	r"(?:\{\{[^{}]+\}\}|\$\{[^{}]+\}|%\([^)]+\)[#0 +\-]?(?:\d+|\*)?(?:\.\d+)?[diouxXeEfFgGcrs%]|"
+	r"%[sdif]|\{\d+\}|\{[a-zA-Z_][\w.]*\})"
+)
+HTML_TAG_PATTERN = re.compile(r"</?[a-zA-Z][^>]*>")
+CODE_MARKERS = (
+	"[File truncated to fit the context window.]",
+	"exports=function",
+	"__name__",
+	"sourceMappingURL",
+	"webpack",
+	"function(e,n,s)",
+	"createElement(",
+	"onUpdate:modelValue",
+)
+
+
+def collect_missing_messages(language: str = "zh", apps: list[str] | None = None) -> list[str]:
+	"""Return source messages that are not translated by any installed app."""
+	import frappe
+	from frappe.translate import deduplicate_messages, get_all_translations, get_messages_for_app
+
+	translations = get_all_translations(language)
+	messages: list[tuple[Any, ...]] = []
+	for app in apps or frappe.get_installed_apps():
+		messages.extend(get_messages_for_app(app))
+
+	return sorted(
+		{
+			message[1]
+			for message in deduplicate_messages(messages)
+			if len(message) > 1 and message[1] and not translations.get(message[1])
+		}
+	)
+
+
+def is_translation_candidate(message: str) -> bool:
+	"""Discard extractor artifacts while retaining labels, errors, and HTML help."""
+	if not message or not message.strip():
+		return False
+	stripped = message.strip()
+	if any(marker in message for marker in CODE_MARKERS):
+		return False
+	if stripped.startswith(("),", ",!0", "))", "}:_", "):_")):
+		return False
+	if len(message) > 1000 and not ("<" in message and ">" in message):
+		return False
+	if len(message) > 500:
+		punctuation = sum(message.count(char) for char in "{}[]();=,")
+		if punctuation / len(message) > 0.12 and message.count(" ") / len(message) < 0.08:
+			return False
+	return True
+
+
+def placeholders(value: str) -> Counter[str]:
+	return Counter(PLACEHOLDER_PATTERN.findall(value or ""))
+
+
+def html_tags(value: str) -> Counter[str]:
+	return Counter(HTML_TAG_PATTERN.findall(value or ""))
+
+
+def validate_translation(source: str, translation: str) -> list[str]:
+	errors: list[str] = []
+	if not isinstance(translation, str) or not translation.strip():
+		return ["translation is empty"]
+	if placeholders(source) != placeholders(translation):
+		errors.append("placeholders changed")
+	if html_tags(source) != html_tags(translation):
+		errors.append("HTML tags changed")
+	return errors
+
+
+def translate_missing_catalog(
+	output_file: str,
+	model_name: str | None = None,
+	base_url_override: str | None = None,
+	batch_size: int = 80,
+	limit: int = 0,
+) -> dict[str, int]:
+	"""Translate the missing installed-app catalog with the site's enabled Flow model.
+
+	The JSON checkpoint is written after every successful batch, so interrupted runs
+	can resume without repeating completed model calls.
+	"""
+	import frappe
+	import requests
+
+	output_path = Path(output_file)
+	completed = _load_json_dict(output_path)
+	failure_path = output_path.with_suffix(output_path.suffix + ".failures")
+	failures = _load_json_dict(failure_path)
+	messages = [message for message in collect_missing_messages() if is_translation_candidate(message)]
+	pending = [message for message in messages if message not in completed]
+	if limit:
+		pending = pending[:limit]
+
+	model = _get_flow_model(model_name)
+	api_key = model.get_password("api_key")
+	base_url = (base_url_override or model.base_url or "").rstrip("/")
+	if not base_url:
+		frappe.throw("The selected Flow Model has no base URL.")
+	model_id = str(model.model_id or "").removeprefix("openai/")
+
+	session = requests.Session()
+	session.trust_env = False
+	for offset in range(0, len(pending), max(1, int(batch_size))):
+		batch = pending[offset : offset + batch_size]
+		translated, batch_failures = _translate_batch_resilient(
+			session, base_url, api_key, model_id, batch
+		)
+		completed.update(translated)
+		for source in translated:
+			failures.pop(source, None)
+		failures.update(batch_failures)
+		_write_json_dict(output_path, completed)
+		_write_json_dict(failure_path, failures)
+		print(
+			f"processed {min(offset + len(batch), len(pending))}/{len(pending)}; "
+			f"translated={len(completed)} failures={len(failures)}"
+		)
+
+	return {
+		"catalog_messages": len(messages),
+		"translated_messages": len(completed),
+		"remaining_messages": max(0, len(messages) - len(completed)),
+		"failed_messages": len(failures),
+	}
+
+
+def _get_flow_model(model_name: str | None):
+	import frappe
+
+	name = model_name or frappe.db.get_value(
+		"Flow Model", {"enabled": 1}, "name", order_by="creation asc"
+	)
+	if not name:
+		frappe.throw("No enabled Flow Model is configured.")
+	return frappe.get_doc("Flow Model", name)
+
+
+def _translate_batch_with_retry(
+	session: Any,
+	base_url: str,
+	api_key: str,
+	model_id: str,
+	messages: list[str],
+) -> dict[str, str]:
+	last_error: Exception | None = None
+	for attempt in range(3):
+		try:
+			result = _request_translations(session, base_url, api_key, model_id, messages)
+			errors = {
+				source: validate_translation(source, result.get(source, ""))
+				for source in messages
+				if validate_translation(source, result.get(source, ""))
+			}
+			if errors:
+				raise ValueError(f"invalid translations: {errors}")
+			return {source: result[source] for source in messages}
+		except Exception as exc:
+			last_error = exc
+			time.sleep(2**attempt)
+
+	raise RuntimeError(f"translation failed for {messages!r}: {last_error}")
+
+
+def _translate_batch_resilient(
+	session: Any,
+	base_url: str,
+	api_key: str,
+	model_id: str,
+	messages: list[str],
+) -> tuple[dict[str, str], dict[str, str]]:
+	try:
+		return _translate_batch_with_retry(
+			session, base_url, api_key, model_id, messages
+		), {}
+	except Exception as exc:
+		if len(messages) == 1:
+			return {}, {messages[0]: str(exc)}
+		middle = len(messages) // 2
+		left, left_failures = _translate_batch_resilient(
+			session, base_url, api_key, model_id, messages[:middle]
+		)
+		right, right_failures = _translate_batch_resilient(
+			session, base_url, api_key, model_id, messages[middle:]
+		)
+		return {**left, **right}, {**left_failures, **right_failures}
+
+
+def _request_translations(
+	session: Any,
+	base_url: str,
+	api_key: str,
+	model_id: str,
+	messages: list[str],
+) -> dict[str, str]:
+	items = [{"id": index, "text": message} for index, message in enumerate(messages)]
+	response = session.post(
+		f"{base_url}/chat/completions",
+		headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+		json={
+			"model": model_id,
+			"temperature": 0,
+			"max_tokens": 8192,
+			"messages": [
+				{
+					"role": "system",
+					"content": (
+						"You are the Simplified Chinese localization editor for the Frappe business "
+						"software ecosystem. Translate every UI label, help text, validation message, "
+						"and notification naturally and professionally. Preserve every placeholder, "
+						"HTML tag, variable, number, punctuation intent, and line break. Keep product "
+						"and technical names such as Frappe, ERPNext, I-ONE, Flow, CRM, HR, API, URL, "
+						"SQL, JSON, CSV, DocType, ID, OAuth, and SLA unchanged. Return only a JSON "
+						"array of objects with integer id and string translation; do not add markdown."
+					),
+				},
+				{
+					"role": "user",
+					"content": json.dumps(items, ensure_ascii=False),
+				},
+			],
+		},
+		timeout=330,
+	)
+	response.raise_for_status()
+	content = response.json()["choices"][0]["message"]["content"]
+	rows = _parse_json_array(content)
+	by_id = {int(row["id"]): _translation_from_row(row) for row in rows}
+	if set(by_id) != set(range(len(messages))):
+		raise ValueError(
+			f"model response ids {sorted(by_id)} did not match {list(range(len(messages)))}"
+		)
+	return {source: by_id[index] for index, source in enumerate(messages)}
+
+
+def _translation_from_row(row: dict[str, Any]) -> str:
+	for key in ("translation", "translated_text", "translated", "text"):
+		value = row.get(key)
+		if isinstance(value, str) and value.strip():
+			return value
+	raise ValueError(f"model response row has no translation: {row!r}")
+
+
+def _parse_json_array(content: str) -> list[dict[str, Any]]:
+	value = (content or "").strip()
+	if value.startswith("```"):
+		value = re.sub(r"^```(?:json)?\s*|\s*```$", "", value, flags=re.IGNORECASE)
+	start = value.find("[")
+	end = value.rfind("]")
+	if start < 0 or end < start:
+		raise ValueError("model response did not contain a JSON array")
+	parsed = json.loads(value[start : end + 1])
+	if not isinstance(parsed, list):
+		raise ValueError("model response is not a JSON array")
+	return parsed
+
+
+def _load_json_dict(path: Path) -> dict[str, str]:
+	if not path.exists():
+		return {}
+	loaded = json.loads(path.read_text(encoding="utf-8"))
+	return {str(key): str(value) for key, value in loaded.items()}
+
+
+def _write_json_dict(path: Path, values: dict[str, str]) -> None:
+	path.parent.mkdir(parents=True, exist_ok=True)
+	temporary = path.with_suffix(path.suffix + ".tmp")
+	temporary.write_text(
+		json.dumps(dict(sorted(values.items())), ensure_ascii=False, indent=2) + "\n",
+		encoding="utf-8",
+	)
+	temporary.replace(path)
+
+
+def merge_translations_into_csv(input_file: str, csv_file: str) -> dict[str, int]:
+	"""Merge a validated JSON translation checkpoint into a Frappe CSV catalog."""
+	translations = _load_json_dict(Path(input_file))
+	csv_path = Path(csv_file)
+	existing: dict[str, str] = {}
+	if csv_path.exists():
+		with csv_path.open("r", encoding="utf-8", newline="") as handle:
+			for row in csv.reader(handle):
+				if len(row) >= 2 and row[0]:
+					existing[row[0]] = row[1]
+
+	added = len(set(translations) - set(existing))
+	existing.update(translations)
+	temporary = csv_path.with_suffix(csv_path.suffix + ".tmp")
+	with temporary.open("w", encoding="utf-8", newline="") as handle:
+		writer = csv.writer(handle, lineterminator="\n")
+		writer.writerows(sorted(existing.items(), key=lambda item: item[0].casefold()))
+	temporary.replace(csv_path)
+	return {"total": len(existing), "added": added, "updated": len(translations) - added}
