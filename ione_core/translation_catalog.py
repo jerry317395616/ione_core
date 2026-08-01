@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import html
 import json
 import re
 import time
@@ -39,6 +40,9 @@ TECHNICAL_PASSTHROUGH = {
 	"SQL",
 	"URL",
 	"UTF-8",
+	"Arial",
+	"Azure",
+	"Bootstrap",
 }
 CODE_MARKERS = (
 	"[File truncated to fit the context window.]",
@@ -51,6 +55,11 @@ CODE_MARKERS = (
 	"onUpdate:modelValue",
 	").format(",
 	"=>",
+	"console.",
+	"===",
+	"!==",
+	"&&",
+	"||",
 )
 
 
@@ -82,7 +91,9 @@ def is_translation_candidate(message: str) -> bool:
 		return False
 	if stripped.startswith(("),", ",!0", "))", "}:_", "):_")):
 		return False
-	if re.fullmatch(r"\$[a-zA-Z_][\w.]*|\.[a-zA-Z0-9.]+", stripped):
+	if re.fullmatch(
+		r"\$[a-zA-Z_][\w.]*|@[a-zA-Z0-9_.-]+|\.[a-zA-Z0-9.]+", stripped
+	):
 		return False
 	if len(message) > 1000 and not ("<" in message and ">" in message):
 		return False
@@ -102,8 +113,13 @@ def html_tags(value: str) -> Counter[str]:
 
 
 def requires_chinese_text(source: str) -> bool:
-	visible = PLACEHOLDER_PATTERN.sub("", HTML_TAG_PATTERN.sub("", source or "")).strip()
+	visible = html.unescape(source or "")
+	visible = PLACEHOLDER_PATTERN.sub("", HTML_TAG_PATTERN.sub("", visible)).strip()
 	if not visible or visible in TECHNICAL_PASSTHROUGH:
+		return False
+	if re.fullmatch(r"[A-Z][A-Z0-9_-]{1,19}", visible):
+		return False
+	if " " not in visible and re.fullmatch(r"[A-Z][A-Za-z0-9_-]*[A-Z0-9][A-Za-z0-9_-]*", visible):
 		return False
 	if re.fullmatch(r"(?:https?://|mailto:|www\.)\S+|\S+@\S+\.\S+", visible):
 		return False

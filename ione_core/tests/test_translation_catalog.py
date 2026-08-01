@@ -52,6 +52,9 @@ class TestTranslationCatalog(TestCase):
 		self.assertFalse(is_translation_candidate("$dayjs"))
 		self.assertFalse(is_translation_candidate(".tar.gz"))
 		self.assertFalse(is_translation_candidate("1:N"))
+		self.assertFalse(is_translation_candidate(";zs[Bs]===!0&&console.error("))
+		self.assertFalse(is_translation_candidate("@jane"))
+		self.assertFalse(is_translation_candidate("&lt;head&gt; HTML"))
 
 	def test_keeps_normal_labels_and_help_text(self):
 		self.assertTrue(is_translation_candidate("Accounts Payable Ageing"))
@@ -72,7 +75,16 @@ class TestTranslationCatalog(TestCase):
 		)
 
 	def test_allows_product_names_and_technical_literals(self):
-		for source in ("Frappe", "ERPNext", "API", "https://example.com", "YYYY-MM-DD"):
+		for source in (
+			"Frappe",
+			"ERPNext",
+			"API",
+			"AAAA",
+			"AmazonRoute53",
+			"BigQuery",
+			"https://example.com",
+			"YYYY-MM-DD",
+		):
 			with self.subTest(source=source):
 				self.assertFalse(requires_chinese_text(source))
 				self.assertEqual(validate_translation(source, source), [])
