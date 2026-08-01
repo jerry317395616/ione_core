@@ -82,6 +82,7 @@ class TestTranslationCatalog(TestCase):
 			"AAAA",
 			"AmazonRoute53",
 			"BigQuery",
+			"CRM-DEAL-.YYYY.-",
 			"https://example.com",
 			"YYYY-MM-DD",
 		):

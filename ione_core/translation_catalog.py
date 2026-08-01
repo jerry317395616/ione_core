@@ -119,6 +119,8 @@ def requires_chinese_text(source: str) -> bool:
 		return False
 	if re.fullmatch(r"[A-Z][A-Z0-9_-]{1,19}", visible):
 		return False
+	if not re.search(r"[a-z]", visible) and re.fullmatch(r"[A-Z0-9_.:/-]+", visible):
+		return False
 	if " " not in visible and re.fullmatch(r"[A-Z][A-Za-z0-9_-]*[A-Z0-9][A-Za-z0-9_-]*", visible):
 		return False
 	if re.fullmatch(r"(?:https?://|mailto:|www\.)\S+|\S+@\S+\.\S+", visible):
