@@ -75,6 +75,8 @@ TECHNICAL_PASSTHROUGH = {
 	"Pusher",
 	"Qwen",
 	"Razorpay",
+	"REST API",
+	"REST JSON",
 	"Redis",
 	"S3",
 	"SLA",

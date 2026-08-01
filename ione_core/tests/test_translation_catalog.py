@@ -111,6 +111,8 @@ class TestTranslationCatalog(TestCase):
 			"Office 365",
 			"Outlook.com",
 			"Plausible",
+			"REST API",
+			"REST JSON",
 			"Sentry",
 			"Shopify",
 			"Supabase",
