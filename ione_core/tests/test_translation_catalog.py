@@ -82,6 +82,8 @@ class TestTranslationCatalog(TestCase):
 			"AAAA",
 			"AmazonRoute53",
 			"BigQuery",
+			"Classplus",
+			"Cloudflare",
 			"CRM-DEAL-.YYYY.-",
 			"https://example.com",
 			"YYYY-MM-DD",

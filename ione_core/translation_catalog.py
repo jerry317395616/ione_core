@@ -43,6 +43,8 @@ TECHNICAL_PASSTHROUGH = {
 	"Arial",
 	"Azure",
 	"Bootstrap",
+	"Classplus",
+	"Cloudflare",
 }
 CODE_MARKERS = (
 	"[File truncated to fit the context window.]",
