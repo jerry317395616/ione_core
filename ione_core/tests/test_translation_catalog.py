@@ -45,6 +45,10 @@ class TestTranslationCatalog(TestCase):
 		self.assertFalse(
 			is_translation_candidate("\n\n[File truncated to fit the context window.]")
 		)
+		self.assertFalse(is_translation_candidate(')} at ${t(e.datetime).format("'))
+		self.assertFalse(is_translation_candidate("$dayjs"))
+		self.assertFalse(is_translation_candidate(".tar.gz"))
+		self.assertFalse(is_translation_candidate("1:N"))
 
 	def test_keeps_normal_labels_and_help_text(self):
 		self.assertTrue(is_translation_candidate("Accounts Payable Ageing"))

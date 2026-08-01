@@ -49,6 +49,8 @@ CODE_MARKERS = (
 	"function(e,n,s)",
 	"createElement(",
 	"onUpdate:modelValue",
+	").format(",
+	"=>",
 )
 
 
@@ -80,13 +82,15 @@ def is_translation_candidate(message: str) -> bool:
 		return False
 	if stripped.startswith(("),", ",!0", "))", "}:_", "):_")):
 		return False
+	if re.fullmatch(r"\$[a-zA-Z_][\w.]*|\.[a-zA-Z0-9.]+", stripped):
+		return False
 	if len(message) > 1000 and not ("<" in message and ">" in message):
 		return False
 	if len(message) > 500:
 		punctuation = sum(message.count(char) for char in "{}[]();=,")
 		if punctuation / len(message) > 0.12 and message.count(" ") / len(message) < 0.08:
 			return False
-	return True
+	return requires_chinese_text(message)
 
 
 def placeholders(value: str) -> Counter[str]:
@@ -141,6 +145,19 @@ def translate_missing_catalog(
 	failure_path = output_path.with_suffix(output_path.suffix + ".failures")
 	failures = _load_json_dict(failure_path)
 	messages = [message for message in collect_missing_messages() if is_translation_candidate(message)]
+	message_set = set(messages)
+	discarded = len(completed)
+	completed = {
+		source: translation
+		for source, translation in completed.items()
+		if source in message_set and not validate_translation(source, translation)
+	}
+	discarded -= len(completed)
+	failures = {
+		source: error
+		for source, error in failures.items()
+		if source in message_set and source not in completed
+	}
 	pending = [message for message in messages if message not in completed]
 	if limit:
 		pending = pending[:limit]
@@ -175,6 +192,7 @@ def translate_missing_catalog(
 		"translated_messages": len(completed),
 		"remaining_messages": max(0, len(messages) - len(completed)),
 		"failed_messages": len(failures),
+		"discarded_checkpoint_messages": discarded,
 	}
 
 
