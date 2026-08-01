@@ -108,6 +108,8 @@ class TestTranslationCatalog(TestCase):
 			"Namecheap",
 			"Nomatim",
 			"Notion",
+			"Office 365",
+			"Outlook.com",
 			"Plausible",
 			"Sentry",
 			"Shopify",
