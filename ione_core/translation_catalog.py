@@ -113,6 +113,7 @@ TECHNICAL_PASSTHROUGH = {
 	"WordPress",
 	"YouTube",
 	"Xero",
+	"X (Twitter)",
 	"Zapier",
 	"Zoom",
 	"Arial",

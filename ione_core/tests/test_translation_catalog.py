@@ -130,6 +130,7 @@ class TestTranslationCatalog(TestCase):
 			"Verdana",
 			"Webhook",
 			"Websocket",
+			"X (Twitter)",
 			"Xero",
 			"Zapier",
 			"Microsoft Teams",
