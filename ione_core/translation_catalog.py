@@ -285,8 +285,12 @@ def _write_json_dict(path: Path, values: dict[str, str]) -> None:
 	temporary.replace(path)
 
 
-def merge_translations_into_csv(input_file: str, csv_file: str) -> dict[str, int]:
-	"""Merge a validated JSON translation checkpoint into a Frappe CSV catalog."""
+def merge_translations_into_csv(
+	input_file: str,
+	csv_file: str,
+	overwrite: bool = False,
+) -> dict[str, int]:
+	"""Merge a validated checkpoint while preserving hand-edited translations."""
 	translations = _load_json_dict(Path(input_file))
 	csv_path = Path(csv_file)
 	existing: dict[str, str] = {}
@@ -296,11 +300,24 @@ def merge_translations_into_csv(input_file: str, csv_file: str) -> dict[str, int
 				if len(row) >= 2 and row[0]:
 					existing[row[0]] = row[1]
 
-	added = len(set(translations) - set(existing))
-	existing.update(translations)
+	added_messages = sorted(set(translations) - set(existing), key=str.casefold)
+	updated_messages = {
+		message
+		for message in translations.keys() & existing.keys()
+		if overwrite and existing[message] != translations[message]
+	}
+	for message in updated_messages:
+		existing[message] = translations[message]
+	for message in added_messages:
+		existing[message] = translations[message]
+
 	temporary = csv_path.with_suffix(csv_path.suffix + ".tmp")
 	with temporary.open("w", encoding="utf-8", newline="") as handle:
 		writer = csv.writer(handle, lineterminator="\n")
-		writer.writerows(sorted(existing.items(), key=lambda item: item[0].casefold()))
+		writer.writerows(existing.items())
 	temporary.replace(csv_path)
-	return {"total": len(existing), "added": added, "updated": len(translations) - added}
+	return {
+		"total": len(existing),
+		"added": len(added_messages),
+		"updated": len(updated_messages),
+	}

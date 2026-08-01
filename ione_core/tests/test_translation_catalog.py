@@ -67,7 +67,23 @@ class TestTranslationCatalog(TestCase):
 			)
 			catalog.write_text("Save,旧保存\nCancel,取消\n", encoding="utf-8")
 
-			result = merge_translations_into_csv(str(checkpoint), str(catalog))
+			result = merge_translations_into_csv(str(checkpoint), str(catalog), overwrite=True)
 
 			self.assertEqual(result, {"total": 3, "added": 1, "updated": 1})
 			self.assertIn("Save,保存", catalog.read_text(encoding="utf-8"))
+
+	def test_merge_preserves_hand_edited_translations_by_default(self):
+		with TemporaryDirectory() as directory:
+			root = Path(directory)
+			checkpoint = root / "translations.json"
+			catalog = root / "zh.csv"
+			checkpoint.write_text(
+				json.dumps({"Save": "机器保存", "Search": "搜索"}, ensure_ascii=False),
+				encoding="utf-8",
+			)
+			catalog.write_text("Save,人工保存\nCancel,取消\n", encoding="utf-8")
+
+			result = merge_translations_into_csv(str(checkpoint), str(catalog))
+
+			self.assertEqual(result, {"total": 3, "added": 1, "updated": 0})
+			self.assertIn("Save,人工保存", catalog.read_text(encoding="utf-8"))
