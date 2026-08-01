@@ -12,6 +12,17 @@ Webhook URL,Webhook 地址
 {0} of {1},第 {0} 项，共 {1} 项
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,首页
+Invoicing,发票
+Payments,收付款
+Financial Reports,财务报表
+ERPNext Settings,ERPNext 设置
+Previous sessions,历史会话
+New chat,新建会话
+Full screen,全屏
+Close (Ctrl+I),关闭 (Ctrl+I)
+"Ask about your data, draft records, or run a task.",询问数据、起草单据或执行任务。
+Ask Flow…,询问 Flow…
+Attach file,附加文件
 Accounting,会计
 Selling,销售
 Buying,采购

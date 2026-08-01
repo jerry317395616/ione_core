@@ -4,9 +4,12 @@
 	const PATCH_FLAG = "__ione_workspace_dock_i18n";
 	const FALLBACK_LABELS = {
 		Home: "首页",
+		Invoicing: "发票",
+		Payments: "收付款",
 		Accounting: "会计",
 		Selling: "销售",
 		Buying: "采购",
+		"Financial Reports": "财务报表",
 		Stock: "库存",
 		Assets: "资产",
 		Manufacturing: "制造",
@@ -26,6 +29,15 @@
 		Build: "构建",
 		Automation: "自动化",
 		Printing: "打印",
+		"ERPNext Settings": "ERPNext 设置",
+		"Previous sessions": "历史会话",
+		"New chat": "新建会话",
+		"Full screen": "全屏",
+		"Close (Ctrl+I)": "关闭 (Ctrl+I)",
+		"Ask about your data, draft records, or run a task.":
+			"询问数据、起草单据或执行任务。",
+		"Ask Flow…": "询问 Flow…",
+		"Attach file": "附加文件",
 	};
 
 	function translate_label(label) {
@@ -57,6 +69,57 @@
 					item.getAttribute("aria-label");
 				set_item_label(item, translate_label(label));
 			});
+	}
+
+	function translate_flow_panel() {
+		const root = document.querySelector("#flow-root");
+		if (!root) {
+			return;
+		}
+
+		root
+			.querySelectorAll("[title], [aria-label], [data-original-title], [placeholder]")
+			.forEach((item) => {
+				for (const attribute of [
+					"title",
+					"aria-label",
+					"data-original-title",
+					"placeholder",
+				]) {
+					const value = item.getAttribute(attribute);
+					const translated = translate_label(value);
+					if (translated && translated !== value) {
+						item.setAttribute(attribute, translated);
+					}
+				}
+			});
+
+		root.querySelectorAll("*").forEach((item) => {
+			for (const node of item.childNodes) {
+				if (node.nodeType !== Node.TEXT_NODE) {
+					continue;
+				}
+				const value = node.nodeValue || "";
+				const trimmed = value.trim();
+				const translated = FALLBACK_LABELS[trimmed];
+				if (translated) {
+					node.nodeValue = value.replace(trimmed, translated);
+				}
+			}
+		});
+	}
+
+	let translation_scheduled = false;
+	function schedule_translation() {
+		if (translation_scheduled) {
+			return;
+		}
+		translation_scheduled = true;
+		window.requestAnimationFrame(() => {
+			translation_scheduled = false;
+			translate_existing_items();
+			translate_flow_panel();
+		});
 	}
 
 	function install_workspace_dock_patch() {
@@ -95,13 +158,14 @@
 			attempts += 1;
 			const installed = install_workspace_dock_patch();
 			translate_existing_items();
+			translate_flow_panel();
 
 			if (installed || attempts >= 100) {
 				window.clearInterval(timer);
 			}
 		}, 100);
 
-		const observer = new MutationObserver(translate_existing_items);
+		const observer = new MutationObserver(schedule_translation);
 		observer.observe(document.body, { childList: true, subtree: true });
 	}
 
