@@ -2,8 +2,10 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
+from unittest.mock import patch
 
 from ione_core.translation_catalog import (
+	_translate_batch_resilient,
 	_translation_from_row,
 	html_tags,
 	is_translation_candidate,
@@ -73,6 +75,22 @@ class TestTranslationCatalog(TestCase):
 			with self.subTest(source=source):
 				self.assertFalse(requires_chinese_text(source))
 				self.assertEqual(validate_translation(source, source), [])
+
+	@patch("ione_core.translation_catalog.time.sleep")
+	@patch("ione_core.translation_catalog._request_translations")
+	def test_resilient_batch_only_retries_invalid_messages(self, request, _sleep):
+		request.side_effect = [
+			{"Save": "保存", "Search": "Search"},
+			{"Search": "搜索"},
+		]
+
+		translated, failures = _translate_batch_resilient(
+			object(), "http://model", "secret", "model", ["Save", "Search"]
+		)
+
+		self.assertEqual(translated, {"Save": "保存", "Search": "搜索"})
+		self.assertEqual(failures, {})
+		self.assertEqual(request.call_args_list[1].args[-1], ["Search"])
 
 	def test_merges_checkpoint_into_frappe_csv(self):
 		with TemporaryDirectory() as directory:

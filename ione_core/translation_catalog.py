@@ -207,32 +207,6 @@ def _get_flow_model(model_name: str | None):
 	return frappe.get_doc("Flow Model", name)
 
 
-def _translate_batch_with_retry(
-	session: Any,
-	base_url: str,
-	api_key: str,
-	model_id: str,
-	messages: list[str],
-) -> dict[str, str]:
-	last_error: Exception | None = None
-	for attempt in range(3):
-		try:
-			result = _request_translations(session, base_url, api_key, model_id, messages)
-			errors = {
-				source: validate_translation(source, result.get(source, ""))
-				for source in messages
-				if validate_translation(source, result.get(source, ""))
-			}
-			if errors:
-				raise ValueError(f"invalid translations: {errors}")
-			return {source: result[source] for source in messages}
-		except Exception as exc:
-			last_error = exc
-			time.sleep(2**attempt)
-
-	raise RuntimeError(f"translation failed for {messages!r}: {last_error}")
-
-
 def _translate_batch_resilient(
 	session: Any,
 	base_url: str,
@@ -240,21 +214,43 @@ def _translate_batch_resilient(
 	model_id: str,
 	messages: list[str],
 ) -> tuple[dict[str, str], dict[str, str]]:
-	try:
-		return _translate_batch_with_retry(
-			session, base_url, api_key, model_id, messages
-		), {}
-	except Exception as exc:
-		if len(messages) == 1:
-			return {}, {messages[0]: str(exc)}
-		middle = len(messages) // 2
+	translated: dict[str, str] = {}
+	pending = list(messages)
+	last_errors: dict[str, str] = {}
+	for attempt in range(3):
+		try:
+			result = _request_translations(session, base_url, api_key, model_id, pending)
+		except Exception as exc:
+			last_errors = {source: str(exc) for source in pending}
+		else:
+			next_pending: list[str] = []
+			last_errors = {}
+			for source in pending:
+				errors = validate_translation(source, result.get(source, ""))
+				if errors:
+					next_pending.append(source)
+					last_errors[source] = ", ".join(errors)
+				else:
+					translated[source] = result[source]
+			pending = next_pending
+			if not pending:
+				return translated, {}
+		time.sleep(2**attempt)
+
+	if len(pending) == 1:
+		return translated, {pending[0]: last_errors.get(pending[0], "translation failed")}
+	if pending:
+		middle = len(pending) // 2
 		left, left_failures = _translate_batch_resilient(
-			session, base_url, api_key, model_id, messages[:middle]
+			session, base_url, api_key, model_id, pending[:middle]
 		)
 		right, right_failures = _translate_batch_resilient(
-			session, base_url, api_key, model_id, messages[middle:]
+			session, base_url, api_key, model_id, pending[middle:]
 		)
-		return {**left, **right}, {**left_failures, **right_failures}
+		translated.update(left)
+		translated.update(right)
+		return translated, {**left_failures, **right_failures}
+	return translated, {}
 
 
 def _request_translations(
