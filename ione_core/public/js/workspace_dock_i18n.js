@@ -54,9 +54,11 @@
 			return;
 		}
 
-		item.setAttribute("title", label);
-		item.setAttribute("aria-label", label);
-		item.setAttribute("data-original-title", label);
+		for (const attribute of ["title", "aria-label", "data-original-title"]) {
+			if (item.getAttribute(attribute) !== label) {
+				item.setAttribute(attribute, label);
+			}
+		}
 	}
 
 	function translate_existing_items() {
