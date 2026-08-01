@@ -166,7 +166,17 @@
 		}, 100);
 
 		const observer = new MutationObserver(schedule_translation);
-		observer.observe(document.body, { childList: true, subtree: true });
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: [
+				"title",
+				"aria-label",
+				"data-original-title",
+				"placeholder",
+			],
+		});
 	}
 
 	if (document.readyState === "loading") {
