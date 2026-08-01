@@ -94,6 +94,7 @@ TECHNICAL_PASSTHROUGH = {
 	"Stalwart/JMAP",
 	"Stripe",
 	"Supabase",
+	"Teachmint",
 	"Telegram",
 	"Trello",
 	"Twilio",

@@ -124,6 +124,7 @@ class TestTranslationCatalog(TestCase):
 		"Skype",
 			"Stalwart/JMAP",
 			"Supabase",
+			"Teachmint",
 			"Vercel",
 			"Xero",
 			"Zapier",

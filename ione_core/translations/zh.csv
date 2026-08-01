@@ -6,6 +6,7 @@ Iframe,内嵌框架
 Logo URI,标志 URI
 Logo URL,标志 URL
 Slack Webhook URL,Slack Webhook 地址
+TOS URI,服务条款 URI
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,首页
 Accounting,会计
