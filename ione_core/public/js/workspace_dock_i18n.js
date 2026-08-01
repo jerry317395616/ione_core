@@ -170,14 +170,9 @@
 		const observer = new MutationObserver(schedule_translation);
 		observer.observe(document.body, { childList: true, subtree: true });
 
-		let flow_attempts = 0;
-		const flow_timer = window.setInterval(() => {
-			flow_attempts += 1;
-			translate_flow_panel();
-			if (flow_attempts >= 100) {
-				window.clearInterval(flow_timer);
-			}
-		}, 200);
+		for (const delay of [1000, 3000, 8000]) {
+			window.setTimeout(translate_flow_panel, delay);
+		}
 	}
 
 	if (document.readyState === "loading") {
