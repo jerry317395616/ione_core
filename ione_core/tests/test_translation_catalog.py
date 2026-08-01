@@ -154,3 +154,23 @@ class TestTranslationCatalog(TestCase):
 
 			self.assertEqual(result, {"total": 3, "added": 1, "updated": 0})
 			self.assertIn("Save,人工保存", catalog.read_text(encoding="utf-8"))
+
+	def test_merge_excludes_artifacts_and_rejects_invalid_translations(self):
+		with TemporaryDirectory() as directory:
+			root = Path(directory)
+			checkpoint = root / "translations.json"
+			catalog = root / "zh.csv"
+			checkpoint.write_text(
+				json.dumps(
+					{
+						"Save": "保存",
+						"@jane": "@jane",
+						"Search": "Search",
+					},
+					ensure_ascii=False,
+				),
+				encoding="utf-8",
+			)
+
+			with self.assertRaisesRegex(ValueError, "Search"):
+				merge_translations_into_csv(str(checkpoint), str(catalog))

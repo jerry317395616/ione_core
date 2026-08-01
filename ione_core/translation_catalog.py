@@ -393,7 +393,20 @@ def merge_translations_into_csv(
 	overwrite: bool = False,
 ) -> dict[str, int]:
 	"""Merge a validated checkpoint while preserving hand-edited translations."""
-	translations = _load_json_dict(Path(input_file))
+	checkpoint = _load_json_dict(Path(input_file))
+	translations = {
+		source: translation
+		for source, translation in checkpoint.items()
+		if is_translation_candidate(source)
+	}
+	invalid = {
+		source: errors
+		for source, translation in translations.items()
+		if (errors := validate_translation(source, translation))
+	}
+	if invalid:
+		sample = dict(list(sorted(invalid.items()))[:20])
+		raise ValueError(f"checkpoint contains invalid translations: {sample}")
 	csv_path = Path(csv_file)
 	existing: dict[str, str] = {}
 	if csv_path.exists():
