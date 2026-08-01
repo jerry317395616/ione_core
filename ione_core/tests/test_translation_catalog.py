@@ -52,6 +52,13 @@ class TestTranslationCatalog(TestCase):
 		self.assertFalse(is_translation_candidate("$dayjs"))
 		self.assertFalse(is_translation_candidate(".tar.gz"))
 		self.assertFalse(is_translation_candidate("1:N"))
+		self.assertFalse(is_translation_candidate("on_update_after_submit"))
+		self.assertFalse(is_translation_candidate("router-link"))
+		self.assertFalse(is_translation_candidate("update:modelValue"))
+		self.assertFalse(is_translation_candidate("bootstrap.ndjson"))
+		self.assertFalse(is_translation_candidate("system | user | assistant | tool"))
+		self.assertFalse(is_translation_candidate("durationchange"))
+		self.assertFalse(is_translation_candidate("svg"))
 		self.assertFalse(is_translation_candidate(";zs[Bs]===!0&&console.error("))
 		self.assertFalse(is_translation_candidate("@jane"))
 		self.assertFalse(is_translation_candidate("&lt;head&gt; HTML"))
@@ -90,6 +97,7 @@ class TestTranslationCatalog(TestCase):
 			"Google Analytics ID",
 			"Google Classroom",
 			"Google Meet",
+			"github",
 			"HL7 v2",
 			"Helvetica Neue",
 			"Hetzner",
@@ -137,11 +145,15 @@ class TestTranslationCatalog(TestCase):
 			"PayPal",
 			"Slack",
 			"Twilio",
+			"twitter",
 			"WhatsApp",
 			"YouTube",
+			"youtube",
 			"CRM-DEAL-.YYYY.-",
 			"https://example.com",
 			"YYYY-MM-DD",
+			"dd/mm/yyyy",
+			"vscode",
 		):
 			with self.subTest(source=source):
 				self.assertFalse(requires_chinese_text(source))

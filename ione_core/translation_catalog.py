@@ -99,6 +99,7 @@ TECHNICAL_PASSTHROUGH = {
 	"Thinkific",
 	"Trello",
 	"Twilio",
+	"Twitter",
 	"Unsplash",
 	"URL",
 	"UTF-8",
@@ -119,15 +120,53 @@ TECHNICAL_PASSTHROUGH = {
 	"Arial",
 	"Azure",
 	"Bootstrap",
+	"Chrome",
 	"Classplus",
 	"Cloudflare",
+	"Emacs",
+	"Facebook",
+	"Fairlogin",
+	"FHIR",
 	"Geoapify",
 	"Helvetica",
 	"Helvetica Neue",
 	"Hetzner",
 	"Inter",
+	"JMAP",
+	"Maildir",
+	"Mbox",
 	"Noto Sans",
 	"Roboto",
+	"VCF",
+	"Vim",
+	"VS Code",
+	"VSCode",
+	"wkhtmltopdf",
+}
+TECHNICAL_PASSTHROUGH_CASEFOLDED = frozenset(
+	value.casefold() for value in TECHNICAL_PASSTHROUGH
+)
+TECHNICAL_CODE_LITERALS = {
+	"div",
+	"durationchange",
+	"eml",
+	"hr",
+	"ics",
+	"id",
+	"loadedmetadata",
+	"nonce",
+	"processlist",
+	"resp2",
+	"resp3",
+	"simulcast",
+	"span",
+	"svc",
+	"svg",
+	"td",
+	"th",
+	"timeupdate",
+	"tr",
+	"volumechange",
 }
 CODE_MARKERS = (
 	"[File truncated to fit the context window.]",
@@ -180,6 +219,12 @@ def is_translation_candidate(message: str) -> bool:
 		r"\$[a-zA-Z_][\w.]*|@[a-zA-Z0-9_.-]+|\.[a-zA-Z0-9.]+", stripped
 	):
 		return False
+	if re.fullmatch(r"[a-z][A-Za-z0-9]*(?:[._:-][A-Za-z0-9]+)+", stripped):
+		return False
+	if re.fullmatch(r"[a-z_]+(?:\s*\|\s*[a-z_]+)+", stripped):
+		return False
+	if stripped.casefold() in TECHNICAL_CODE_LITERALS:
+		return False
 	if len(message) > 1000 and not ("<" in message and ">" in message):
 		return False
 	if len(message) > 500:
@@ -200,11 +245,11 @@ def html_tags(value: str) -> Counter[str]:
 def requires_chinese_text(source: str) -> bool:
 	visible = html.unescape(source or "")
 	visible = PLACEHOLDER_PATTERN.sub("", HTML_TAG_PATTERN.sub("", visible)).strip()
-	if not visible or visible in TECHNICAL_PASSTHROUGH:
+	if not visible or visible.casefold() in TECHNICAL_PASSTHROUGH_CASEFOLDED:
 		return False
 	technical_parts = [part.strip() for part in visible.split("/")]
 	if len(technical_parts) > 1 and all(
-		part in TECHNICAL_PASSTHROUGH for part in technical_parts
+		part.casefold() in TECHNICAL_PASSTHROUGH_CASEFOLDED for part in technical_parts
 	):
 		return False
 	if re.fullmatch(r"[A-Z][A-Z0-9_-]{1,19}", visible):
@@ -215,7 +260,7 @@ def requires_chinese_text(source: str) -> bool:
 		return False
 	if re.fullmatch(r"(?:https?://|mailto:|www\.)\S+|\S+@\S+\.\S+", visible):
 		return False
-	if re.fullmatch(r"[YMDHhms:/.,\-\s]+", visible):
+	if re.fullmatch(r"[YMDHhms:/.,\-\s]+", visible, flags=re.IGNORECASE):
 		return False
 	return bool(ENGLISH_WORD_PATTERN.search(visible))
 
