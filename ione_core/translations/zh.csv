@@ -5,6 +5,7 @@ Iframe,内嵌框架
 "If enabled, only System Managers can upload public files. Other users can't see the checkbox <i>Is Private</i> in the upload dialog.","启用后，只有系统管理员可以上传公共文件。其他用户在上传对话框中看不到 <i>设为私有</i> 复选框。"
 Logo URI,标志 URI
 Logo URL,标志 URL
+Slack Webhook URL,Slack Webhook 地址
 Home,首页
 Accounting,会计
 Selling,销售
