@@ -84,6 +84,7 @@ class TestTranslationCatalog(TestCase):
 			"BigQuery",
 			"Classplus",
 			"Cloudflare",
+			"Flow / Qwen",
 			"CRM-DEAL-.YYYY.-",
 			"https://example.com",
 			"YYYY-MM-DD",

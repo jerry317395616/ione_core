@@ -119,6 +119,11 @@ def requires_chinese_text(source: str) -> bool:
 	visible = PLACEHOLDER_PATTERN.sub("", HTML_TAG_PATTERN.sub("", visible)).strip()
 	if not visible or visible in TECHNICAL_PASSTHROUGH:
 		return False
+	technical_parts = [part.strip() for part in visible.split("/")]
+	if len(technical_parts) > 1 and all(
+		part in TECHNICAL_PASSTHROUGH for part in technical_parts
+	):
+		return False
 	if re.fullmatch(r"[A-Z][A-Z0-9_-]{1,19}", visible):
 		return False
 	if not re.search(r"[a-z]", visible) and re.fullmatch(r"[A-Z0-9_.:/-]+", visible):
