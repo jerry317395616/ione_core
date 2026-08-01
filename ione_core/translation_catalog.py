@@ -13,6 +13,33 @@ PLACEHOLDER_PATTERN = re.compile(
 	r"%[sdif]|\{\d+\}|\{[a-zA-Z_][\w.]*\})"
 )
 HTML_TAG_PATTERN = re.compile(r"</?[a-zA-Z][^>]*>")
+HAN_PATTERN = re.compile(r"[\u3400-\u9fff]")
+ENGLISH_WORD_PATTERN = re.compile(r"[A-Za-z]{2,}")
+TECHNICAL_PASSTHROUGH = {
+	"API",
+	"CRM",
+	"CSV",
+	"DocType",
+	"ERPNext",
+	"Frappe",
+	"Flow",
+	"GitHub",
+	"GitLab",
+	"HR",
+	"HTML",
+	"I-ONE",
+	"ID",
+	"JSON",
+	"LDAP",
+	"OAuth",
+	"OpenAI",
+	"Qwen",
+	"Redis",
+	"SLA",
+	"SQL",
+	"URL",
+	"UTF-8",
+}
 CODE_MARKERS = (
 	"[File truncated to fit the context window.]",
 	"exports=function",
@@ -70,6 +97,17 @@ def html_tags(value: str) -> Counter[str]:
 	return Counter(HTML_TAG_PATTERN.findall(value or ""))
 
 
+def requires_chinese_text(source: str) -> bool:
+	visible = PLACEHOLDER_PATTERN.sub("", HTML_TAG_PATTERN.sub("", source or "")).strip()
+	if not visible or visible in TECHNICAL_PASSTHROUGH:
+		return False
+	if re.fullmatch(r"(?:https?://|mailto:|www\.)\S+|\S+@\S+\.\S+", visible):
+		return False
+	if re.fullmatch(r"[YMDHhms:/.,\-\s]+", visible):
+		return False
+	return bool(ENGLISH_WORD_PATTERN.search(visible))
+
+
 def validate_translation(source: str, translation: str) -> list[str]:
 	errors: list[str] = []
 	if not isinstance(translation, str) or not translation.strip():
@@ -78,6 +116,8 @@ def validate_translation(source: str, translation: str) -> list[str]:
 		errors.append("placeholders changed")
 	if html_tags(source) != html_tags(translation):
 		errors.append("HTML tags changed")
+	if requires_chinese_text(source) and not HAN_PATTERN.search(translation):
+		errors.append("translation contains no Chinese text")
 	return errors
 
 

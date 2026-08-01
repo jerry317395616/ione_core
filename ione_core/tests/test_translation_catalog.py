@@ -9,6 +9,7 @@ from ione_core.translation_catalog import (
 	is_translation_candidate,
 	merge_translations_into_csv,
 	placeholders,
+	requires_chinese_text,
 	validate_translation,
 )
 
@@ -55,6 +56,19 @@ class TestTranslationCatalog(TestCase):
 			_translation_from_row({"id": 0, "translated_text": "保存"}),
 			"保存",
 		)
+
+	def test_requires_actual_chinese_for_business_labels(self):
+		self.assertTrue(requires_chinese_text("Accounts Payable Ageing"))
+		self.assertEqual(
+			validate_translation("Accounts Payable Ageing", "Accounts Payable Ageing"),
+			["translation contains no Chinese text"],
+		)
+
+	def test_allows_product_names_and_technical_literals(self):
+		for source in ("Frappe", "ERPNext", "API", "https://example.com", "YYYY-MM-DD"):
+			with self.subTest(source=source):
+				self.assertFalse(requires_chinese_text(source))
+				self.assertEqual(validate_translation(source, source), [])
 
 	def test_merges_checkpoint_into_frappe_csv(self):
 		with TemporaryDirectory() as directory:
