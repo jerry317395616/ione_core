@@ -84,6 +84,7 @@ TECHNICAL_PASSTHROUGH = {
 	"SLA",
 	"SNOMED CT",
 	"SQL",
+	"Sendgrid",
 	"Sentry",
 	"Shopify",
 	"Slack",

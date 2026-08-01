@@ -116,6 +116,7 @@ class TestTranslationCatalog(TestCase):
 			"Robots.txt",
 			"Rust",
 			"SNOMED CT",
+			"Sendgrid",
 			"Sentry",
 			"Shopify",
 			"Supabase",
