@@ -7,7 +7,11 @@ description = "Frappe service core for the I-ONE AI workbench"
 requires-python = ">=3.14"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "markdownify>=0.13",
+    "requests>=2.31",
+]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
@@ -24,4 +28,3 @@ ignore = ["E501", "W191"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "tab"
-

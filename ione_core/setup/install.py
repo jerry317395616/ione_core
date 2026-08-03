@@ -65,6 +65,7 @@ def after_install():
 	ensure_roles()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	ensure_flow_tools()
 	sync_translation_overrides()
 
 
@@ -73,6 +74,7 @@ def after_migrate():
 	migrate_agent_fields()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	ensure_flow_tools()
 	ensure_runtime_config()
 	sync_translation_overrides()
 
@@ -87,6 +89,12 @@ def ensure_runtime_config():
 	from ione_core.runtime_config import ensure_web_request_timeout
 
 	ensure_web_request_timeout()
+
+
+def ensure_flow_tools():
+	from ione_core.setup.flow_tools import ensure_frappe_document_tool
+
+	ensure_frappe_document_tool()
 
 
 def migrate_agent_fields():
