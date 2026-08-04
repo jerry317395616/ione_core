@@ -28,6 +28,7 @@ class TestCrmLocalization(TestCase):
 		for source in ("Getting started", "Start now", "Help centre", "Skip all", "Call Logs"):
 			with self.subTest(source=source):
 				self.assertIn(f'["{source}",', script)
+		self.assertIn("window.__ione_crm_i18n_loaded = true", script)
 		self.assertIn("steps(?:\\s+completed)?", script)
 		self.assertIn("%\\s+completed", script)
 

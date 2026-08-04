@@ -4,6 +4,7 @@
 	if (!window.location.pathname.startsWith("/crm")) {
 		return;
 	}
+	window.__ione_crm_i18n_loaded = true;
 
 	const EXACT_LABELS = new Map([
 		["Call Logs", "通话记录"],

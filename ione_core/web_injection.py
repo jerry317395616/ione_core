@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n.js?v=20260804-1"
+CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n.js?v=20260804-2"
 CRM_I18N_TAG = f'<script src="{CRM_I18N_ASSET}"></script>'
 
 
