@@ -2,6 +2,8 @@ import json
 
 WORKSPACE_NAME = "Healthcare"
 WORKSPACE_TITLE = "医疗管理"
+APP_DESKTOP_ICON_NAME = "Marley Health"
+APP_DESKTOP_TITLE = "医疗健康"
 
 NUMBER_CARD_NAMES = (
 	"Total Patients",
@@ -403,6 +405,14 @@ def ensure_healthcare_workspace():
 	previous_in_migrate = frappe.flags.in_migrate
 	frappe.flags.in_migrate = True
 	try:
+		if frappe.db.exists("Desktop Icon", APP_DESKTOP_ICON_NAME):
+			frappe.db.set_value(
+				"Desktop Icon",
+				APP_DESKTOP_ICON_NAME,
+				"label",
+				APP_DESKTOP_TITLE,
+				update_modified=False,
+			)
 		for workspace_label, workspace_name, workspace_icon in SIDEBAR_WORKSPACES:
 			current_workspace = (
 				workspace if workspace_name == WORKSPACE_NAME else frappe.get_doc("Workspace", workspace_name)

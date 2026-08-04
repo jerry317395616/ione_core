@@ -2,6 +2,8 @@ import json
 import unittest
 
 from ione_core.setup.healthcare_workspace import (
+	APP_DESKTOP_ICON_NAME,
+	APP_DESKTOP_TITLE,
 	CARD_GROUPS,
 	CHART_NAMES,
 	NUMBER_CARD_NAMES,
@@ -15,6 +17,10 @@ from ione_core.setup.healthcare_workspace import (
 
 
 class HealthcareWorkspaceTest(unittest.TestCase):
+	def test_healthcare_app_has_a_professional_chinese_desktop_title(self):
+		self.assertEqual(APP_DESKTOP_ICON_NAME, "Marley Health")
+		self.assertEqual(APP_DESKTOP_TITLE, "医疗健康")
+
 	def test_every_primary_workspace_has_a_flat_secondary_menu(self):
 		self.assertEqual(
 			set(WORKSPACE_SIDEBAR_SPECS),

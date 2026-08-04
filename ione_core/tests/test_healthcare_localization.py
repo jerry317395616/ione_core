@@ -9,6 +9,7 @@ class TestHealthcareLocalization(TestCase):
 
 	def test_workspace_uses_professional_chinese_terms(self):
 		expected = {
+			"Marley Health": "医疗健康",
 			"Healthcare": "医疗管理",
 			"Healthcare Practitioner": "医务人员",
 			"Practitioner Schedule": "医务人员排班",
