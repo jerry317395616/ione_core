@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n.js?v=20260804-2"
-CRM_I18N_TAG = f'<script src="{CRM_I18N_ASSET}"></script>'
+from functools import lru_cache
+from pathlib import Path
+
+CRM_I18N_MARKER = 'data-ione-crm-i18n="20260804-1"'
 
 
 def is_crm_html_response(
@@ -25,10 +27,20 @@ def is_crm_html_response(
 
 
 def inject_crm_i18n_asset(html: str) -> str:
-	"""Insert the localization asset once, immediately before the closing body tag."""
-	if not html or CRM_I18N_ASSET in html or "</body>" not in html:
+	"""Insert the localization script once, immediately before the closing body tag."""
+	if not html or CRM_I18N_MARKER in html or "</body>" not in html:
 		return html
-	return html.replace("</body>", f"{CRM_I18N_TAG}\n</body>", 1)
+	script = read_crm_i18n_script()
+	if not script:
+		return html
+	tag = f"<script {CRM_I18N_MARKER}>\n{script}\n</script>"
+	return html.replace("</body>", f"{tag}\n</body>", 1)
+
+
+@lru_cache(maxsize=1)
+def read_crm_i18n_script() -> str:
+	path = Path(__file__).with_name("public") / "js" / "crm_i18n.js"
+	return path.read_text(encoding="utf-8")
 
 
 def inject_crm_i18n(response, request) -> None:

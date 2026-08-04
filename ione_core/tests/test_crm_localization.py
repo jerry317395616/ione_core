@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from ione_core.translation_overrides import read_translation_catalog
-from ione_core.web_injection import CRM_I18N_ASSET, inject_crm_i18n_asset, is_crm_html_response
+from ione_core.web_injection import CRM_I18N_MARKER, inject_crm_i18n_asset, is_crm_html_response
 
 
 class TestCrmLocalization(TestCase):
@@ -55,5 +55,6 @@ class TestCrmLocalization(TestCase):
 	def test_asset_is_injected_once(self):
 		html = "<html><body><div id='app'></div></body></html>"
 		localized = inject_crm_i18n_asset(html)
-		self.assertIn(CRM_I18N_ASSET, localized)
+		self.assertIn(CRM_I18N_MARKER, localized)
+		self.assertIn("window.__ione_crm_i18n_loaded = true", localized)
 		self.assertEqual(inject_crm_i18n_asset(localized), localized)
