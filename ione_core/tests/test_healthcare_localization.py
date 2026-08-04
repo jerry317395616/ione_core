@@ -34,6 +34,8 @@ class TestHealthcareLocalization(TestCase):
 			"Total Patients": "患者总数",
 			"Open Appointments": "待就诊预约",
 			"Appointments to Bill": "待计费预约",
+			"Reports & Masters": "报表与基础资料",
+			"Vacant": "空闲",
 		}
 
 		for source, translation in expected.items():

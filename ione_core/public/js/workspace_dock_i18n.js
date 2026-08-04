@@ -30,6 +30,8 @@
 		Automation: "自动化",
 		Printing: "打印",
 		"ERPNext Settings": "ERPNext 设置",
+		"Reports & Masters": "报表与基础资料",
+		Vacant: "空闲",
 		"Previous sessions": "历史会话",
 		"New chat": "新建会话",
 		"Full screen": "全屏",
@@ -111,6 +113,22 @@
 		});
 	}
 
+	function translate_workspace_content() {
+		document
+			.querySelectorAll(".ce-header .h4, .widget-control .es-badge")
+			.forEach((item) => {
+				const value = item.textContent || "";
+				const trimmed = value.trim();
+				const vacant = trimmed.match(/^(\d+)\s+Vacant$/);
+				const translated = vacant
+					? `${vacant[1]} 空闲`
+					: FALLBACK_LABELS[trimmed];
+				if (translated && translated !== trimmed) {
+					item.textContent = value.replace(trimmed, translated);
+				}
+			});
+	}
+
 	let translation_scheduled = false;
 	function schedule_translation() {
 		if (translation_scheduled) {
@@ -121,6 +139,7 @@
 			translation_scheduled = false;
 			translate_existing_items();
 			translate_flow_panel();
+			translate_workspace_content();
 		});
 	}
 
@@ -161,6 +180,7 @@
 			const installed = install_workspace_dock_patch();
 			translate_existing_items();
 			translate_flow_panel();
+			translate_workspace_content();
 
 			if (installed || attempts >= 100) {
 				window.clearInterval(timer);
@@ -171,7 +191,10 @@
 		observer.observe(document.body, { childList: true, subtree: true });
 
 		for (const delay of [1000, 3000, 8000]) {
-			window.setTimeout(translate_flow_panel, delay);
+			window.setTimeout(() => {
+				translate_flow_panel();
+				translate_workspace_content();
+			}, delay);
 		}
 	}
 
