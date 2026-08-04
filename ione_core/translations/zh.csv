@@ -4980,7 +4980,7 @@ Embedding Failed,嵌入失败
 Embedding Model,嵌入模型
 Embedding Model In Use,正在使用的嵌入模型
 Embedding provider returned {0} vectors for {1} inputs.,嵌入提供商为 {1} 个输入返回了 {0} 个向量。
-Emergency,紧急
+Emergency,急诊
 Emergency Deactivate Production,紧急停用生产环境
 Emergency Exception,紧急异常
 EMI (PMT) based,基于等额本息 (PMT)

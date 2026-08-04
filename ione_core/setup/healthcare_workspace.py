@@ -403,12 +403,26 @@ def ensure_healthcare_workspace():
 	previous_in_migrate = frappe.flags.in_migrate
 	frappe.flags.in_migrate = True
 	try:
-		for workspace_name in WORKSPACE_SIDEBAR_SPECS:
+		for workspace_label, workspace_name, workspace_icon in SIDEBAR_WORKSPACES:
 			current_workspace = (
 				workspace if workspace_name == WORKSPACE_NAME else frappe.get_doc("Workspace", workspace_name)
 			)
+			current_workspace.update(
+				{
+					"label": workspace_label,
+					"title": workspace_label,
+					"icon": workspace_icon,
+				}
+			)
 			current_workspace.set("sidebar_items", build_sidebar_items(workspace_name))
 			current_workspace.save(ignore_permissions=True)
+			if frappe.db.exists("Desktop Icon", workspace_name):
+				frappe.db.set_value(
+					"Desktop Icon",
+					workspace_name,
+					{"label": workspace_label, "icon": workspace_icon},
+					update_modified=False,
+				)
 	except Exception as exc:
 		raise RuntimeError(f"Unable to configure Healthcare workspace navigation: {exc}") from exc
 	finally:

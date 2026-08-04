@@ -28,6 +28,13 @@ class HealthcareWorkspaceTest(unittest.TestCase):
 			self.assertTrue(all(item["type"] == "Link" for item in items))
 			self.assertTrue(all(item["child"] == 0 for item in items))
 
+	def test_primary_workspace_labels_and_icons_are_explicit(self):
+		presentation = {workspace: (label, icon) for label, workspace, icon in SIDEBAR_WORKSPACES}
+		self.assertEqual(presentation["Emergency"], ("急诊管理", "siren"))
+		self.assertEqual(presentation["Setup"], ("基础设置", "settings"))
+		self.assertNotIn("heartbeat", {icon for _label, _workspace, icon in SIDEBAR_WORKSPACES})
+		self.assertNotIn("setting", {icon for _label, _workspace, icon in SIDEBAR_WORKSPACES})
+
 	def test_workspace_content_references_every_configured_component(self):
 		content = json.loads(build_workspace_content())
 		ids = [block["id"] for block in content]
