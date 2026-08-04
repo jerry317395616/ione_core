@@ -69,5 +69,6 @@ class TestCrmLocalization(TestCase):
 		localized = inject_crm_i18n_asset(html)
 		self.assertIn(CRM_I18N_MARKER, localized)
 		self.assertIn(CRM_I18N_ASSET, localized)
+		self.assertIn("?v=20260804-2", CRM_I18N_ASSET)
 		self.assertIn('type="module"', localized)
 		self.assertEqual(inject_crm_i18n_asset(localized), localized)
