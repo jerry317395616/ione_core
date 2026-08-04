@@ -288,11 +288,13 @@ def translate_missing_catalog(
 	base_url_override: str | None = None,
 	batch_size: int = 80,
 	limit: int = 0,
+	apps: list[str] | None = None,
 ) -> dict[str, int]:
-	"""Translate the missing installed-app catalog with the site's enabled Flow model.
+	"""Translate missing catalog messages with the site's enabled Flow model.
 
 	The JSON checkpoint is written after every successful batch, so interrupted runs
-	can resume without repeating completed model calls.
+	can resume without repeating completed model calls. Pass ``apps`` to limit the
+	translation run to specific installed applications.
 	"""
 	import frappe
 	import requests
@@ -301,7 +303,11 @@ def translate_missing_catalog(
 	completed = _load_json_dict(output_path)
 	failure_path = output_path.with_suffix(output_path.suffix + ".failures")
 	failures = _load_json_dict(failure_path)
-	messages = [message for message in collect_missing_messages() if is_translation_candidate(message)]
+	messages = [
+		message
+		for message in collect_missing_messages(apps=apps)
+		if is_translation_candidate(message)
+	]
 	message_set = set(messages)
 	discarded = len(completed)
 	completed = {

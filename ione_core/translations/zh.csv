@@ -14989,3 +14989,414 @@ Student Monthly Attendance Sheet,学生月度考勤表
 Student Report Generation Tool,学生报告生成工具
 Tools,工具
 Video,视频
+ days,天
+ meetings,次会议
+ out of ,中的
+...Adding Article to Topics,...正在将文章添加到主题
+...Adding Course to Programs,...正在将课程添加到培养项目
+...Adding Quiz to Topics,...正在将测验添加到主题
+...Adding Topic to Courses,...正在将主题添加到课程
+A question must have more than one options,一个问题必须至少包含两个选项
+A qustion must have at least one correct options,一个问题必须至少有一个正确选项
+Academic,学业
+Academic Term {0} does not belong to Academic Year {1},学期 {0} 不属于学年 {1}
+Academic Term: ,学期：
+Academic Year Name,学年名称
+Academic Year: ,学年：
+Accounting Defaults,会计默认设置
+Accounting Defaults are not set in row {0} for component {1} ,组件 {1} 的第 {0} 行未设置会计默认设置
+Achievement,成就
+Activity Date,活动日期
+Add Article to Topics,将文章添加到主题
+Add Course to Programs,将课程添加到培养项目
+Add Guardians to Email Group,将监护人添加到邮件组
+Add letterhead,添加信头
+Add Quiz to Topics,将测验添加到主题
+Add to Courses,添加到课程
+Add to Programs,添加到培养项目
+Add to Topics,添加到主题
+Add Topic to Courses,将主题添加到课程
+Admission End Date,招生截止日期
+Admission End Date should be greater than Admission Start Date.,招生截止日期应晚于招生开始日期。
+Admission Start Date,招生开始日期
+Admissions for {0},{0} 的招生
+Admitted,已录取
+Against Invoice,关联发票
+All Student Admissions,全部招生记录
+Alternate Number,备用号码
+An academic term with this 'Academic Year' {0} and 'Term Name' {1} already exists. Please modify these entries and try again.,具有此“学年”{0} 和“学期名称”{1} 的学期已存在。请修改这些条目并重试。
+Application Fee,申请费
+As Examiner,作为考官
+As Supervisor,担任监考人
+Assessment Criteria Group,考核标准组
+Assessment Group Name,考核组名称
+Assessment Group: ,考核组：
+Assessment Plan Criteria,考核计划标准
+Assessment Plan Name,考核计划名称
+Assessment Report,考核报告
+Assessment Result Detail,考核结果详情
+Assessment Result record {0} already exists.,考核结果记录 {0} 已存在。
+Assessment Terms,考核学期
+Attendance Based On,考勤依据
+Attendance Based on Course Schedule,基于课程安排的考勤
+Attendance cannot be marked for future dates.,无法为未来日期标记考勤。
+Attendance cannot be marked for {0} as it is a holiday.,无法为 {0} 标记考勤，因为它是节假日。
+Attendance cannot be marked outside of Academic Year {0},无法在学年 {0} 之外标记考勤
+Attendance Freeze Date,考勤冻结日期
+Attendance has been marked successfully.,考勤已成功标记。
+Batch is mandatory in row {0},第 {0} 行必填批次
+Batch: ,批次：
+Boarding Student,寄宿学生
+"By default, a new User is created for every new Student. If enabled, no new User will be created when a new Student is created.",默认情况下，会为每个新学生创建新用户。如果启用，创建新学生时将不会创建新用户。
+"By default, Sales Invoice will be created against Program Enrollment / Fee Schedule.
+If enabled Sales Order will be created","默认情况下，销售发票将针对培养项目注册/收费计划创建。
+如果启用，将创建销售订单"
+"By default, the Sales Invoice Created will be in Draft Mode. If enabled, the Sales Invoice will be submitted once created.",默认情况下，创建的销售发票将处于草稿模式。如果启用，创建销售发票后将立即提交。
+"By default, the Sales Invoice's  Posting Date will be equal to Fee Schedule's Posting Date. If disabled then Sales Invoice's Posting Date will be today's date.",默认情况下，销售发票的过账日期将等于收费计划的过账日期。如果禁用，则销售发票的过账日期将为今天日期。
+"By default, the Sales Order Created will be in Draft Mode. If enabled, the Sales Order will be submitted once created.",默认情况下，创建的销售订单将处于草稿模式。如果启用，创建销售订单后将立即提交。
+"By default, the Sales Order's  Transaction Date will be equal to Fee Schedule's Transaction Date. If disabled then Sales Order's Transaction Date will be today's date.",默认情况下，销售订单的交易日期将等于收费计划的交易日期。如果禁用，则销售订单的交易日期将为今天日期。
+Can't create standard criteria. Please rename the criteria,无法创建标准评分标准，请重命名该评分标准
+Cannot enroll more than {0} students for this student group.,无法为该学生班级注册超过 {0} 名学生。
+Cannot mark attendance for future dates.,无法为未来日期标记考勤。
+Check all,全选
+Check this if the Student is residing at the Institute's Hostel.,如学生住在学校宿舍，请勾选此项。
+"Check this to mark the student as present in case the student is not attending the institute to participate or represent the institute in any event.
+
+",如果学生因参加活动或代表学校参加活动而未到校上课，请勾选此项并将该学生标记为出勤。
+Class Schedule Color,课程安排颜色
+Compare List function takes on list arguments,Compare List 函数仅接受列表参数
+Course and Assessment,课程与考核
+Course Assessment Criteria,课程考核标准
+Course Code,课程代码
+Course Code: ,课程代码：
+Course End Date,课程结束日期
+Course Enrollment {0} does not exists,课程注册 {0} 不存在
+Course is mandatory in row {0},第 {0} 行中的课程为必填项
+Course Scheduling Failed,课程安排失败
+Course Start Date,课程开始日期
+Course Start Date cannot be greater than Course End Date.,课程开始日期不能晚于课程结束日期。
+Course Topic,课程主题
+Course {0} has been added to all the selected programs successfully.,课程 {0} 已成功添加到所有选定的培养项目中。
+Course: ,课程：
+Courses updated,课程已更新
+Create Fee Schedule,创建收费计划
+Create Sales Order instead of Sales Invoice,创建销售订单而非销售发票
+Create Student Groups,创建学生班级
+Creating student groups,正在创建学生班级
+Current Academic Term,当前学期
+Current Academic Year,当前学年
+Customer {0} created and linked to Student,客户 {0} 已创建并关联到学生
+Customer {0} updated,客户 {0} 已更新
+Date of Birth cannot be greater than Joining Date.,出生日期不能晚于入学日期。
+Date of Leaving,离校日期
+Days HTML,天数 HTML
+Default Grading Scale,默认评分标准
+"Defaults fetched from ""Fee Component"" Item Group ",默认值从“收费项目”项目组获取
+Discount cannot be greater than 100%  in row {0},第 {0} 行中的折扣不能大于 100%
+Discount(%),折扣(%)
+Do you want to update attendance? <br> Present: {0} <br> Absent: {1},您是否要更新考勤？<br> 出勤：{0} <br> 缺勤：{1}
+Due Date in row {0} should be greater than or same as today's date.,第 {0} 行中的到期日应大于或等于今天的日期。
+Duplicate roll number for student {0},学生 {0} 的学号重复
+Education Manager,教育管理员
+Eligibility and Details,资格与详情
+Employee ID is linked with another instructor,员工 ID 已链接到另一位教师
+Enable Admission Application,启用入学申请
+End on,结束于
+Enroll Students,注册学生
+Enrolled courses,已注册课程
+Enrolling student,正在注册学生
+Enrolling students,正在批量注册学生
+Enrollment,注册
+Enrollment Date,注册日期
+Enrollment Details,注册详情
+Enter 0 to waive limit,输入 0 以豁免限制
+Error during payment: {0},支付期间出错：{0}
+Error during payment: {0} Please contact the Administrator. Amount {1} Currency {2} Formatted {3},支付期间出错：{0} 请联系管理员。金额 {1} 货币 {2} 格式化 {3}
+Evaluate,评定
+Examiner,考官
+Examiner Name,考官姓名
+Father,父亲
+Fee Breakup (each student),收费明细（每位学生）
+Fee Category Default,收费类别默认值
+Fee Component,收费项目
+Fee Component {0} is not part of Fee Structure {1},收费项目 {0} 不属于收费标准 {1}
+Fee Records Created - {0},已创建收费记录 - {0}
+"Fee records will be created in the background.
+                In case of any error the error message will be updated in the Schedule.","收费记录将在后台创建。
+                如果出现任何错误，错误消息将更新到计划中。"
+Fee Schedule Details,收费计划详情
+Fee Schedule Program,收费计划培养项目明细
+Fee Schedule Student Group,收费计划学生班级明细
+Fees Category,收费类别
+Fees Collected,已收取费用
+Following course schedules were created,已创建以下课程计划
+"For Batch based Student Group, the Student Batch will be validated for every Student from the Program Enrollment.",对于按批次创建的学生班级，系统将根据培养项目注册记录校验每位学生的所属批次。
+"For Course based Student Group, the Course will be validated for every Student from the enrolled Courses in Program Enrollment.",对于按课程创建的学生班级，系统将根据培养项目注册记录中的已选课程校验每位学生。
+From Time cannot be greater than To Time.,开始时间不能晚于结束时间。
+Get Courses,获取课程
+Get Students,获取学生
+Get Students From,学生来源
+Grade Code,等级代码
+Grade Description,等级描述
+Grading Basis,评分依据
+Grading Scale Interval,评分等级区间
+Grading Scale Intervals,评分等级区间
+Grading Scale Name,评分等级名称
+Group Based On,分组依据
+Group Based on,分组依据
+Group Roll No,班级序号
+Group Roll Number,班级序号
+Guardian Details,监护人详情
+Guardian Interest,监护人兴趣
+Guardian Interests,监护人兴趣
+Guardian Name,监护人姓名
+Guardian Of ,被监护学生
+Guardian Student,被监护学生
+Guardian1 Email ID,监护人1 邮箱 ID
+Guardian1 Mobile No,监护人1 手机号
+Guardian1 Name,监护人1 姓名
+Guardian2 Email ID,监护人2 邮箱 ID
+Guardian2 Mobile No,监护人2 手机号
+Guardian2 Name,监护人2 姓名
+Guardians,监护人
+Hero Image,横幅图片
+House Name,院舍名称
+"If enabled, field Academic Term will be Mandatory in Program Enrollment Tool.",启用后，在“培养项目注册工具”中，“学期”字段将变为必填项。
+"If enabled, the attendance will be marked on Course Schedule basis and will be mandatory.
+
+If disabled, the attendance will be marked on Student Group Basis for that particular date.","启用后，考勤将基于“课程安排”进行标记，且为必填项。
+
+禁用后，考勤将基于该特定日期的“学生班级”进行标记。"
+Institution,机构
+Instructor Log,教师日志
+Instructor Name,教师姓名
+Instructor Records to be created by,教师记录创建方式
+Invalid document provided.,提供的文档无效。
+Invalid Enrollment {0} for student {1},学生 {1} 的无效注册 {0}
+Invalid overlap field {0} for {1},{1} 的无效重叠字段 {0}
+Invalid student search field,无效的学生搜索字段
+Invoice Created,发票已创建
+Invoice Pending,发票待处理
+Is Time-Bound,是否限时
+Joining Date can not be greater than Leaving Date,入学日期不能晚于离校日期
+Latest Attempt,最新尝试
+Latest Highest Score,最新最高分
+Leave application {0} already exists against the student {1},学生 {1} 已存在请假申请 {0}
+Leave blank if you make students groups per year,如果按学年创建学生班级，请留空
+Leave unchecked if you don't want to consider batch while making course based groups. ,如果创建基于课程的组时不考虑批次，请取消勾选。
+Leaving Certificate Number,离校证明编号
+Ledger Entries will be created against the company mentioned here.,将在此处提到的公司下创建分类账条目。
+Make Academic Term Mandatory,使学期成为必填项
+Mandatory field - Academic Year,必填字段 - 学年
+Mandatory field - Get Students From,必填字段 - 从以下来源获取学生
+Mandatory field - Program,必填字段 - 培养项目
+Mandatory Fields,必填字段
+Mark as Present,标记为出勤
+Marking attendance,正在标记考勤
+Max Strength,最大人数
+Max strength cannot be less than zero.,最大人数不能小于零。
+Maximum Age,最大年龄
+Maximum Assessment Score,最大考核分数
+Maximum attempts for this quiz reached!,已达到此测验的最大尝试次数！
+Maximum Score,最高分数
+Minimum Age,最小年龄
+Mother,母亲
+Multiple Correct Answer,多选题
+Naming Series (for Student Applicant),命名系列（用于学生申请）
+Nationality,国籍
+New Academic Term,新学期
+New Academic Year,新学年
+New Program,新培养项目
+New Student Batch,新学生批次
+No Academic Terms found for Academic Year {0},未找到学年 {0} 的学期
+No attendance has been marked for {0} as it is a Holiday,由于 {0} 是假日，未标记考勤
+No classes found in the leave period,请假期间未找到课程
+No correct answer is set for {0},未为 {0} 设置正确答案
+No Result to submit,无可提交的结果
+No Student Groups created.,未创建学生班级。
+No students Found,未找到学生
+No students found,未找到学生
+No Students in,无学生
+No. of Meetings Attended by Parents,家长参加的会议次数
+Not eligible for the admission in this program as per Date Of Birth,根据出生日期，不符合该培养项目的入学资格
+Occupation,职业
+"Only the Student Applicant with the status ""Approved"" will be selected in the table below.",只有状态为“已批准”的学生申请人会被选中在下表中。
+Order Created,订单已创建
+Order Pending,订单待处理
+Other details,其他详情
+Parent Assessment Group,上级考核组
+Parents Teacher Meeting Attendance,家长会出席情况
+Passing Score,及格分数
+Passing Score value should be between 0 and 100,及格分数值应在 0 到 100 之间
+Payment for {0} course,{0} 课程的付款
+Payment ID ,支付 ID
+Payment Record,支付记录
+Payment request {0} created,支付请求 {0} 已创建
+Please add programs to enable admission application.,请添加培养项目以启用入学申请。
+Please define grade for Threshold 0%,请为阈值 0% 定义等级
+Please enter the Academic Year and set the Start and End date.,请输入学年并设置开始和结束日期。
+Please fill in all the details to generate Assessment Result.,请填写所有详细信息以生成考核结果。
+Please fill in all the mandatory fields.,请填写所有必填字段。
+Please select a Program first.,请先选择一个培养项目。
+Please select at least one day to schedule the course.,请至少选择一天来安排课程。
+Please select Course,请选择课程
+Please select Program,请选择培养项目
+Please select the assessment group other than 'All Assessment Groups',请选择除“所有考核组”之外的考核组
+Please set the Email ID for the Student to send the Payment Request,请为学生设置电子邮件 ID 以发送付款请求
+Please setup Instructor Naming System in Education > Education Settings,请在“教育 > 教育设置”中设置教师命名系统
+Please setup Students under Student Groups,请在学生班级下设置学生
+Present ,出席
+Print Report Card,打印成绩单
+Program Abbreviation,培养项目缩写
+Program and Course,培养项目与课程
+Program Course,培养项目课程
+Program Enrollment Course,培养项目注册课程
+Program Enrollment Fee,培养项目注册费用
+Program Enrollment Tool Student,培养项目注册工具学生明细
+Program Fee,培养项目收费
+Program in the Fee Structure and Student Group {0} are different.,收费标准中的培养项目与学生班级 {0} 不同。
+Program Name,培养项目名称
+Program: ,培养项目：
+Programs updated,培养项目已更新
+Question Link,问题链接
+Quiz Activity,测验活动
+Quiz Configuration,测验配置
+Quiz Question,测验问题
+Quiz Result,测验结果
+Quiz {0} does not exist,测验 {0} 不存在
+Razorpay Data,Razorpay 数据
+Razorpay Key,Razorpay 密钥
+Razorpay Secret,Razorpay 密钥
+Reason For Leaving,离校原因
+Relation with Guardian1,与监护人1的关系
+Relation with Guardian2,与监护人2的关系
+Relations,关系
+Report Settings,报表设置
+Reschedule,重新安排
+Result already Submitted,结果已提交
+Result HTML,结果 HTML
+Room Name,教室名称
+Room Number,教室编号
+Row {0}:Sibling Date of Birth cannot be greater than today.,第 {0} 行：兄弟姐妹的出生日期不能晚于今天。
+Sales Invoice Posting Date should be same as Fee Schedule Posting Date,销售发票过账日期应与收费计划过账日期相同
+Sales Order Posting Date should be same as Fee Schedule Posting Date,销售订单过账日期应与收费计划过账日期相同
+Schedule Course,安排课程
+Schedule date selected does not lie within the Academic Term of the Student Group {0}.,选择的安排日期不在学生班级 {0} 的学期内。
+Schedule date selected does not lie within the Academic Year of the Student Group {0}.,选择的安排日期不在学生班级 {0} 的学年内。
+Scheduled Upto,计划至
+School / College Logo,学校/学院标志
+School / College Name Abbreviation,学校/学院名称缩写
+School House,学校宿舍
+Score cannot be greater than Maximum Score,分数不能大于最高分数
+Score out of 100,满分 100 分
+Seating Capacity,座位容量
+Select students manually for the Activity based Group,手动选择活动小组的学生
+Select the program first,请先选择培养项目
+Selected Option,已选选项
+Send Payment Request,发送付款请求
+Send Payment Request Email,发送付款请求邮件
+Separate course based Group for every Batch,为每个批次设置独立的课程小组
+Set 0 for no limit,设置为 0 表示无限制
+Show Marks,显示分数
+Sibling Details,兄弟姐妹详情
+Siblings,兄弟姐妹
+Single Correct Answer,单选题
+Skip User creation for new Student,为新学生跳过用户创建
+Start on,开始于
+Student Address,学生地址
+Student Admission Program,招生培养项目
+Student Admissions,学生录取
+Student Attendance record {0} already exists against the Student {1},学生 {1} 已存在考勤记录 {0}
+Student Batch,学生批次
+Student Data,学生数据
+Student Email,学生邮箱
+Student Email Address,学生电子邮件地址
+Student Email ID,学生邮箱 ID
+Student Group Creation Tool Course,学生班级创建工具课程
+Student Group Instructor,学生班级教师
+Student Group is already updated.,学生班级已更新。
+Student Group is mandatory,学生班级为必填项
+Student Group Name,学生班级名称
+Student Group Name is mandatory in row {0},第 {0} 行中的学生班级名称为必填项
+Student Group Strength,学生班级人数
+Student Group Student,学生班级成员
+Student Group: ,学生班级：
+Student Guardian,学生监护人
+Student ID,学生 ID
+Student ID: ,学生 ID：
+Student is already enrolled via Course Enrollment {0},学生已通过课程注册记录 {0} 完成注册
+Student is already enrolled.,学生已注册。
+Student Language,学生语言
+Student Mobile No.,学生手机号
+Student Mobile Number,学生手机号码
+Student Name,学生姓名
+Student Name: ,学生姓名：
+Student Report Card,学生成绩单
+Student Sibling,学生兄弟姐妹
+Student Siblings,学生兄弟姐妹
+Student with email {0} does not exist,邮箱为 {0} 的学生不存在
+Student {0} - {1} appears Multiple times in row {2} & {3},学生 {0} - {1} 在行 {2} 和 {3} 中重复出现
+Student {0} does not belong to group {1},学生 {0} 不属于组 {1}
+Student {0} exist against student applicant {1},学生 {0} 已关联学生申请人 {1}
+Student {0}: {1} does not belong to Student Group {2},学生 {0}: {1} 不属于学生班级 {2}
+Students HTML,学生 HTML
+Studying in Same Institute,同校就读
+Submit Sales Invoice from Program Enrollment / Fee Schedule,从培养项目注册/收费计划提交销售发票
+Submit Sales Order from Program Enrollment / Fee Schedule,从培养项目注册/收费计划提交销售订单
+Sum of Scores of Assessment Criteria needs to be {0}.,考核标准分数之和应为 {0}。
+Supervisor,监考人
+Supervisor Name,监考人姓名
+Term,学期
+Term End Date,学期结束日期
+Term Name,学期名称
+Term Start Date,学期开始日期
+The question cannot be duplicate,问题不能重复
+The Term cannot end after the Academic Year {0},学期不能晚于学年 {0} 结束
+The Term cannot start before the Academic Year {0},学期不能早于学年 {0} 开始
+The Term End Date cannot be before the Term Start Date. Please correct the dates and try again.,学期结束日期不能早于学期开始日期。请更正日期并重试。
+The Year End Date cannot be earlier than the Year Start Date. Please correct the dates and try again.,学年结束日期不能早于学年开始日期。请更正日期并重试。
+There is a problem with the payment gateway. Please contact the Administrator to proceed.,支付网关存在问题。请联系管理员以继续操作。
+There were errors creating Course Schedule,创建课程计划时出错
+This article is already added to the existing topics,此文章已添加到现有主题中
+This course is already added to the existing programs,此课程已添加到现有培养项目中
+This is based on the attendance of this Student,这基于该学生的出勤记录
+This is based on the course schedules of this Instructor,这基于该教师的课程安排
+This quiz is already added to the existing topics,此测验已添加到现有主题中
+This topic is already added to the existing courses,此主题已添加到现有课程中
+This {0} conflicts with {1} for {2} {3},{0} 与 {1} 在 {2} {3} 上存在冲突
+Topic Content,主题内容
+Topic Name,主题名称
+Topic {0} has been added to all the selected courses successfully.,主题 {0} 已成功添加到所有选定的课程中。
+Topics,主题
+Topics updated,主题已更新
+Total amount in the table should be equal to the total amount from fee structure,表格中的总金额应等于收费标准中的总金额
+Total amount of Fee Schedules exceeds the Total Amount of Fee Structure,收费计划总金额超过收费标准总金额
+Total Amount per Student,每位学生的总金额
+Total Collected: {0},已收取总额：{0}
+Total Leave,总请假
+Total Outstanding: {0},未收总额：{0}
+Total Parents Teacher Meeting,家长会总次数
+Total Student,学生总数
+Total Students,学生总数
+Total Weightage of all Assessment Criteria must be 100%,所有考核标准的总权重必须为 100%
+Treshold {0}% appears more than once,阈值 {0}% 出现多次
+Uncheck all,取消全选
+User {0} already exists,用户 {0} 已存在
+User {0} created,用户 {0} 已创建
+Validate Batch for Students in Student Group,验证学生班级中学生的批次
+Validate Enrolled Course for Students in Student Group,验证学生班级中学生的已注册课程
+Weightage,权重
+Work Address,工作地址
+Wrong,错误
+You are not allowed to enroll for this course,您无权注册此课程
+You are not enrolled in program {0},您未注册培养项目 {0}
+You have already assessed for the assessment criteria {}.,您已完成对考核标准 {} 的评分。
+{0} - {1} is inactive student,{0} - {1} 为非在籍学生
+{0} - {1} is not enrolled in the Batch {2},{0} - {1} 未注册批次 {2}
+{0} - {1} is not enrolled in the Course {2},{0} - {1} 未注册课程 {2}
+{0} Fee Schedule(s) created,已创建 {0} 个收费计划
+{0} or {1} is mandatory,{0} 或 {1} 为必填项
+{0} Result submittted,已提交 {0} 个结果
+{0} Student Groups created.,已创建 {0} 个学生班级。
+{0} Students have been enrolled,已注册 {0} 名学生
+{0} {1} has been added to all the selected topics successfully.,{0} {1} 已成功添加到所有选定主题。
