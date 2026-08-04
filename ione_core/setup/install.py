@@ -67,6 +67,7 @@ def after_install():
 	ensure_default_onboarding_flow()
 	ensure_flow_tools()
 	ensure_education_workspace()
+	ensure_healthcare_workspace()
 	sync_translation_overrides()
 
 
@@ -77,6 +78,7 @@ def after_migrate():
 	ensure_default_onboarding_flow()
 	ensure_flow_tools()
 	ensure_education_workspace()
+	ensure_healthcare_workspace()
 	ensure_runtime_config()
 	sync_translation_overrides()
 
@@ -101,6 +103,12 @@ def ensure_flow_tools():
 
 def ensure_education_workspace():
 	from ione_core.setup.education_workspace import ensure_education_workspace as ensure
+
+	return ensure()
+
+
+def ensure_healthcare_workspace():
+	from ione_core.setup.healthcare_workspace import ensure_healthcare_workspace as ensure
 
 	return ensure()
 
