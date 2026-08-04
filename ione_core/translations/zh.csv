@@ -685,7 +685,7 @@ View documentation,查看文档
 Walk-ins,上门咨询
 We are changing how permissions work in Frappe CRM,我们正在更改 Frappe CRM 中的权限工作方式
 Website forms,网站表单
-Welcome to Frappe CRM,欢迎使用 Frappe CRM
+Welcome to Frappe CRM,欢迎使用客户关系管理
 What are your biggest challenges with sales today?,您目前面临的最大销售挑战是什么？
 What would you like to accomplish first?,您希望首先完成什么？
 WhatsApp Message,WhatsApp 消息
@@ -16848,3 +16848,8 @@ to know more,了解更多
 {0} session completed,{0} 课程已完成
 {0} sessions completed,{0} 课程已完成
 {0} with {1},{0} 与 {1}
+Call Logs,通话记录
+Continue,继续
+Help centre,帮助中心
+Skip all,全部跳过
+Start now,立即开始

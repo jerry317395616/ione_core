@@ -10,6 +10,8 @@ app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 
 app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260804-1"]
 
+after_request = ["ione_core.web_injection.inject_crm_i18n"]
+
 add_to_apps_screen = [
 	{
 		"name": app_name,
