@@ -7,6 +7,7 @@ from ione_core.setup.healthcare_workspace import (
 	NUMBER_CARD_NAMES,
 	SHORTCUT_SPECS,
 	SIDEBAR_WORKSPACES,
+	WORKSPACE_SIDEBAR_SPECS,
 	build_sidebar_items,
 	build_workspace_content,
 	build_workspace_links,
@@ -14,20 +15,18 @@ from ione_core.setup.healthcare_workspace import (
 
 
 class HealthcareWorkspaceTest(unittest.TestCase):
-	def test_sidebar_prioritizes_official_business_workspaces(self):
-		items = build_sidebar_items()
-		workspace_links = [item for item in items if item["link_type"] == "Workspace"]
+	def test_every_primary_workspace_has_a_flat_secondary_menu(self):
 		self.assertEqual(
-			[(item["label"], item["link_to"]) for item in workspace_links],
-			[(label, workspace) for label, workspace, _icon in SIDEBAR_WORKSPACES],
+			set(WORKSPACE_SIDEBAR_SPECS),
+			{workspace for _label, workspace, _icon in SIDEBAR_WORKSPACES},
 		)
-
-		sections = [item for item in items if item["type"] == "Section Break"]
-		self.assertEqual(
-			[item["label"] for item in sections],
-			["日常诊疗", "住院与护理", "检验与诊断", "康复管理", "医保与收费", "病历与报表", "机构与设置"],
-		)
-		self.assertTrue(all(item["keep_closed"] for item in sections))
+		for workspace_name in WORKSPACE_SIDEBAR_SPECS:
+			items = build_sidebar_items(workspace_name)
+			self.assertEqual(items[0]["label"], "工作台")
+			self.assertEqual(items[0]["link_type"], "Workspace")
+			self.assertEqual(items[0]["link_to"], workspace_name)
+			self.assertTrue(all(item["type"] == "Link" for item in items))
+			self.assertTrue(all(item["child"] == 0 for item in items))
 
 	def test_workspace_content_references_every_configured_component(self):
 		content = json.loads(build_workspace_content())
@@ -52,10 +51,11 @@ class HealthcareWorkspaceTest(unittest.TestCase):
 		self.assertEqual([item["label"] for item in breaks], [group[0] for group in CARD_GROUPS])
 		self.assertEqual([item["link_count"] for item in breaks], [len(group[1]) for group in CARD_GROUPS])
 
-	def test_every_sidebar_child_is_grouped(self):
-		items = build_sidebar_items()
-		first_section = next(index for index, item in enumerate(items) if item["type"] == "Section Break")
-		self.assertTrue(all(item["child"] == 1 for item in items[first_section:] if item["type"] == "Link"))
+	def test_sidebar_targets_are_unique_within_each_workspace(self):
+		for workspace_name in WORKSPACE_SIDEBAR_SPECS:
+			items = build_sidebar_items(workspace_name)
+			targets = [(item["link_type"], item["link_to"]) for item in items]
+			self.assertEqual(len(targets), len(set(targets)))
 
 
 if __name__ == "__main__":
