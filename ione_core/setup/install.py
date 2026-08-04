@@ -66,6 +66,7 @@ def after_install():
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
 	ensure_flow_tools()
+	ensure_education_workspace()
 	sync_translation_overrides()
 
 
@@ -75,6 +76,7 @@ def after_migrate():
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
 	ensure_flow_tools()
+	ensure_education_workspace()
 	ensure_runtime_config()
 	sync_translation_overrides()
 
@@ -95,6 +97,12 @@ def ensure_flow_tools():
 	from ione_core.setup.flow_tools import ensure_frappe_document_tool
 
 	ensure_frappe_document_tool()
+
+
+def ensure_education_workspace():
+	from ione_core.setup.education_workspace import ensure_education_workspace as ensure
+
+	return ensure()
 
 
 def migrate_agent_fields():
