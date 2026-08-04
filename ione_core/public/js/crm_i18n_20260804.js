@@ -11,6 +11,7 @@
 		["Continue", "继续"],
 		["Getting started", "入门指南"],
 		["Help centre", "帮助中心"],
+		["of", "/"],
 		["Skip all", "全部跳过"],
 		["Start now", "立即开始"],
 		["Welcome to Frappe CRM", "欢迎使用客户关系管理"],

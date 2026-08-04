@@ -30,7 +30,14 @@ class TestCrmLocalization(TestCase):
 		script = (
 			Path(__file__).parents[1] / "public" / "js" / "crm_i18n_20260804.js"
 		).read_text(encoding="utf-8")
-		for source in ("Getting started", "Start now", "Help centre", "Skip all", "Call Logs"):
+		for source in (
+			"Getting started",
+			"Start now",
+			"Help centre",
+			"of",
+			"Skip all",
+			"Call Logs",
+		):
 			with self.subTest(source=source):
 				self.assertIn(f'["{source}",', script)
 		self.assertIn("window.__ione_crm_i18n_loaded = true", script)
