@@ -11,7 +11,7 @@ TOS URI,服务条款 URI
 Webhook URL,Webhook 地址
 {0} of {1},第 {0} 项，共 {1} 项
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
-Home,首页
+Home,主页
 Invoicing,发票
 Payments,收付款
 Financial Reports,财务报表
@@ -5074,7 +5074,7 @@ Enables Calendar and Gantt views.,启用日历和甘特图视图。
 Enabling auto reply on an incoming email account will send automated replies to all the synchronized emails. Do you wish to continue?,在传入电子邮件账户上启用自动回复将向所有同步的电子邮件发送自动回复。您是否希望继续？
 "Enabling this will register your site on a central relay server to send push notifications for all installed apps through Firebase Cloud Messaging. This server only stores user tokens and error logs, and no messages are saved.",启用此功能将在中央中继服务器上注册您的站点，以便通过 Firebase Cloud Messaging 为所有已安装的应用程序发送推送通知。该服务器仅存储用户令牌和错误日志，不保存任何消息。
 Enabling this will submit documents in background,启用此功能将在后台提交文档
-Encounter,遭遇
+Encounter,就诊记录
 Encounter Index,遭遇索引
 Encounter Key,遭遇键
 Encounter No,遭遇编号
@@ -9064,7 +9064,7 @@ OAuth Provider Settings,OAuth 提供程序设置
 OAuth Scope,OAuth 范围
 OAuth Settings,OAuth 设置
 OAuth Signup,OAuth 注册
-Observation,观察
+Observation,观察记录
 Observed At,观察时间
 Occurred,发生
 Occurrence Count,发生次数
@@ -14969,7 +14969,7 @@ Room,教室
 Sales Invoice,销售发票
 Sales Order,销售订单
 Settings,设置
-Setup,基础资料
+Setup,设置
 Student,学生
 Student Admission,学生录取
 Student and Guardian Contact Details,学生及监护人联系方式
@@ -15400,3 +15400,1450 @@ You have already assessed for the assessment criteria {}.,您已完成对考核�
 {0} Student Groups created.,已创建 {0} 个学生班级。
 {0} Students have been enrolled,已注册 {0} 名学生
 {0} {1} has been added to all the selected topics successfully.,{0} {1} 已成功添加到所有选定主题。
+ Quantity,数量
+ out of {0},{0} 中的
+", Mobile {}",，移动设备 {}
+<b><a href='/app/Form/Healthcare Settings'>Healthcare Settings</a></b>,<b><a href='/app/Form/Healthcare Settings'>医疗设置</a></b>
+<b>Expiry Date of Patient's Insurance Policy</b> (via Patient Insurance Policy) or <b>Validity End Date of Coverage</b> (via Item Insurance Eligibility),<b>患者保险单的到期日期</b>（通过患者保险单）或 <b>保障有效期截止日期</b>（通过项目保险资格）
+"<b>Reason for Claim Rejection / Error</b> is required, please update row #{}",需要 <b>拒赔/错误原因</b>，请更新第 {} 行
+"<b>Single</b>: Results which require only a single input.\n<br>\n<b>Compound</b>: Results which require multiple event inputs.\n<br>\n<b>Descriptive</b>: Tests which have multiple result components with manual result entry.\n<br>\n<b>Grouped</b>: Test templates which are a group of other test templates.\n<br>\n<b>No Result</b>: Tests with no results, can be ordered and billed but no Lab Test will be created. e.g.. Sub Tests for Grouped results",<b>单项</b>：仅需单一输入的结果。\n<br>\n<b>复合</b>：需要多个事件输入的结果。\n<br>\n<b>描述性</b>：具有多个结果组件且需手动输入结果的测试。\n<br>\n<b>分组</b>：由其他测试模板组成的测试模板组。\n<br>\n<b>无结果</b>：无结果的测试，可以下单和计费，但不会创建检验检查。例如：分组结果的子测试
+<b>Valid From</b> date cannot be after <b>Valid Till</b> date,<b>生效日期</b>不能晚于 <b>失效日期</b>
+"<br><br><br>Creating Health ID <br>\n								<small>Please note, this may take a while</small>",<br><br><br>正在创建健康 ID <br>\n								<small>请注意，这可能需要一些时间</small>
+<br><br><br>Getting Health ID,<br><br><br>正在获取健康 ID
+<br><br>Resending Aadhaar OTP...,<br><br>正在重新发送 Aadhaar OTP...
+<br><br>Searching...,<br><br>正在搜索...
+"<br><br>Verifying OTP... <br>\n					<small>Please note, this may take a while</small>",<br><br>正在验证 OTP... <br>\n					<small>请注意，这可能需要一些时间</small>
+<br><br>Verifying...,<br><br>正在验证...
+<br>Please check email / mobile or disable 'Invite as User' to skip creating User,<br>请检查电子邮件/手机，或禁用“作为用户邀请”以跳过创建用户
+"<p>Notes:</p>\n\n<ol>\n<li>Keywords Available : \n<code>age</code></li>\n<li>Tables Available : <code>Patient, Healthcare Settings, Observation, Observation Template</code></li>\n</ol>","<p>备注：</p>\n\n<ol>\n<li>可用关键词：\n<code>age</code></li>\n<li>可用表格：<code>Patient, Healthcare Settings, Observation, Observation Template</code></li>\n</ol>"
+A Negative,A 型阴性
+A Positive,A 型阳性
+A Sales Invoice already exists for this Emergency Record,此急诊记录已存在销售发票
+AB Negative,AB 型阴性
+AB Positive,AB 型阳性
+ABDM Request,ABDM 请求
+ABDM Settings,ABDM 设置
+ABHA Address is required to search,需要 ABHA 地址进行搜索
+ABHA Addressent Required,需要 ABHA 地址
+ABHA ID created successfully,ABHA ID 创建成功
+ABHA ID not Created,ABHA ID 未创建
+Aadhaar Consent Template,Aadhaar 同意模板
+Abbreviation already used for {0},{0} 的缩写已使用
+Abdomen,腹部
+Abnormal,异常
+Abnormal Condition,异常状况
+Abnormal From,异常起始值
+Abnormal Interpretation,异常解释
+Abnormal Long Interpretation,异常长解释
+Abnormal Options,异常选项
+Abnormal Ratio,异常比率
+Abnormal To,异常结束值
+Abnormal Value,异常值
+About when and how to obtain urgent work care,关于何时以及如何获取紧急工作护理
+"Actions implied by the request are to be permanently halted, before all of the administrations occurred. This should not be used if the original order was entered in error",请求所隐含的操作应被永久中止，在所有管理行为发生之前。如果原始订单是错误输入的，则不应使用此选项
+Actions implied by the request are to be temporarily halted. The request might or might not be resumed. May also be called 'suspended'.,请求所隐含的操作应被暂时中止。请求可能会也可能不会恢复。也可能称为“挂起”
+Active Assist,活跃辅助
+Active Treatment Counselling {0} already exist for encounter {1},活跃治疗咨询 {0} 已存在于 encounter {1} 中
+Activity Duration,活动持续时间
+Actual End Datetime,实际结束日期时间
+Actual Start Datetime,实际开始日期时间
+Acuity,急症程度
+Add / Edit Fields,添加/编辑字段
+Add Clinical Note,添加临床笔记
+Add Exercise Step,添加锻炼步骤
+Add Exercises,添加锻炼项目
+Add Medication Orders,添加用药医嘱
+Add Multiple Service Units,添加多个服务单元
+Add New Line,添加新行
+Add Observation,添加观察记录
+Add Test,添加测试
+Add Time Slots,添加时间段
+Adding Order Entries,添加医嘱条目
+Additional information regarding the patient,关于患者的附加信息
+Admission Encounter,入院就诊
+Admission Instructions,入院说明
+Admission Nursing Checklist Template,入院护理检查表模板
+Admission Order,入院医嘱
+Admission Ordered For,入院对象
+Admission Schedule Date,入院计划日期
+Admission Scheduled,已安排入院
+Admission Service Unit Type,入院服务单元类型
+Admit,办理入院
+Admitted Datetime,入院日期时间
+Adults' pulse rate is anywhere between 50 and 80 beats per minute.,成人的脉搏率每分钟在 50 到 80 次之间
+Advice on Discharge,出院建议
+Against Inpatient Medication Order,住院用药医嘱
+Against Inpatient Medication Order Entry,住院用药医嘱录入
+Age From,起始年龄
+Age To,终止年龄
+Alcohol Consumption (Past),酒精消费（过去）
+Alcohol Consumption (Present),酒精消费（现在）
+Alcohol past use,过去饮酒史
+Alcohol use,饮酒史
+All actions that are implied by the request have occurred.,请求所隐含的所有操作均已执行。
+All published FHIR Versions.,所有已发布的 FHIR 版本。
+All the drugs are available with sufficient qty to process this Inpatient Medication Entry.,所有药品库存充足，可处理此住院用药录入。
+Allergies,过敏史
+"Allergies, Medical and Surgical History",过敏史、内科及外科病史
+Allerigies,过敏史
+Allocated Amount (via Journal Entry),已分配金额（通过日记账录入）
+Allow Appointments,允许预约
+Allow Blank,允许为空
+Allow Booking For,允许预约对象
+Allow Discharge Despite Pending Healthcare Services,允许在待处理医疗服务时办理出院
+Allow Discharge Despite Unbilled Healthcare Services,允许在未计费医疗服务时办理出院
+Allow Overlap,允许重叠
+Allow Stock Consumption,允许库存消耗
+Allow Video Conferencing,允许视频会议
+Allowed Options,允许选项
+Already Exist,已存在
+Ambulance,救护车
+Amended,已修订
+An Inpatient Medication Order {0} against Patient Encounter {1} already exists.,患者就诊 {1} 已存在住院用药医嘱 {0}。
+An active contract for this Insurance Payor already exists: {0},该保险支付方已存在有效合同：{0}
+An order created in fulfillment of a broader order that represents the authorization for a single activity occurrence. E.g. The administration of a single dose of a drug.,为满足更广泛订单而创建的订单，代表对单次活动发生的授权。例如：单次给药。
+Antibiotic,抗菌药物
+Antibiotic Name,抗生素名称
+Appointment Based On Check In,基于签到预约
+Appointment Booked,预约已确认
+Appointment Cancelled.,预约已取消。
+Appointment Cancelled. Please review and cancel the invoice {0},预约已取消。请审核并取消发票 {0}。
+Appointment Confirmation Message Not Sent,预约确认消息未发送
+Appointment Date and Time are required.,预约日期和时间是必填项。
+Appointment Datetime,预约日期时间
+Appointment Duration (mins),预约时长（分钟）
+Appointment End Datetime,预约结束日期时间
+Appointment For,预约对象
+Appointment Notes,预约备注
+Appointment Reminder,预约提醒
+Appointment Status,预约状态
+Appointment Type,预约类型
+Appointment Type Service Item,预约类型服务项
+Appointment Type Service Items,预约类型服务项
+Appointment date and Healthcare Practitioner are Mandatory,预约日期和医务人员为必填项
+Appointment end must be after start.,预约结束时间必须晚于开始时间。
+Appointment for service units with Inpatient Occupancy can only be created against the unit where patient is admitted.,具有住院床位的服务单元的预约只能针对患者已入院的单元创建。
+Appointment {0} and Sales Invoice {1} cancelled,预约 {0} 和销售发票 {1} 已取消
+Appointments,预约
+Appointments to Bill,待计费预约
+Approve All,全部批准
+"Approved / Rejected / Paid Amount connot be more than Claim Amount, please update row #{}",批准金额/拒绝金额/已付金额不能超过理赔金额，请更新第 {} 行
+Approved Amount,批准金额
+Approved Date,批准日期
+Approved {0} Observation(s),已批准 {0} 项观察结果
+Approving Observations,批准观察结果
+Are you sure you want to approve all Observations in this report?,确定要批准此报告中的所有观察结果吗？
+Are you sure you want to authorise Observation <b></b>,确定要授权观察结果 <b></b> 吗？
+Are you sure you want to cancel this appointment?,确定要取消此预约吗？
+Are you sure you want to mark {0} sample(s) as Collected?,确定要将 {0} 个样本标记为已采集吗？
+Arrival,到达
+Arrival Date and Time,到达日期和时间
+Arrival Mode,到达方式
+Assessment Datetime,评估日期时间
+Assessment Description,评估描述
+Assessment Parameter,评估参数
+Assessment Parameters,评估参数
+Assessment Scale,评估量表
+Assessment Sheet,评估表
+Assessment Template,评估模板
+"Assessment tool/survey instrument observations (e.g., Apgar Scores, Montreal Cognitive Assessment (MoCA)).",评估工具/调查工具观察结果（例如，阿普加评分，蒙特利尔认知评估 (MoCA)）。
+Assign Bed,分配床位
+Assistance Level,协助级别
+Attach Medical Record,附加病历
+Attach Result,附加结果
+Attending Practitioner,主治医师
+Automatically Generate Billable,自动生成可计费项
+Available slots,可用时段
+Average Score,平均分数
+Avoid Confirmation,避免确认
+Awaiting Disposition,等待处置
+B Negative,B 型阴性
+B Positive,B 型阳性
+BP Diastolic,舒张压
+BP Systolic,收缩压
+Based on Condition and Formula,基于条件和公式
+Based on Consumption,基于消耗量
+Bed Occupancy,床位占用率
+Billables,计费项目
+Billing & Accounts,账单与财务
+Billing Item,计费项
+Billing Summary,账单摘要
+Billing Type,账单类型
+Billing and Insurance,账单与保险
+Bloated,臃肿
+Blood Pressure,血压
+Blood Pressure (diastolic),血压（舒张压）
+Blood Pressure (systolic),血压（收缩压）
+Body Part,身体部位
+Body Part Link,身体部位链接
+Body Temperature,体温
+Book,书籍
+Boolean,布尔值
+Boolean Value,布尔值
+Break,中断
+Browse Medication,浏览药品
+Cancel Admission,取消入院
+"Cannot Cancel, Insurance Claim already Completed / Partly Paid",无法取消，保险索赔已完成或部分支付
+Cannot check in a {0} appointment,无法签到 {0} 预约
+Cannot create Unavailable block: it conflicts with existing Patient Appointment(s): ,无法创建不可用时间段：它与现有的患者预约冲突：
+"Cannot link existing Item Code {}, UOM {} does not match with Item Stock UOM",无法链接现有物料代码 {}，单位 {} 与物料库存单位不匹配
+Cannot mark Inpatient Record as Discharged since there are unbilled services. ,由于存在未计费服务，无法将住院记录标记为已出院。
+Canonical Mapping,规范映射
+Captured,已捕获
+Care,护理
+Change In Item,物料变更
+Change Item Code,更改物料代码
+Change Template Code,更改模板代码
+Change in Item,物料变更
+Check Availability,检查可用性
+Check this if the Clinical Procedure is billable and also set the rate.,勾选此项以将临床诊疗设为可计费并设置费率。
+Check this if the Clinical Procedure utilises consumables. Click <a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>here</a> to know more,勾选此项以表明临床诊疗使用消耗品。点击 <a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>此处</a> 了解更多
+Check this if you want the Name and Designation of the Employee associated with the User who submits the document to be printed in the Lab Test Report.,勾选此项以在检验检查报告中打印提交文档的用户关联的员工姓名和职位。
+Check-in time cannot be after current time,签到时间不能晚于当前时间
+Check-in time cannot be greater than the current time,签到时间不能大于当前时间
+Checked In,已签到
+Checked Out,已签退
+Checking this option will prompt for Appointment invoicing and payment,勾选此选项将提示进行预约开票和付款
+Checking this will create Lab Test(s) specified in the Sales Invoice on submission.,勾选此项将在提交时根据销售发票创建指定的检验检查。
+Checking this will create a Sample Collection document  every time you create a Lab Test,勾选此项将在每次创建检验检查时创建样本采集文档
+Checking this will create new Patients with a Disabled status by default and will only be enabled after invoicing the Registration Fee.,勾选此项将默认创建状态为“禁用”的新患者，并在开具注册费发票后启用。
+Checking this will popup to invoice appointment,勾选此项将弹出预约开票窗口
+Checking this will restrict printing and emailing of Lab Test documents unless they have the status as Approved.,勾选此项将限制打印和发送检验检查文档，除非其状态为“已批准”。
+Checklist,检查清单
+Chief Complaint,主诉
+Circular reference detected: '{0}' is already a component (directly or indirectly) of '{1}',检测到循环引用：'{0}' 已经是 '{1}' 的组件（直接或间接）
+Claim Amount,索赔金额
+Claim Coverage %,索赔覆盖率 %
+Claim Details,索赔详情
+Claim Error / Reject Reason,索赔错误/拒绝原因
+Claim Mode of Approval,索赔审批方式
+Claim Status,索赔状态
+Claim Validity End Date,索赔有效期截止日期
+Claim already created for all Inpatient Occupancies,所有住院占用均已创建索赔
+Claims Receivable Account,索赔应收账户
+Claims Receivable Account is mandatory for Company {},公司 {} 必须填写索赔应收账户
+Clinical Note,临床笔记
+Clinical Note Type,临床笔记类型
+Clinical Notes,临床笔记
+Clinical Procedure,临床诊疗
+Clinical Procedure ({0}):,临床诊疗 ({0})：
+Clinical Procedure Consumable Item,临床诊疗耗材项目
+Clinical Procedure Item,临床诊疗项目
+Clinical Procedure Rate,临床诊疗费率
+Clinical Procedure Template,临床诊疗模板
+Clinical Procedure is already created,临床诊疗已创建
+Clinical Procedure {0} already created from service request {1},临床诊疗 {0} 已从服务请求 {1} 创建
+Clinical Procedures,临床诊疗
+"Clinical observations measure the body's basic functions such as blood pressure, heart rate, respiratory rate, height, weight, body mass index, head circumference, pulse oximetry, temperature, and body surface area.",临床观察用于测量身体的基本功能，如血压、心率、呼吸频率、身高、体重、身体质量指数、头围、脉搏血氧饱和度、体温和体表面积。
+Coated,涂层
+Code Description,代码描述
+Code System,代码系统
+Code Value,代码值
+Code Value Description,代码值描述
+Code Value Set,代码值集
+Codes indicating the degree of authority/intentionality associated with a request.,表示与请求相关的权限/意图程度的代码。
+Codes providing the status of an observation.,提供观察状态的代码。
+Codification Table,编码表
+Collect Fee for Patient Registration,收取患者注册费
+Collect Payment on Portal,在门户上收取付款
+Collect Registration Fee,收取注册费
+Collected,已收取
+Collected By,收取人
+Collected On,收取日期
+Collected User,收取用户
+Collection Date Time,收取日期时间
+Collection Details,收取详情
+Collection Details:,收取详情：
+Collection Point,收取点
+Colony Population,殖民地人口
+Colony UOM,殖民地计量单位
+Combinations,组合
+Company and Insurance Provider are mandatory,公司和保险公司为必填项
+Complaint,主诉
+Complaints,投诉
+Complete and Consume,完成并消耗
+Complete {0} and Consume Stock?,完成 {0} 并消耗库存？
+Complete {0}?,完成 {0}？
+Completed Orders,已完成订单
+Completed Sessions,已完成会话
+Component Observation Parent,组件观察父级
+Component Observations,组件观察
+Compound,复方
+Compound Test Result,复合测试结果
+Configure a service Item for {0},为 {0} 配置服务项目
+Confirm to Schedule Admission,确认安排入院
+Confirmation Message,确认消息
+Consent Management,同意管理
+Consent Required,需要同意
+Constipated,便秘
+Consultation Item,咨询项目
+Consultation Setup,诊疗设置
+Consulting Charges: {0},咨询费：{0}
+Consumable Total Amount,耗材总金额
+Consume Stock,消耗库存
+Consumption Details,消耗详情
+Consumption Invoiced,已开具消费发票
+Contact & Address,联系人及地址
+Contact: ,联系人：
+Container Closure Color,容器盖颜色
+Conversion Factor is mandatory,必须填写换算系数
+Corrected,已更正
+"Could not add conferencing to this Appointment, please contact System Manager",无法为此预约添加视频会议，请联系系统管理员
+Could not create Service Units,无法创建服务单元
+Counts Completed,已完成计数
+Counts Completed: {0},已完成计数：{0}
+Counts Target,计数目标
+Counts Targeted: {0},目标计数：{0}
+Coverage,保险保障
+Coverage %,覆盖率 %
+Coverage Amount,覆盖金额
+Coverage Percentage,覆盖百分比
+Coverage Status,覆盖状态
+Create ABHA,创建 ABHA
+Create Coverage,创建覆盖范围
+Create Insurance Coverage,创建保险覆盖
+Create Lab Test(s) on Sales Invoice Submission,提交销售发票时创建检验检查
+Create Medication Request,创建用药申请
+Create Multiple,批量创建
+Create Nursing Tasks,创建护理任务
+Create Observation(s) on Sales Invoice Submission,提交销售发票时创建观察项
+Create Sample Collection document for Lab Test,为检验检查创建样本采集文档
+Create Service Request,创建服务请求
+Create Slots,创建时段
+Create Treatment Counselling,创建治疗咨询
+Create and link a service item to be billed for Out Patient Consulting.,创建并链接用于门诊咨询计费的服务项目。
+Create and link the document to complete this task,创建并链接文档以完成此任务
+Create/Link Code,创建/链接代码
+Create/Link Item,创建/链接物品
+Creating Insurance Coverage,正在创建保险覆盖
+Creating Lab Tests...,正在创建检验检查...
+Creating Treatment Counselling,正在创建治疗咨询
+Creating {0} Service Units,正在创建 {0} 个服务单元
+Critical Condition,危重状态
+Critical From,危急起始时间
+Critical Interpretation,危急解读
+Critical Long Interpretation,关键长解读
+Critical Options,关键选项
+Critical Ratio,关键比率
+Critical To,关键至
+Critical Value,关键值
+Current Bed,当前床位
+Current Issues,当前问题
+Custom Document Types,自定义文档类型
+Custom Result,自定义结果
+Custom Signature in Print,打印中的自定义签名
+Customer Not Found,未找到客户
+Customer {0} created and linked to Patient,客户 {0} 已创建并链接到患者
+Customer {0} has been linked to Patient,客户 {0} 已链接到患者
+Customer {0} is created.,客户 {0} 已创建。
+Dashboard,仪表盘
+Date Fieldname,日期字段名
+Date Time,日期时间
+Date of birth,出生日期
+Day(s),天
+Deceased,已故
+Default Appointment Type,默认预约类型
+Default Code System,默认代码系统
+Default Code System to be used when creating Insurance Claim,创建保险索赔时使用的默认代码系统
+Default Duration,默认持续时间
+Default Duration (In Minutes),默认持续时间（分钟）
+Default Google Calendar,默认 Google 日历
+Default Healthcare Service Items,默认医疗服务项目
+Default Intent,默认意图
+Default Interval,默认间隔
+Default Interval UOM,默认间隔单位
+Default Prescription Dosage,默认处方剂量
+Default Prescription Duration,默认处方持续时间
+Default duration which the task can take to complete,任务完成所需的默认时长
+Default income accounts to be used if not set in Healthcare Practitioner to book Appointment charges.,如果在医务人员中未设置，用于预订预约费用的默认收入账户。
+Default receivable accounts to be used to book Appointment charges.,用于预订预约费用的默认应收账户。
+Department wise Patient Appointments,按科室统计患者预约
+Description ,描述
+Descriptive,描述性
+Descriptive Result,描述性结果
+Descriptive Test,描述性测试
+Descriptive Test Result,描述性测试结果
+Descriptive Test Template,描述性测试模板
+Descriptive Toggle,描述性切换
+Diagnosis Trends,诊断趋势
+Diagnostic,诊断
+Diagnostic Module,诊断管理
+Diagnostic Report,诊断报告
+Diagnostics,检查诊断
+"Did not send SMS, missing patient mobile number or message content.",未发送短信，缺少患者手机号码或消息内容。
+Diet Adviced,饮食建议
+Difficulty Level,难度等级
+Directive,指令
+Disapproval Reason,拒绝原因
+Discharge Date,出院日期
+Discharge Details,出院详情
+Discharge Instructions,出院说明
+Discharge Notes,出院备注
+Discharge Nursing Checklist Template,出院护理检查清单模板
+Discharge Ordered Date,出院指令日期
+Discharge Scheduled,已安排出院
+Discharge Summary,出院总结
+Discharging Practitioner,出院医师
+Disposition Date and Time,处置日期和时间
+Disposition Notes,处置备注
+Do Not Bill Patient Encounters for Inpatients,不对住院患者的就诊进行计费
+Do not add Video Conferencing,不添加视频会议
+Do not confirm if appointment is created for the same day,如果预约是在当天创建的，则不确认
+Do not print or email Lab Tests without Approval,未经批准不打印或发送检验检查报告
+Dosage,剂量
+Dosage Form,剂型
+Dosage Form:,剂型：
+Dosage Strength,剂量强度
+Dosage by Time Interval,按时间间隔给药
+Dosage:,剂量：
+Drug Code,药物代码
+Drug Name,药物名称
+Drug Name / Description,药物名称/描述
+Drug Prescription,药物处方
+Duplicate Item,重复项目
+Duration (In Minutes),持续时间（分钟）
+Each slot indicates the capacity currently available for booking,每个时段表示当前可用于预约的容量
+Edit Clinical Note,编辑临床笔记
+Edit Exercise Step,编辑运动步骤
+Edit Observation,编辑观察结果
+Eligibility Applicable for,适用资格
+Eligibility Details,资格详情
+Eligibility For ,适用对象
+Eligibility Plan,保险资格计划
+Emergency Consultation Fee,急诊咨询费
+Emergency Occupancy,急诊入住
+Emergency Record,急诊记录
+Emergency Triage Queue,急诊分诊队列
+Employee (Lab Technician),员工（检验技师）
+Employee and User Details,员工和用户详情
+Employee name and designation in print,打印时显示员工姓名和职称
+Enable Free Follow-ups,启用免费随访
+Encounter Date,就诊日期
+Encounter Details,就诊详情
+Encounter Impression,就诊印象
+Encounter Status,就诊状态
+Encounter Time,就诊时间
+End time must be after start time.,结束时间必须晚于开始时间。
+Enter a name for the Clinical Procedure Template,请输入临床诊疗模板的名称
+Entered In Error,误录入
+Entered in Error,误录入
+Error / Reject Reason,错误/拒绝原因
+Error calculating Coverage for Insurance Coverage {}. Please verify Coverage for Item and then try saving Insurance Coverage again,计算保险覆盖范围 {} 时出错。请核实项目的覆盖范围，然后再次尝试保存保险覆盖范围
+Error in formula,公式错误
+Error while evaluating the {0} {1} at row {2}. <br><br> <b>Error:</b> {3}\n			<br><br> <b>Hint:</b> {4},在评估第 {2} 行的 {0} {1} 时出错。<br><br> <b>错误：</b> {3}\n			<br><br> <b>提示：</b> {4}
+Estimated Duration,预计持续时间
+Exercise Difficulty Level,运动难度等级
+Exercise Instructions,运动说明
+Exercise Name,运动名称
+Exercise Steps,运动步骤
+Exercise Type,运动类型
+Exercise Type Step,运动类型步骤
+Exercise Video,运动视频
+Exercises,运动
+Expected Discharge,预计出院
+Expected Length of Stay,预计住院时长
+Expected Result Date,预计结果日期
+Expected Result Time,预计结果时间
+Expected and Discharge dates cannot be less than Admission Schedule date,预计和出院日期不能早于入院计划日期
+Experimental ,实验性
+Expiry Date for the Insurance Policy cannot be a past date,保险保单的到期日期不能是过去的日期
+External Referral,外部转诊
+"Failed to fetch health Data, Please try again later",获取健康数据失败，请稍后重试
+Failed to mark samples as Collected,标记样本为已收集失败
+Family,家庭
+Fee Validity,费用有效期
+Fee Validity Reference,费用有效期参考
+Fee Validity {0} updated.,费用有效期 {0} 已更新。
+Fetch Patient Coverages,获取患者保险覆盖
+Fetched existing ABHA of aadhaar provided,已获取提供的 Aadhaar 对应的现有 ABHA
+"Fetched from Practitioner Schedule if ""Create Slots"" is disabled",如果禁用了“创建时段”，则从医务人员排班中获取
+Fetching Available Slots...,正在获取可用时段...
+Fetching Coverages,正在获取保险覆盖
+Fetching Pending Medication Orders,正在获取待处理用药医嘱
+Fetching Template Details,正在获取模板详情
+Fetching Treatment Plans,正在获取治疗方案
+Filler Order,填充订单
+Findings,发现
+Fluid,液体
+Follow Up Date,复诊日期
+Followup Date,复诊日期
+For Procedure,用于手术
+For use while scheduling tele-consultations via Google Meet,用于通过 Google Meet 安排远程会诊
+Free Followup Details,免费复诊详情
+From Age Type,起始年龄类型
+From Duration,起始时长
+Furry,毛皮
+Gateway Name,网关名称
+Gender (if unidentified),性别（若未确定）
+Gender: ,性别：
+Generate Billables,生成计费项
+Generating OTP...,正在生成 OTP...
+Generic Name,通用名
+Gestational Age,胎龄
+Get Applicable Treatment Plans,获取适用的治疗方案
+Get From Encounter,从就诊记录获取
+Get Items from Healthcare Services,从医疗服务获取项目
+Get Items from Prescriptions,从处方获取项目
+Get Orders,获取订单
+Get Pending Medication Orders,获取待处理用药医嘱
+Get Prescribed Clinical Procedures,获取处方的临床手术
+Get Prescribed Therapies,获取处方疗法
+Get from Patient Encounter,从患者就诊记录获取
+Getting From Encounter,从就诊记录获取
+Google Calendar Required,需要 Google 日历
+Group Tests,组合检验
+Grouped Observations,组合观察结果
+Has Component,包含组件
+Health ID Service,健康 ID 服务
+Healthcare,医疗管理
+Healthcare Activity,医疗活动
+Healthcare Administrator,医疗管理员
+Healthcare Insurance Policy,医疗保险保单
+Healthcare Payment Record,医疗支付记录
+Healthcare Practitioner,医务人员
+Healthcare Practitioner (Primary),主要医务人员
+Healthcare Practitioner (Secondary),次要医务人员
+Healthcare Practitioner not available on {0},{0} 不可用
+Healthcare Practitioner {0} not available on {1},{0} 在 {1} 不可用
+Healthcare Schedule Time Slot,医疗排班时段
+Healthcare Service,医疗服务
+Healthcare Service Insurance Coverage,医疗服务保险保障
+Healthcare Service Items,医疗服务项目
+Healthcare Service Template,医疗服务模板
+Healthcare Service Unit,医疗服务单元
+Healthcare Service Unit Tree,医疗服务单元树
+Healthcare Service Unit Type,医疗服务单元类型
+Healthcare Service Unit Type cannot have both {0} and {1},医疗服务单元类型不能同时包含 {0} 和 {1}
+Healthcare Service Unit Type must allow atleast one among {0} and {1},医疗服务单元类型必须至少允许 {0} 和 {1} 中的一个
+Healthcare Services,医疗服务
+Healthcare Settings,医疗管理设置
+Heart Rate / Pulse,心率/脉搏
+Height (In Meter),身高（米）
+High Sensitivity,高灵敏度
+Hyper,亢进
+ICD-10-CM (United States),ICD-10-CM（美国）
+ICD-9-CM (clinical codes),ICD-9-CM（临床代码）
+ICD-9-CM (procedure codes),ICD-9-CM（程序代码）
+Identification Number (UID),识别号码（UID）
+Identifies the level of importance to be assigned to actioning the request.,标识分配给处理请求的重要性级别。
+Identify Patient,识别患者
+"If ""Link Customer to Patient"" is checked in Healthcare Settings and an existing Customer is not selected then, a Customer will be created for this Patient for recording transactions in Accounts module.",如果在“医疗设置”中勾选了“将客户链接到患者”，且未选择现有客户，则系统将为该患者创建客户，以便在“会计”模块中记录交易。
+"If checked, a customer will be created for every Patient. Patient Invoices will be created against this Customer. You can also select existing Customer while creating a Patient. This field is checked by default.",如果勾选此项，将为每位患者创建客户。患者发票将针对此客户创建。在创建患者时，您也可以选择现有客户。此字段默认已勾选。
+"If checked, a customer will be created, mapped to Patient.\nPatient Invoices will be created against this Customer. You can also select existing Customer while creating Patient.",如果勾选此项，将创建客户并与患者关联。\n患者发票将针对此客户创建。在创建患者时，您也可以选择现有客户。
+"If enabled, diagnostic details tab will show on patient portal",如果启用，诊断详情选项卡将显示在患者门户中
+"If this Healthcare Practitioner also works for the In-Patient Department, set the inpatient visit charge for this Practitioner.",如果该医务人员同时也在住院部工作，请为此从业者设置住院就诊费用。
+"If this Healthcare Practitioner works for the In-Patient Department, create a service item for Inpatient Visits.",如果该医务人员在住院部工作，请为住院就诊创建服务项目。
+"If unchecked, the item will not be available in Sales Invoices for billing but can be used in group test creation. ",如果未勾选，该项目将不会出现在销售发票中用于计费，但可用于创建组合测试。
+"If you want to send SMS alert on Patient Registration, you can enable this option. Similary, you can set up Out Patient SMS alerts for other functionalities in this section. Click",如果您希望在患者注册时发送短信提醒，可以启用此选项。同样，您可以在本节中为其他功能设置门诊短信提醒。点击
+"If you want to track Payroll and other HRMS operations for a Practitoner, create an Employee and link it here.",如果您希望跟踪从业者的薪资和其他 HRMS 操作，请创建员工并在此处链接。
+"If you wish to override default accounts settings and configure the Income and Receivable accounts for Healthcare, you can do so here.",如果您希望覆盖默认账户设置并为医疗模块配置收入和应收账户，可以在此处进行设置。
+"If your Healthcare facility bills registrations of Patients, you can check this and set the Registration Fee in the field below. Checking this will create new Patients with a Disabled status by default and will only be enabled after invoicing the Registration Fee.",如果您的医疗机构对患者注册进行计费，您可以勾选此项并在下方字段中设置注册费。勾选此项将默认创建状态为“禁用”的新患者，只有在开具注册费发票后才会启用。
+Imaging Toggle,影像切换
+Immutable,不可变
+Immutable ,不可变
+In Months,以月为单位
+In Treatment,治疗中
+In print,在打印中
+Incomplete Services,未完成的服务
+Indicates the mechanism used to compare versions to determine which is more current.,指示用于比较版本以确定哪个版本更新的机制。
+"Information to help easily interpret the test report, will be printed as part of the Lab Test result.",有助于轻松解读测试报告的信息，将作为检验检查结果的一部分打印。
+Inpatient Billables,住院计费项
+Inpatient Consulting Charge is mandatory if you are setting Inpatient Consulting Charge Item,如果您设置了住院咨询收费项目，则住院咨询费用为必填项
+Inpatient Details,住院详情
+Inpatient Medication Entry,住院用药录入
+Inpatient Medication Entry Detail,住院用药录入明细
+Inpatient Medication Order,住院用药医嘱
+Inpatient Medication Order Entry,住院用药医嘱录入
+Inpatient Medication Orders,住院用药医嘱
+Inpatient Medication Orders updated successfully,住院用药医嘱更新成功
+Inpatient Occupancy,住院床位占用
+Inpatient Record,住院记录
+Inpatient Record Item,住院记录项
+Inpatient Settings,住院设置
+Inpatient Status,住院状态
+Inpatient Visit Charge,住院就诊费用
+Inpatient Visit Charge Item,住院就诊费用项目
+Instance Order,实例订单
+Instructions to be printed on the worksheet,打印在工作表上的说明
+Insurance,医疗保险
+Insurance ,保险
+Insurance Claim,保险理赔
+Insurance Claim Coverage,保险理赔覆盖范围
+Insurance Claim Credit Days,保险理赔信用天数
+Insurance Claim Details,保险理赔详情
+Insurance Claim already submitted for Insurance Coverages<br>{},保险理赔已提交至保险覆盖范围<br>{}
+Insurance Coverage,保险覆盖范围
+Insurance Coverage Posting Date,保险覆盖范围过账日期
+Insurance Coverage not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled,保险覆盖范围未创建！<br>不支持，因为已启用<b>自动预约开票</b>
+"Insurance Coverage {} - {}<br>Discount: {}%, Coverage: {}%",保险覆盖范围 {} - {}<br>折扣：{}%，覆盖范围：{}%
+Insurance Eligibility Plan,保险资格计划
+Insurance Eligibility not found for Item {}.,未找到项目 {} 的保险资格。
+Insurance Payor,保险支付方
+Insurance Payor Contract,保险支付方合同
+Insurance Payor Eligibility Plan,保险支付方资格计划
+Insurance Payor Name,保险支付方名称
+Insurance Plan,保险计划
+Insurance Policy,保险保单
+Insurance Policy Details,保险保单详情
+Intent,意图
+Interpretation,解释
+Interpretation Template,解释模板
+Interval UOM,间隔单位
+Intervention,干预
+"Invalid Claim Amount, row #{}",无效的理赔金额，第 {} 行
+Invalid Coverage / Discount percentage,无效的覆盖范围/折扣百分比
+"Invalid Coverage Percent {}, cannot submit Insurance Coverage as Approved",无效的覆盖范围百分比 {}，无法将保险覆盖范围提交为已批准
+Invalid Healthcare Service Unit,无效的医疗服务单元
+Invalid Insurance Policy,无效的保险保单
+Invalid Number of Service Units,无效的服务单元数量
+"Invalid Service Template, Insurance Coverage can only be created for Templates marked <b>Is Billable</b>",无效的服务模板，保险覆盖范围只能为标记为<b>可计费</b>的模板创建
+"Invalid Service Template, Item is required to create Insurance Coverage",无效的服务模板，创建保险覆盖范围需要项目
+Investigations,检查
+"Investigations, Therapy & Procedures",检查、治疗与手术
+Invoice Consumables Separately,单独开具耗材发票
+Invoice Discount %,发票折扣百分比
+Invoice Discount Amount,发票折扣金额
+Invoice Patient Registration,发票患者注册
+Invoice Separately as Consumables,单独作为耗材开具发票
+Invoiced,已开票
+Invoiced Quantity and Invoiced Amount cannot be more than Claim Quantity {} and Claim Amount {},已开票数量和已开票金额不能超过理赔数量 {} 和理赔金额 {}
+Is Combination,是否为组合
+Is FHIR Defined,是否已定义 FHIR
+Is Inpatient,是否为住院
+Is OT,是否为手术室
+Is Order Completed,订单是否已完成
+Italic,斜体
+Item <b>{}</b> has been already used in <b><a href='/app/medication/{}'>Medication</a></b>,物品 <b>{}</b> 已在 <b><a href='/app/medication/{}'>药品</a></b> 中使用
+Item Code (Drug),物品编码（药品）
+Item Eligibility overlaps with {eligibility},物品保险资格与 {eligibility} 重叠
+Item Insurance Eligibility,项目保险资格
+Item Price for Item {} not found,未找到物品 {} 的物品价格
+Item with Item Code {0} already exists,物品编码为 {0} 的物品已存在
+Item {0} is already linked to Service Unit Type {1},物品 {0} 已链接到服务单元类型 {1}
+Item {0} is not active,物品 {0} 未激活
+Lab Prescription,检验医嘱
+Lab Routine,检验常规
+Lab Technician,检验技师
+Lab Technician Designation,检验技师职称
+Lab Technician Name,检验技师姓名
+Lab Test,检验检查
+Lab Test Group Template,检验项目组模板
+Lab Test Item {0} already exist,检验检查项目 {0} 已存在
+Lab Test Name,检验检查名称
+Lab Test Report,检验报告
+Lab Test Sample,检验样本
+Lab Test Template,检验项目模板
+Lab Test UOM,检验单位
+Lab Test is already created,检验检查已创建
+Lab Test {0} already created from service request {1},检验检查 {0} 已从服务请求 {1} 创建
+Lab Test(s) {0} created successfully,检验检查 {0} 创建成功
+Lab Tests,检验检查
+LabTest Approver,检验检查审批人
+Laboratory,检验科
+Laboratory SMS Alerts,检验科短信提醒
+Laboratory Settings,检验科设置
+Laboratory Setup,检验设置
+Laboratory User,检验科用户
+Left Without Being Seen,未就诊离开
+Link Customer to Patient,将客户链接到患者
+Link Existing Item,链接现有物品
+Link existing Item,链接现有物品
+"Link the Google Calendar created and Authorized by the practitioner, all tele consultation appointments will be scheduled using this calendar",链接由从业者创建并授权的 Google 日历，所有远程会诊预约将使用此日历安排
+Linked Item,关联项目
+Linked Item Details,关联项目详情
+Linked Items,关联项目
+Linked Party (Customer),关联方（客户）
+Long Interpretation,长解释
+Low Sensitivity,低敏感性
+Lower number means higher acuity. 1 is the most urgent.,数值越低表示病情越严重。1 为最紧急。
+Make Payment,制作付款
+Mandatory Results,必填结果
+Manual approval required for Insurance Coverage {},保险覆盖需要手动审批 {}
+Mark Approved,标记为已批准
+Mark Collected,标记为已采集
+Mark Draft,标记为草稿
+Mark Rejected,标记为已拒绝
+Marking Collected...,正在标记为已采集...
+Masters,基础资料
+Max number of visit,最大访问次数
+Maximum Appointments,最大预约数
+Maximum Capacity:,最大容量：
+Maximum Number of Appointments (Nos),最大预约数量（个）
+Maximum Quantity Exceeded,超出最大数量
+Maximum appointments cannot be more than {0} in row #{1},第 {1} 行的最大预约数不能超过 {0}
+Maximum billable quantity exceeded by {0},超出最大可计费数量 {0}
+Medical Codes,医疗代码
+Medical Coding,医疗编码
+Medical Department,医疗科室
+Medical History,病史
+Medical Record,病历
+Medical Value,医疗值
+Medical history,病史
+Medication,药品
+Medication Class,药品类别
+Medication Details,药品详情
+Medication Entry,用药执行记录
+Medication Ingredient,药品成分
+Medication Item,药品项目
+Medication Item wise Sales,按药物项目的销售
+Medication Linked Item,药品关联项目
+Medication Order,用药医嘱
+Medication Orders,用药医嘱
+Medication Request,用药申请
+Medication Request Status,用药申请状态
+Medication Request Status Codes.,用药申请状态代码。
+Medication Request(s) Created,已创建药品申请
+Medication Requests,用药申请
+Medication Warehouse,药品仓库
+Medication:,药品：
+Medications,药品
+Merge Into Patient,合并至患者
+Method Value,方法值
+Middle Name (optional),中间名（可选）
+Minimum Billable Quantity,最小计费数量
+Mins in Dept,部门停留时间（分钟）
+Missing Configuration,缺少配置
+Missing Insurance Policy,缺少保险保单
+Missing Mandatory Fields,缺少必填字段
+Missing Required Fields,缺少必填字段
+"Missing required details, did not create Inpatient Record",缺少必要详情，未创建住院记录
+Mode of Approval,审批方式
+Moderate Sensitivity,中度敏感
+Monday ,星期一
+Month(s),月
+Monthly Therapy Sessions: ,每月治疗次数：
+More info,更多信息
+Name of Insurance Plan,保险计划名称
+Naming Series for Insurance Coverage Journal Entry,保险覆盖日记账的命名系列
+National Drug Code,国家药品代码
+New ${frm.doc.task_doctype},新 ${frm.doc.task_doctype}
+New Clinical Note,新临床笔记
+New Medication,新药品
+New Medication Request,新药品申请
+New Observation,新观察记录
+New Service Request,新服务请求
+New Service Unit Name,新服务单元名称
+Nightly generate billable from Inpatient Occupancy,每晚从住院占用生成计费
+No Clinical Notes,无临床笔记
+No Drug Shortage,无药品短缺
+No Inpatient Record found against patient {0},未找到患者 {0} 对应的住院记录
+No Insurance Claim Coverages in Approved status to create Payment Entry,没有处于已批准状态的保险索赔覆盖以创建付款条目
+No Lab Tests created,未创建检验检查
+No Lab Tests found for the Patient {0},未找到患者 {0} 的检验检查
+No Medication Requests,无药品申请
+No Observations,无观察记录
+No Result,无结果
+No Service Requests,无服务请求
+No Show,未出席
+No active Insurance Contract for Company {0} with Insurance Payor {1},公司 {0} 与保险支付方 {1} 之间没有有效的保险合同
+"No matching Patient Insurance Coverages found, please check the filters",未找到匹配的患者保险覆盖范围，请检查筛选条件
+No more records..,没有更多记录..
+No of Sessions,会话次数
+No pending medication orders found for selected criteria,未找到符合选定条件的待处理用药医嘱
+No slots available for booking,没有可用的预订时段
+No valid contract found with the Insurance Payor {0},未找到与保险支付方 {0} 的有效合同
+No vital signs recorded,未记录生命体征
+No. of prints,打印份数
+Non numeric result {0} is not allowed for Permitted Data Type {1},非数值结果 {0} 不允许用于允许的数据类型 {1}
+Non numeric result {0} is not allowed for Permitted Type {1},非数值结果 {0} 不允许用于允许的类型 {1}
+Normal Condition,正常状况
+Normal From,正常起始值
+Normal Interpretation,正常解读
+Normal Long Interpretation,正常长解读
+Normal Options,正常选项
+Normal Range,正常范围
+Normal Ratio,正常比率
+Normal Test Result,正常测试结果
+Normal Test Template,正常测试模板
+Normal To,正常终止值
+Normal Toggle,正常切换
+Normal Value,正常值
+Normal reference range for an adult is 16–20 breaths/minute (RCP 2012),成人的正常呼吸频率为 16–20 次/分钟 (RCP 2012)
+"Normal resting blood pressure in an adult is approximately 120 mmHg systolic, and 80 mmHg diastolic, abbreviated ""120/80 mmHg""",成人的正常静息血压约为收缩压 120 mmHg，舒张压 80 mmHg，简写为“120/80 mmHg”
+Not Active,未激活
+Not Allowed to 'Complete' Nursing Task without linking Task Document,未链接任务文档时，不允许“完成”护理任务
+Not Allowed to cancel Nursing Task with status 'Completed',不允许取消状态为“已完成”的护理任务
+"Not Allowed to delete coverage after submission, please update the Coverage status instead",提交后不允许删除覆盖范围，请更新覆盖范围状态
+Not Collected,未采集
+Not allowed to print this document.,不允许打印此文档。
+"Not allowed, cannot overlap appointment {}",不允许，预约 {} 不能重叠
+"Not allowed, {} cannot exceed maximum capacity {}",不允许，{} 不能超过最大容量 {}
+"Not permitted, configure Lab Test Template as required",不允许，请按要求配置检验检查模板
+Not permitted. Please disable the Lab Test Template,不允许。请禁用检验检查模板
+Not permitted. Please disable the Service Unit Type,不允许。请禁用服务单元类型
+Nothing to invoice for this Emergency Record,此急诊记录无发票内容
+Number Of Repeats Allowed,允许重复次数
+Number of Patient Encounters in Valid Days,有效天数内的患者就诊次数
+Number of Service Units,服务单位数量
+Number of Service Units to be created should at least be 1,创建的服务单位数量至少应为 1
+Number of prints required for labelling the samples,样本标签所需的打印份数
+Nursing Checklist Template,护理清单模板
+Nursing Checklist Template Task,护理检查表模板任务
+Nursing Task,护理任务
+Nursing Task cannot be 'Draft' after submission,提交后护理任务不能为“草稿”
+Nursing Tasks,护理任务
+Nursing Tasks Created,已创建的护理任务
+Nursing User,护理人员
+Nutrition Values,营养值
+O Negative,O 型阴性
+O Positive,O 型阳性
+OP & IP,门诊与住院
+OP Consulting Charge,门诊咨询费
+"OTP Generation Failed, Please try again later",OTP 生成失败，请稍后重试
+Obese,肥胖
+Observation Category,观察类别
+Observation Category codes.,观察类别代码。
+Observation Component,观察组件
+Observation Method,观察方法
+Observation Reference Range,观察参考范围
+Observation Sample Collection,观察样本采集
+Observation Status,观察状态
+Observation Template,观察模板
+Observation Template '{0}' cannot be added as a component of itself.,观察模板 '{0}' 不能作为其自身的组件添加。
+Observation idx,观察索引
+"Observations generated by imaging. The scope includes observations regarding plain x-ray, ultrasound, CT, MRI, angiography, echocardiography, and nuclear medicine.",由成像生成的观察结果。范围包括关于普通 X 光、超声、CT、MRI、血管造影、超声心动图和核医学的观察。
+"Observations generated by non-interventional treatment protocols (e.g. occupational, physical, radiation, nutritional and medication therapy)",由非干预性治疗协议（如职业、物理、辐射、营养和药物治疗）生成的观察结果
+"Observations generated by other procedures. This category includes observations resulting from interventional and non-interventional procedures excluding laboratory and imaging (e.g., cardiology catheterization, endoscopy, electrodiagnostics, etc.). Procedure results are typically generated by a clinician to provide more granular information about component observations made during a procedure. An example would be when a gastroenterologist reports the size of a polyp observed during a colonoscopy.",由其他程序生成的观察结果。此类别包括由介入性和非介入性程序产生的观察结果，不包括实验室和成像（例如，心脏导管插入术、内窥镜、电诊断等）。程序结果通常由临床医生生成，以提供有关程序中进行的组件观察的更详细信息。例如，当胃肠病学家报告结肠镜检查期间观察到的息肉大小时。
+Observations generated by physical exam findings including direct observations made by a clinician and use of simple instruments and the result of simple maneuvers performed directly on the patient's body.,由体格检查发现生成的观察结果，包括临床医生进行的直接观察、使用简单仪器以及直接在患者身体上执行的简单操作的结果。
+Observations that are not approved were skipped: {0},未批准的观察结果已跳过：{0}
+"Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data)",测量或记录任何增强或维持身体健康和整体健康的身体活动的观察结果。不在执业者（如物理治疗师）的直接监督下。（例如，游泳圈数、步数、睡眠数据）
+"Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data.)",测量或记录任何增强或维持身体健康和整体健康的身体活动的观察结果。不在执业者（如物理治疗师）的直接监督下。（例如，游泳圈数、步数、睡眠数据。）
+Observations without a result were skipped: {0},没有结果的观察结果已跳过：{0}
+Occupancy Status,占用状态
+Occupational Hazards and Environmental Factors,职业危害与环境因素
+Occupational hazards,职业危害
+Occupied,已占用
+Occurrence As Needed,按需发生
+Occurrence Date,发生日期
+Occurrence Time,发生时间
+Official URL,官方 URL
+One Sided,单向
+Only Insurance Coverages in Status <b>Approved</b> or <b>Rejected</b> can be submitted,仅状态为 <b>已批准</b> 或 <b>已拒绝</b> 的保险保障可提交
+"Only applicable to status codes, all status codes are mapped to one of the codes defined as part of Resource Status (The master set of status codes used throughout FHIR)",仅适用于状态代码，所有状态代码均映射到资源状态定义代码之一（FHIR 中使用的状态代码主集）
+Open Appointments,待就诊预约
+Open Medication {0},打开用药 {0}
+"Optional, if you want to manage stock separately for this Service Unit",可选，如果您想为此服务单元单独管理库存
+"Optional, set this <i>only</i> if you want to restrict this coverage to Patients subscribed to an Insurance Plan (Insurance Policy for the Patient should have the Coverage Plan selected).",可选，仅当您希望将此保障限制为订阅了保险计划（患者保险单应已选择保障计划）的患者时才设置此 <i>选项</i>。
+Order Admission,入院医嘱
+Order Description,医嘱描述
+Order Details,医嘱详情
+Order Discharge,出院医嘱
+Order Group,医嘱组
+Order Group (Encounter),医嘱组（就诊）
+Order Group Reference,医嘱组引用
+Order Group Type,医嘱组类型
+Order History,医嘱历史
+Order Item Code,医嘱项目代码
+Order Name:,医嘱名称：
+Order Reference DocType,医嘱参考 DocType
+Order Reference Name,医嘱参考名称
+Order Source,医嘱来源
+Order Specifications,医嘱规格
+Order Template,医嘱模板
+Order Template Type,医嘱模板类型
+Order Template Type and Order Template are mandatory to create Service Request,创建服务请求时，医嘱模板类型和医嘱模板为必填项
+Order Time,医嘱时间
+Order Type:,医嘱类型：
+Ordered By Practitioner,开单医师
+Ordered By Practitioner Name,开单医师姓名
+Ordered by Practitioner,开单医师
+Ordered by Practitioner Name,开单医师姓名
+Orders,医嘱
+Orders Created from Treatment Counselling,由治疗咨询创建的医嘱
+Orders Html,医嘱 HTML
+Organism,生物体
+Organism Test Item,生物体测试项目
+Organism Test Result,生物体测试结果
+Original Order,原始订单
+Other Risk Factors,其他风险因素
+Other risk factors,其他风险因素
+Out Patient Consulting Charge,门诊咨询费
+Out Patient Consulting Charge Item,门诊咨询费项目
+Out Patient SMS Alerts,门诊短信提醒
+Out Patient SMS alerts,门诊短信提醒
+Outpatient Consulting Charge is mandatory if you are setting Outpatient Consulting Charge Item,如果设置了门诊咨询费项目，则必须设置门诊咨询费
+Outpatient Settings,门诊设置
+Overlaps with another Availability: ,与另一可用性时间重叠：
+Overlaps with another Unavailability: ,与另一不可用性时间重叠：
+Overrides the Default Price List in Insurance Payor Contract,覆盖保险支付方合同中的默认价格表
+Overweight,超重
+Parent Observation,父级观察项
+Parent Service Unit,父级服务单元
+Partially Approved,部分批准
+Partly Collected,部分收款
+Partly Invoiced,部分开票
+Party (Customer),客户（Party）
+Patient <b>{0}</b> is not linked to a Customer,患者 <b>{0}</b> 未关联到客户
+Patient <b>{0}</b> is not linked to a Customer <b><a href='/app/Form/Patient/{1}'>{1}</a></b>,患者 <b>{0}</b> 未关联到客户 <b><a href='/app/Form/Patient/{1}'>{1}</a></b>
+Patient Age,患者年龄
+Patient Age From,患者起始年龄
+Patient Age From cannot be less than 0,患者起始年龄不能小于 0
+Patient Age To,患者结束年龄
+Patient Age To cannot be less than 0,患者结束年龄不能小于 0
+Patient Age To cannot be less than Patient Age From,患者结束年龄不能小于患者起始年龄
+Patient Appointment,患者预约
+Patient Appointment Analytics,患者预约分析
+Patient Appointment is already created,患者预约已创建
+Patient Assessment,患者评估
+Patient Assessment Detail,患者评估明细
+Patient Assessment Parameter,患者评估参数
+Patient Assessment Sheet,患者评估表
+Patient Assessment Template,患者评估模板
+Patient Care Type,患者护理类型
+Patient Consent Template,患者同意书模板
+Patient Consent To Use Aadhaar For ABHA Creation,患者同意使用 Aadhaar 创建 ABHA
+Patient Consent is required for ABHA creation,创建 ABHA 需要患者同意
+Patient Demographics,患者人口统计信息
+Patient Description,患者描述
+Patient Details,患者详情
+Patient Encounter,患者就诊
+Patient Encounter Diagnosis,患者就诊诊断
+Patient Encounter Symptom,患者就诊症状
+Patient Gender,患者性别
+Patient History,患者病历
+Patient History Custom Document Type,患者病历自定义单据类型
+Patient History Settings,患者病历设置
+Patient History Standard Document Type,患者病历标准单据类型
+Patient Instructions,患者医嘱
+Patient Insurance Coverage,患者保险保障
+Patient Insurance Coverage Details,患者保险覆盖详情
+Patient Insurance Policy,患者保险保单
+Patient Insurance Policy is required to create Insurance Coverage,创建保险覆盖需要患者保险保单
+Patient Insurance Policy {} is not valid as on {},患者保险保单 {} 在 {} 无效
+Patient Medical Record,患者医疗记录
+Patient Medical Record can only be created for submittable document types.,患者病历只能为可提交的文档类型创建。
+Patient Name By,患者姓名由
+Patient Payable,患者应付
+Patient Portal,患者门户
+Patient Profile,患者档案
+Patient Progress,患者病程
+Patient Registration,患者登记
+Patient Relation,患者关系
+Patient already exist,患者已存在
+Patient already has an appointment booked for the same day!,患者已预约了当天的预约！
+Patient already has an appointment {} booked for {} on {},患者已预约了 {} 的 {} 在 {}
+Patient and Policy Details,患者与保单详情
+Patient has fee validity till,患者费用有效期至
+Patient has no fee validity,患者无费用有效期
+Patient not found,未找到患者
+Patient referral requests created successfully,患者转诊请求创建成功
+Patient {0} already has an Insurance Policy {1} with the same Policy Number {2},患者 {0} 已拥有保单号 {2} 的保险保单 {1}
+Patient {0} already has an active insurance policy {1} with the coverage plan {2} for this period,患者 {0} 在该期间已拥有覆盖计划 {2} 的活跃保险保单 {1}
+Patient {0} is not admitted in the service unit {1},患者 {0} 未入住服务单元 {1}
+Payment Entry against Insurance Coverages {} via Insurance Claim {},通过保险索赔 {} 针对保险覆盖 {} 的付款录入
+Payment Required,需付款
+Payment for Doctype,文档类型付款
+"Perform the service only if there is a need. For example ""pain"", ""on flare-up"", etc.",仅在必要时提供服务。例如“疼痛”、“发作期”等。
+Period:,期间：
+Permitted Data Type,允许的数据类型
+Permitted Unit,允许的计量单位
+Personal and Social History,个人与社会史
+Phone (Office),电话（办公室）
+Phone (R),电话（R）
+Physical Examination,体格检查
+Plan Conditions,计划条件
+Planned End Datetime,计划结束日期时间
+Planned Sessions,计划会话
+Planned vs Actual Therapy Session,计划与实际治疗记录对比
+Please Configure Clinical Procedure Consumable Item in {0},请在 {0} 中配置临床诊疗耗材项目
+Please complete linked Nursing Tasks before submission: {},提交前请完成关联的护理任务：{}
+Please enable Allow Negative Stock in Stock Settings or create Stock Entry to proceed.,请启用库存设置中的允许负库存，或创建库存入库单以继续。
+Please enter a reason to Reject.,请输入拒绝原因。
+Please enter result for all components to Approve.,请输入所有组件的结果以进行审批。
+Please enter result to Approve.,请输入结果以进行审批。
+Please enter {},请输入 {}
+Please first select the rows you want to update,请先选择要更新的行
+Please save the patient first,请先保存患者
+Please select Drug,请选择药物
+Please select Healthcare Service,请选择医疗服务
+Please select Patient,请选择患者
+Please select Patient first,请先选择患者
+Please select Patient to get Lab Tests,请选择患者以获取检验检查
+Please select Patient to get prescribed procedure,请选择患者以获取处方程序
+Please select a Medication,请选择一种药物
+Please select a Patient Encounter to get from,请选择一个患者就诊记录以从中获取
+Please select a Patient to be invoiced,请选择一个需要开票的患者
+Please select a patient first,请先选择患者
+Please select a service request.,请选择一个服务请求。
+Please select a valid Date,请选择有效日期
+Please select at least one specimen ID to print!,请选择至少一个样本 ID 以进行打印！
+Please select patient,请选择患者
+Please set Customer in Patient {0},请在患者 {0} 中设置客户
+Please set a Customer for Patient {0} to raise an invoice,请为患者 {0} 设置关联的客户以开具发票
+Please set a Customer linked to the Patient,请设置与患者关联的客户
+Please set a valid Service Unit Capacity to enable Overlapping Appointments,请设置有效的服务单元容量以启用预约重叠
+Please set an Insurance Policy to create coverage,请设置保险保单以创建保障
+"Please set defaults for Customer Group, Territory and Selling Price List in Selling Settings",请在销售设置中为客户组、地区和售价列表设置默认值
+Please set the Paid Amount first,请先设置已付金额
+Police,警察
+Policy Expiry Date,保单到期日
+Policy Number,保单号
+Portal Image,门户图片
+Position In Queue,队列中的位置
+"Position In Queue after ""Check In""",签到后的队列位置
+Post-op Nursing Checklist Template,术后护理检查清单模板
+Posting Date Based on,过账日期基于
+Practitioner,医务人员
+Practitioner Availability,医务人员可预约时间
+Practitioner Availability End time must be after Start time.,医务人员可用性的结束时间必须晚于开始时间。
+Practitioner Availability Start and End times are required.,需要设置医务人员可用性的开始和结束时间。
+Practitioner Availability:,医务人员可用性：
+Practitioner Email,医务人员邮箱
+Practitioner Name,医务人员姓名
+Practitioner Primary Address,医务人员主要地址
+Practitioner Primary Contact,医务人员主要联系方式
+Practitioner Schedule,医务人员排班
+Practitioner Schedule Not Found,未找到医务人员排班
+Practitioner Schedule:,医务人员排班：
+Practitioner Schedules,医务人员排班
+Practitioner Service Unit Schedule,医务人员服务单元排班
+Practitioner Type,医务人员类型
+Practitioner {0} does not have a Practitioner Schedule assigned.,医务人员 {0} 未分配医务人员排班。
+Practitioner {0} does not have a Service Unit set against the Practitioner Schedule {1}.,医务人员 {0} 在医务人员排班 {1} 中未设置服务单元。
+Practitioners,医务人员
+Pre-op Nursing Checklist Template,术前护理检查清单模板
+Preferred Display Name,首选显示名称
+Pregnant,怀孕
+Preliminary,初步
+Prescription,处方
+Prescription Dosage,处方用量
+Prescription Duration,处方疗程
+Prescriptions,处方
+Presence of a fever (temp &gt; 38.5 °C/101.3 °F or sustained temp &gt; 38 °C/100.4 °F),发烧（体温 > 38.5 °C/101.3 °F 或持续体温 > 38 °C/100.4 °F）
+Price List Not Set,未设置价格表
+Price List is mandatory,价格表为必填项
+Print Barcode,打印条形码
+Print Position,打印位置
+Print {0},打印 {0}
+Printed,已打印
+Printed on,打印于
+Procedure Created,程序已创建
+Procedure Prescription,程序处方
+Procedure Template,程序模板
+Procedures,程序
+Process Service Request If Billing Status Is Paid,如果计费状态为已支付，则处理服务请求
+Process Transfer,处理转移
+Processing Inpatient Discharge,处理住院患者出院
+Processing Patient Admission,处理患者入院
+"Properties of the linked Item, you may further configure Batch Number and Expiry, Serial Number, Shelf Life etc. in the Item master",链接项目的属性，您可以在项目主数据中进一步配置批号、有效期、序列号、货架寿命等
+Proposal,提案
+Pulse,脉搏
+Quantity Invoiced,已开票数量
+Quantity not available for the following items in warehouse {0}. ,仓库中以下项目的数量不可用：{0}。
+Quantity:,数量：
+Rate / UOM,单价 / 计量单位
+Reason For Rejection,拒绝原因
+Reason Reference,参考依据
+Reason Reference DocType,参考依据 DocType
+Reason Required,需要原因
+Reason for Cancellation,取消原因
+Receivable Account is entered more than once for same Company,同一公司的应收科目被输入了多次
+Receivable Account not configured for Insurance Payor,未配置保险支付方的应收科目
+Received Time,接收时间
+Record Triage,记录分诊
+Record Vital Signs,记录生命体征
+Record Vitals,记录体征
+Records and History,诊疗记录
+Ref DocName,参考文档名称
+Refer,参考
+Refer Patient,转诊患者
+Reference Appointments,参考预约
+Reference Child,参考子项
+Reference Posting Date,参考过账日期
+Reference Range,参考范围
+Reference Ranges,参考范围
+Reference Sales Invoice,参考销售发票
+Reference Text,参考文本
+Reference URL,参考 URL
+Referral,转诊
+Referred to Practitioner,接诊医师
+Referring Practitioner,转诊医师
+Reflex Order,反射订单
+Reflexes,反射
+Registration Fee,注册费
+Registration Fee cannot be negative or zero,注册费不能为负数或零
+Registration Item,注册项目
+Registration Message,注册消息
+Rehabilitation,康复治疗
+Rehabilitation and Physiotherapy,康复与理疗
+Reject All,全部拒绝
+Rejected Amount,拒绝金额
+Rejected Claims Expense Account,被拒索赔费用科目
+Rejected Claims Expense Account is entered more than once for same company,同一公司的被拒索赔费用科目重复输入
+Rejected Claims Expense account is not configured for Company {},公司 {} 未配置被拒索赔费用科目
+Rejected {0} Observation(s),拒绝 {0} 条观察记录
+Rejecting Observations,拒绝观察记录
+Reminder Message,提醒消息
+Replaced,已替换
+Report Preference,报告偏好
+Request,请求
+Request Date,请求日期
+Request Details,请求详情
+Request Name,请求名称
+Request Status,请求状态
+Request Status Codes.,请求状态代码。
+Requested End Time,请求结束时间
+Requested Start Time,请求开始时间
+Requesting Department,请求部门
+Requesting Practitioner,申请医师
+Requesting Practitioner Name,申请医师姓名
+Require Result Value,需要结果值
+Reschedule Appointment,重新预约
+Resend OTP,重新发送 OTP
+Resistant,耐药
+Respiratory Rate,呼吸频率
+Respiratory rate,呼吸频率
+Respiratory/Pulse Rate,呼吸/脉搏频率
+Result Component,结果组件
+Result Date,结果日期
+Result Emailed Message,结果已发送邮件
+Result Format,结果格式
+Result Interpretation,结果解读
+Result Legend,结果图例
+Result Legend Print,结果图例打印
+Result Options,结果选项
+Result Period From,结果起始期间
+Result Period To,结果结束期间
+Result Printed Message,结果已打印消息
+Result Template,结果模板
+Result Value,结果值
+Review Details,审查详情
+Risk Factors,风险因素
+Routine,常规
+Row #{0} (Drug Prescription): Drug Code is mandatory,第 {0} 行（药品处方）：药品代码为必填项
+Row #{0} (Lab Tests): Observation Template or Lab Test Template is mandatory,第 {0} 行（检验检查）：观察模板或检验检查模板为必填项
+"Row #{0} Item under Insurance Coverage {1}, quantity cannot be more than approved quantity <b>{2}</b>",第 {0} 行：保险覆盖范围内的商品 {1}，数量不能超过批准数量 <b>{2}</b>
+"Row #{0} Item under Insurance Coverage {1}, rate should be equal to approved rate<b>{2}</b>",第 {0} 行：保险覆盖范围内的商品 {1}，单价应等于批准单价 <b>{2}</b>
+Row #{0}: Check Out cannot be before Check In,第 {0} 行：退房时间不能早于入住时间
+Row #{0}: Check Out datetime cannot be less than Check In datetime,第 {0} 行：退房日期时间不能早于入住日期时间
+Row #{0}: Conversion Factor is mandatory,第 {0} 行：换算系数为必填项
+Row #{0}: Document Type {1} is not submittable.,第 {0} 行：文档类型 {1} 不可提交。
+Row #{0}: Field {1} in Document Type {2} is not a Date / Datetime field.,第 {0} 行：文档类型 {2} 中的字段 {1} 不是日期/日期时间字段。
+Row #{0}: No such Field named {1} found in the Document Type {2}.,第 {0} 行：在文档类型 {2} 中未找到名为 {1} 的字段。
+Row #{0}: Please enter the result value for {1},第 {0} 行：请输入 {1} 的结果值
+Row #{0}: Result for Secondary UOM not calculated,第 {0} 行：未计算辅助单位的结果
+Row #{1} No Approved Insurance Claim found for Journal Entry {0},第 {1} 行：未找到针对日记账分录 {0} 的已批准保险理赔
+Row {0}: Cannot create Inpatient Medication Entry against cancelled Inpatient Medication Order {1},第 {0} 行：无法针对已取消的住院用药医嘱 {1} 创建住院用药录入
+Row {0}: This Medication Order is already marked as completed,第 {0} 行：此用药医嘱已标记为已完成
+SMS Sent,短信已发送
+"SMS not sent, please check SMS Settings",短信未发送，请检查短信设置
+Sales Date,销售日期
+Sales Invoice Item Amount,销售发票项目金额
+Sales Invoice Posting Date,销售发票过账日期
+Sales Invoice Status,销售发票状态
+Sales Invoice or Patient Encounter is required to create Lab Tests,创建检验检查需要销售发票或患者就诊记录
+Sales Invoice {0} created,已创建销售发票 {0}
+Sample Collection,样本采集
+Sample Collection Required,需要样本采集
+Sample Collection Time,样本采集时间
+Sample Collection {0} has been created,已创建样本采集 {0}
+Sample Details,样本详情
+Sample HTML,样本 HTML
+Sample ID,样本 ID
+Sample Quantity cannot be negative or 0,样本数量不能为负数或 0
+Sample Status,样本状态
+Sample UOM,样本 UOM
+Samples,样本
+Scale Max,量程最大值
+Scale Maximum,量程最大值
+Scale Min,量程最小值
+Scale Minimum,量程最小值
+Schedule Admission,安排入院
+Schedule Details,排班详情
+Schedule Discharge,安排出院
+Scheduled Billing Time,计划计费时间
+"Schedules for {0} overlaps, do you want to proceed after skipping overlapped slots ?",{0} 的排班存在重叠，是否跳过重叠时段后继续？
+Scheduling Patient Admission,安排患者入院
+Scope Type,范围类型
+Score Obtained,得分
+Secondary UOM,辅助 UOM
+Secondary UOM Result,辅助 UOM 结果
+Select Assessment Parameter,选择评估参数
+Select Assessment Template,选择评估模板
+Select Bed,选择床位
+Select Days,选择天数
+Select Insurance Policy,选择保险保单
+Select Patient,选择患者
+Select Therapy Type,选择治疗类型
+Select a Service Request,选择服务请求
+Select a different Patient to merge into,选择另一个患者进行合并
+Select an Item Group for the Clinical Procedure Item.,为临床诊疗项目选择一个物品组。
+Select if you want to chose an existing Item,选择此项以使用现有物品
+"Select, to make the practitioner searchable with these fields",选择此项，以便通过这些字段搜索从业者
+Selected Fields,已选字段
+Selected service unit type doesn't have any item linked,所选的服务单位类型未关联任何物品
+Selling Price List not found. Please configure a valid Price List in the document.,未找到销售价格列表。请在文档中配置有效的价格列表。
+Send to Emergency,发送至急诊
+Sending OTP...,正在发送 OTP...
+Sensitivity,药敏
+Sensitivity Test Result,敏感性测试结果
+Sensitivity Toggle,敏感性切换
+Sequence in Order Group,订单组中的顺序
+Service Request,医疗服务申请
+Service Request Category,服务请求类别
+Service Request Defaults,服务请求默认值
+Service Request Reason,服务请求原因
+Service Request Reason ,服务请求原因
+Service Request need to be invoiced before proceeding,服务请求必须在继续之前进行开票
+Service Request(s) Created,已创建的服务请求
+Service Requests,服务请求
+Service Template,服务模板
+Service Template Type,服务模板类型
+Service Type,服务类型
+Service Unit,服务单元
+Service Unit Capacity,服务单元容量
+Service Unit Name,服务单元名称
+Service Unit Name and Company are mandatory to create Healthcare Service Units,创建医疗服务单元时，服务单元名称和公司为必填项
+Service Unit Not Found,未找到服务单元
+Service Unit Occupied,服务单元已占用
+Service Unit Tree,服务单元树
+Service Unit Type,服务单元类型
+Service Unit Type Item,服务单元类型项目
+Service Unit {0} is already occupied. Please choose a vacant one.,服务单元 {0} 已被占用。请选择一个空闲的单元。
+Service Unit:,服务单元：
+Sessions Completed,已完成会话
+Set Disposition,设置处置方式
+Set if you want to create a new Item,设置是否创建新项目
+Set the Item Code which will be used for billing the Clinical Procedure.,设置将用于临床诊疗计费的物料代码。
+Set the Out Patient Consulting Charge for this Practitioner.,设置该从业者的门诊咨询费。
+Set the Practitioner Schedule you just created. This will be used while booking appointments.,设置您刚刚创建的医务人员排班。这将在预约时使用。
+Set up default Accounts for the Healthcare Facility,为医疗机构设置默认账户
+Sets the number of concurrent appointments allowed,设置允许的并发预约数量
+Short Interpretation,简短解释
+Show Completed Orders,显示已完成的订单
+Show Components,显示组件
+Show Diagnostics Tab on Portal,在门户中显示诊断选项卡
+Show Payment Popup,显示支付弹窗
+Show Payment Prompt in Appointment,在预约中显示支付提示
+Show in Portal,在门户中显示
+Slots for {0} are not added to the schedule,{0} 的时段未添加到日程中
+Social History,社会史
+"Social History Observations define the patient's occupational, personal (e.g., lifestyle), social, familial, and environmental history and health risk factors that may impact the patient's health.",社会史观察定义了患者的职业、个人（例如生活方式）、社会、家庭和环境病史，以及可能影响患者健康的健康风险因素。
+Source Doc,源文档
+Specimen,标本
+Specimen Type,标本类型
+Spouse,配偶
+Staff Role,员工角色
+Standard Document Types,标准文档类型
+Standard Selling Rate should be greater than zero.,标准售价应大于零。
+Start Date should be before End Date,开始日期应在结束日期之前
+Steps Table,步骤表
+Stock Consumption,库存消耗
+Stock Entry {0} created and ,库存入库 {0} 已创建，并且
+Stock quantity to start the Procedure is not available in the Warehouse {0}. Do you want to record a Stock Entry?,仓库 {0} 中没有足够的库存数量来启动该程序。是否要记录库存入库？
+Strength,强度
+Strength UOM,强度单位
+Submit Orders on Save,保存时提交订单
+Submitted Date,提交日期
+"Subsequent to being Final, the observation has been modified subsequent. This includes updates/new information and corrections.",在最终确认后，该观察结果已被后续修改。这包括更新/新信息和更正。
+"Subsequent to being Final, the observation has been modified to correct an error in the test result.",在最终确认后，该观察结果已被修改以更正测试结果中的错误。
+Surgical History,手术史
+Surgical history,手术史
+Survey,调查
+Susceptible,易感
+Symptoms,症状
+Syncing Documents ...,正在同步文档...
+System URI,系统 URI
+"System will validate if a document of this type is created and linked before completing the Nursing Task - for example, Vital Signs if the task is supposed to capture the vitals of the Patient",系统将在完成护理任务之前验证是否已创建并链接了此类型的文档——例如，如果任务旨在记录患者的生命体征，则验证生命体征文档
+Target Reassessment (Minutes),目标重新评估（分钟）
+Targetted,靶向
+Task Details,任务详情
+Task DocType,任务 DocType
+Task Doctype,任务 DocType
+Task Document Name,任务文档名称
+Task Duration,任务持续时间
+Task End Time,任务结束时间
+Task Resolution,任务解决
+Task Schedule,任务日程
+Task Start Time,任务开始时间
+Tele,电话
+Temperature,温度
+Template Details,模板详情
+Template DocName,模板文档名称
+Template DocType,模板文档类型
+Terminology Mapping,医疗术语映射
+Test :,测试：
+Test Created,测试已创建
+Test Group,测试组
+Test Name,测试名称
+Test Template,测试模板
+The activity described by the request has been fully performed. No further activity will occur.,请求描述的活动已完全执行。不会再发生进一步的活动。
+"The authoring/source system does not know which of the status values currently applies for this observation. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which.",创作/源系统不知道当前哪个状态值适用于此观察。注意：此概念不应用于“其他”——假定列出的某个状态适用，但创作/源系统不知道是哪一个。
+"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which.",创作/源系统不知道当前哪个状态值适用于此请求。注意：此概念不应用于“其他”——假定列出的某个状态适用，但创作/源系统不知道是哪一个。
+The item referenced by {0} - {1} is already invoiced,{0} - {1} 引用的项目已开票
+The lifecycle status of an artifact.,工件的生命周期状态。
+The number of free follow ups (Patient Encounters in valid days) allowed,允许的自由随访次数（有效天数内的患者就诊）
+"The observation has been withdrawn following previous final release. This electronic record should never have existed, though it is possible that real-world decisions were based on it. (If real-world activity has occurred, the status should be 'cancelled' rather than 'entered-in-error'.).",观察结果在之前的最终发布后已撤回。此电子记录本不应存在，尽管现实世界的决策可能基于它。（如果发生了现实世界的活动，状态应为“已取消”而不是“录入错误”。）。
+The observation is complete and there are no further actions needed.),观察结果已完成，无需进一步操作。）
+The observation is unavailable because the measurement was not started or not completed (also sometimes called 'aborted').,观察结果不可用，因为测量未开始或未完成（有时也称为“已中止”）。
+The request (and any implicit authorization to act) has been temporarily withdrawn but is expected to resume in the future.,请求（以及任何隐含的行动授权）已暂时撤回，但预计未来会恢复。
+The request (and any implicit authorization to act) has been terminated prior to the known full completion of the intended actions. No further activity should occur.,请求在预期行动完全完成之前已被终止。不应再发生进一步的活动。
+The request has been created but is not yet complete or ready for action.,请求已创建，但尚未完成或准备好采取行动。
+The request has been withdrawn before any administrations have occurred,请求在任何给药发生之前已被撤回
+The request has normal priority.,请求具有正常优先级。
+"The request is 'actionable', but not all actions that are implied by it have occurred yet.",请求是“可操作的”，但其中隐含的所有行动尚未发生。
+The request is a suggestion made by someone/something that does not have an intention to ensure it occurs and without providing an authorization to act.,请求是由某人/某物提出的建议，没有确保其发生的意图，也没有提供行动授权。
+The request is in force and ready to be acted upon.,请求处于有效状态，准备采取行动。
+The request is no longer active and the subject should no longer be taking the medication.,请求不再活跃，受试者应停止服药。
+"The request is not yet 'actionable', e.g. it is a work in progress, requires sign-off, verification or needs to be run through decision support process.",请求尚未“可操作”，例如它仍在进行中，需要签署、验证或需要经过决策支持流程。
+"The request represents a component or option for a RequestOrchestration that establishes timing, conditionality and/or other constraints among a set of requests.",请求代表 RequestOrchestration 的一个组件或选项，该组件或选项在一组请求之间建立时间、条件性和/或其他约束。
+The request represents a legally binding instruction authored by a Patient or RelatedPerson.,请求代表由患者或相关人员撰写的具有法律约束力的指令。
+The request represents a request/demand and authorization for action by the requestor.,请求代表请求者对行动的请求/要求和授权。
+The request represents an automatically generated supplemental authorization for action based on a parent authorization together with initial results of the action taken against that parent authorization.,请求代表基于父级授权以及针对该父级授权采取的行动的初步结果而自动生成的补充行动授权。
+The request represents an intention to ensure something occurs without providing an authorization for others to act.,请求代表确保某事发生的意图，但未提供他人行动的授权。
+The request represents an original authorization for action.,请求代表原始的行动授权。
+The request represents the view of an authorization instantiated by a fulfilling system representing the details of the fulfiller's intention to act upon a submitted order.,请求代表由履行系统实例化的授权视图，该履行系统代表履行者对提交订单采取行动的意图详情。
+The request should be actioned as soon as possible - higher priority than urgent.,请求应尽快处理——优先级高于紧急。
+The request should be actioned immediately - highest possible priority. E.g. an emergency.,请求应立即处理——最高优先级。例如紧急情况。
+The request should be actioned promptly - higher priority than routine.,请求应迅速处理——优先级高于常规。
+"The request was recorded against the wrong patient or for some reason should not have been recorded (e.g. wrong medication, wrong dose, etc.). Some of the actions that are implied by the medication request may have occurred. For example, the medication may have been dispensed and the patient may have taken some of the medication.",请求是针对错误的患者记录的，或者由于某些原因不应被记录（例如错误的药物、错误的剂量等）。请求隐含的一些行动可能已经发生。例如，药物可能已被分发，患者可能已经服用了一些药物。
+"The results of observations generated by laboratories. Laboratory results are typically generated by laboratories providing analytic services in areas such as chemistry, hematology, serology, histology, cytology, anatomic pathology (including digital pathology), microbiology, and/or virology. These observations are based on analysis of specimens obtained from the patient and submitted to the laboratory.",由实验室生成的观察结果。实验室结果通常由提供分析服务的实验室生成，涉及领域包括化学、血液学、血清学、组织学、细胞学、解剖病理学（包括数字病理学）、微生物学和/或病毒学。这些观察结果基于对患者获取并送检至实验室的样本进行分析。
+The role responsible for performing the medication request,负责执行用药申请的角色
+The role responsible for performing the service,负责执行服务的角色
+The selected Service Unit <strong>{0}</strong> is already occupied. Please choose a vacant Service Unit.,所选的服务单元 <strong>{0}</strong> 已被占用。请选择一个空闲的服务单元。
+The time duration before or after the event on which the Nursing Task is to be performed. The Nursing Task start time will be set based on this.,护理任务执行事件之前或之后的时间持续时间。护理任务的开始时间将基于此设置。
+Therapies,疗法
+Therapy,治疗
+Therapy For,治疗对象
+Therapy Plan,治疗计划
+Therapy Plan Detail,治疗计划明细
+Therapy Plan Details,治疗计划明细
+Therapy Plan Required,需要治疗计划
+Therapy Plan Template,治疗计划模板
+Therapy Plan Template Detail,治疗计划模板明细
+Therapy Plan is required to create Therapy Session,创建治疗记录需要治疗计划
+Therapy Plan {0} created successfully.,治疗计划 {0} 创建成功。
+Therapy Session,治疗记录
+Therapy Session Charges: {0},治疗记录费用：{0}
+Therapy Session is already created,治疗记录已创建
+Therapy Session overlaps with {0},治疗记录与 {0} 重叠
+Therapy Session {0} already created from service request {1},治疗记录 {0} 已从服务请求 {1} 创建
+Therapy Sessions Overlapping,治疗记录时间重叠
+Therapy Type,治疗类型
+Therapy Types,治疗类型
+There are Orders yet to be carried out<b> {0},仍有待执行的订单<b> {0}
+There is no patient to merge,没有可合并的患者
+These options will be available for selection in Observation. No need to add a blank space before the first option,这些选项将在观察中提供选择。无需在第一个选项前添加空格
+This error can be due to invalid formula.,此错误可能是由于公式无效所致。
+This is a root healthcare service unit and cannot be edited.,这是根级医疗服务单元，无法编辑。
+This is an initial or interim observation: data may be incomplete or unverified.,这是初步或中期观察：数据可能不完整或未经核实。
+This is based on transactions against this Healthcare Practitioner.,这是基于与该医务人员相关的交易。
+This is based on transactions against this Patient. See timeline below for details,这是基于与该患者相关的交易。请参阅下方的时间线以获取详细信息
+"This request should never have existed and should be considered 'void'. (It is possible that real-world decisions were based on it. If real-world activity has occurred, the status should be 'revoked' rather than 'entered-in-error'.).",此请求本不应存在，应视为“无效”。（现实世界的决策可能基于此请求。如果已发生现实世界活动，状态应为“撤销”而不是“录入错误”。）。
+This value is updated in the Default Sales Price List.,此值将更新到默认销售价目中。
+Time Off,休假
+Time Offset,时间偏移
+Time Slots,时间段
+Time of Approval,批准时间
+Time of Result,结果时间
+Time period (Valid number of days) for free consultations,免费咨询的有效天数（时间周期）
+"Time slot skiped, the slot {0} to {1} overlap exisiting slot {2} to {3}",已跳过该时间段，时间段 {0} 至 {1} 与现有时间段 {2} 至 {3} 重叠
+Time slots added,已添加时间段
+To Admit,待收治
+To Age Type,至年龄类型
+To Discharge,至出院
+To Duration,至时长
+To enable this feature need Payments App,启用此功能需要安装 Payments 应用
+Tobacco Consumption (Past),烟草消费（过去）
+Tobacco Consumption (Present),烟草消费（当前）
+Tobacco past use,烟草既往使用
+Tobacco use,烟草使用
+Tongue,舌头
+Total Counts Completed,已完成计数总数
+Total Counts Targeted,目标计数总数
+Total Coverage Amount Invoiced,已开票总承保金额
+Total Dispensable Quantity,总可调配数量
+Total Insurance Claim Amount,总保险理赔金额
+Total Orders,总订单数
+Total Patients,患者总数
+Total Patients Admitted,在院患者总数
+Total Qty Invoiced,已开票总数量
+Total Sales,总销售额
+Total Score Obtained,总得分
+Total Sessions,总会话数
+Total Sessions Completed,已完成会话总数
+Total Therapy Sessions: ,总治疗记录数：
+Transfer Bed,转床
+Transfer Qty,转移数量
+Transferred For Procedure,因手术转床
+Treatment Counselling,治疗咨询
+Treatment Counselling Required for IP,住院患者需进行的治疗咨询
+Treatment Done,治疗完成
+Treatment Plan Template,治疗方案模板
+Treatment Plan Template Item,治疗计划模板项
+Treatment Plan Template Items,治疗计划模板项列表
+Treatment Plan Template Practitioner,治疗计划模板从业者
+Triage,分诊
+Triage Date and Time,分诊日期和时间
+Triage Level,分诊级别
+Triage Practitioner,分诊医师
+Triaged,已分诊
+Type of the new Service Unit,新服务单元的类型
+UOM Conversion in Hours,按小时进行 UOM 转换
+Unavailable block for a practitioner must overlap at least partially with an existing Availability or Practitioner Schedule,治疗师不可用时间段必须与现有可用时间段或治疗师排班表至少部分重叠
+Unbilled Services,未开票服务
+Underweight,体重过轻
+Unidentified Patient,未识别患者
+Unsatisfactory,不满意
+Update Claim Status,更新理赔状态
+Update Schedule,更新排班
+Use for an unidentified patient (e.g. unconscious arrival). A provisional Patient is created from this.,用于未识别患者（例如昏迷入院）。系统将由此创建临时患者。
+User exists with Email {},用户已存在，邮箱为 {}
+User {0} is already assigned to Healthcare Practitioner {1},用户 {0} 已分配给医务人员 {1}
+Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html,使用符合 HL7 标准的 ICD-[x]。https://terminology.hl7.org/ICD.html
+Using LOINC with HL7 Standards. https://terminology.hl7.org/LOINC.html,使用符合 HL7 标准的 LOINC。https://terminology.hl7.org/LOINC.html
+Using RxNorm with HL7 Standards. https://terminology.hl7.org/RxNorm.html,使用符合 HL7 标准的 RxNorm。https://terminology.hl7.org/RxNorm.html
+Using SNOMED CT with HL7 Standards. https://terminology.hl7.org/SNOMEDCT.html\n				See also the SNOMED CT Usage Summary (link below) which summarizes the use of SNOMED CT in the base FHIR Specification.\n				https://www.hl7.org/fhir/snomedct-usage.html,使用符合 HL7 标准的 SNOMED CT。https://terminology.hl7.org/SNOMEDCT.html\n				另请参阅 SNOMED CT 使用摘要（见下方链接），其中总结了 SNOMED CT 在基础 FHIR 规范中的使用情况。\n				https://www.hl7.org/fhir/snomedct-usage.html
+Using UCUM with HL7 Standards. https://terminology.hl7.org/UCUM.html,使用符合 HL7 标准的 UCUM。https://terminology.hl7.org/UCUM.html
+Valid Number of Days,有效天数
+Validate Nursing Checklists,验证护理清单
+Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event.,在患者事务性事件发生前，验证护理清单中的所有必填任务是否已完成。
+"Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event. For example, if any of the tasks as part of the Discharge Checklist is not in status Completed, system will alert the user while trying to Discharge the Patient from inpatient facility",在患者事务性事件发生前，验证护理清单中的所有必填任务是否已完成。例如，如果出院清单中的任何任务状态不是“已完成”，系统在尝试将患者从住院设施办理出院时将提醒用户。
+Value Set,值集
+Verification Failed,验证失败
+Verify ABHA,验证 ABHA
+Verify ABHA Number,验证 ABHA 号码
+Very Coated,重度舌苔
+Very Hyper,极度亢奋
+Video Conferencing disabled for group consultations,团体咨询已禁用视频会议
+"Video conferencing enabled for {}, 											please link {} or configure Default Google Calendar in {}",已为 {} 启用视频会议，请链接 {} 或在 {} 中配置默认 Google 日历
+View Lab Tests,查看检验检查
+Visits Completed,已完成就诊
+Vital Signs,生命体征
+Walk-in,门诊
+Warehouse from where medication stock should be consumed,应从中消耗药品库存的仓库
+Weight (In Kilogram),体重（千克）
+"While booking tele-consultation appointments via Google Meet, this Google Calendar will be used. You can also configure separate Google Calender for each Practitioner if required",通过 Google Meet 预订远程会诊预约时，将使用此 Google 日历。如有需要，您也可以为每位治疗师配置单独的 Google 日历
+Widow,寡妇
+Will be serially suffixed to maintain uniquness. Example: 'Ward' will be named as 'Ward-####',将添加序列后缀以保持唯一性。例如：“Ward”将命名为“Ward-####”
+Will be set as the default Code System selected in the Codification Table,将设置为编码表中选定的默认代码系统
+Worksheet & Legend,工作表与图例
+Worksheet Instructions,工作表说明
+Worksheet Print,工作表打印
+Year(s),年
+Years(s),年
+You are not linked to any patient. Please contact the administration.,您未关联任何患者。请联系管理员。
+"You can also set the Medical Department for the template. After saving the document, an Item will automatically be created for billing this Clinical Procedure. You can then use this template while creating Clinical Procedures for Patients. Templates save you from filling up redundant data every single time. You can also create templates for other operations like Lab Tests, Therapy Sessions, etc.",您还可以为模板设置医疗科室。保存文档后，系统将自动创建用于结算此临床检查项目的物品。随后，您可以在为患者创建临床检查时使用此模板。模板可避免每次重复填写冗余数据。您还可以为其他操作（如检验检查、治疗课程等）创建模板。
+"You can configure default Items for billing consultation charges, procedure consumption items and inpatient visits",您可以配置用于结算咨询费、检查消耗物品及住院访问的默认物品
+"You can create a service item for Inpatient Visit Charge and set it here. Similarly, you can set up other Healthcare Service Items for billing in this section. Click",您可以在此处为住院访问费创建服务物品。同样，您可以在本节中设置其他用于结算的医疗服务物品。点击
+You can only cancel Insurance Coverage with Status {},您只能取消状态为 {} 的保险覆盖
+You cannot Cancel Service Request in {} status,您无法在 {} 状态下取消服务请求
+You cannot add '{0}' because it already contains {1} levels of nested components. The maximum allowed depth is {2}.,无法添加 '{0}'，因为它已包含 {1} 层嵌套组件。允许的最大深度为 {2}。
+You cannot provide more than 2 options for Boolean result,布尔结果不能提供超过 2 个选项
+last Name,姓
+on {0},在 {0} 上
+slots available for booking,可用于预订的时段
+to know more,了解更多
+{0} Service Units created,已创建 {0} 个服务单位
+{0} as on {1},{0} 截至 {1}
+{0} at {1},{0} 于 {1}
+{0} does not have a Healthcare Practitioner Schedule / Availability. Add it in Healthcare Practitioner master / Practitioner Availability,{0} 没有医务人员日程/可用性。请在医务人员主数据/从业者可用性中添加
+{0} has fee validity till {1},{0} 的费用有效期至 {1}
+{0} is on Leave on {1},{0} 在 {1} 请假
+{0} is on a Half day Leave on {1},{0} 在 {1} 半日请假
+{0} medication order completed,{0} 用药医嘱已完成
+{0} medication orders completed,{0} 用药医嘱已完成
+{0} out of {1},{0} 共 {1}
+{0} session completed,{0} 课程已完成
+{0} sessions completed,{0} 课程已完成
+{0} with {1},{0} 与 {1}

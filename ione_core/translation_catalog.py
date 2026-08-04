@@ -223,6 +223,8 @@ def is_translation_candidate(message: str) -> bool:
 		r"\$[a-zA-Z_][\w.]*|@[a-zA-Z0-9_.-]+|\.[a-zA-Z0-9.]+", stripped
 	):
 		return False
+	if re.fullmatch(r"[a-z][A-Z0-9]{3,}", stripped):
+		return False
 	if re.fullmatch(r"[a-z][A-Za-z0-9]*(?:[._:-][A-Za-z0-9]+)+", stripped):
 		return False
 	if re.fullmatch(r"[a-z_]+(?:\s*\|\s*[a-z_]+)+", stripped):

@@ -71,6 +71,7 @@ class TestTranslationCatalog(TestCase):
 		self.assertFalse(is_translation_candidate(";zs[Bs]===!0&&console.error("))
 		self.assertFalse(is_translation_candidate("@jane"))
 		self.assertFalse(is_translation_candidate("&lt;head&gt; HTML"))
+		self.assertFalse(is_translation_candidate("pCLUCUMOCD"))
 
 	def test_keeps_normal_labels_and_help_text(self):
 		self.assertTrue(is_translation_candidate("Accounts Payable Ageing"))
