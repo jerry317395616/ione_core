@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n_20260804.js?v=20260804-2"
-CRM_I18N_MARKER = 'data-ione-crm-i18n="20260804-2"'
+CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n_20260804.js?v=20260804-3"
+CRM_I18N_MARKER = 'data-ione-crm-i18n="20260804-3"'
 
 
 def is_crm_html_response(
@@ -28,7 +28,10 @@ def inject_crm_i18n_asset(html: str) -> str:
 	"""Insert the localization script once, immediately before the closing body tag."""
 	if not html or CRM_I18N_MARKER in html or "</body>" not in html:
 		return html
-	tag = f'<script type="module" src="{CRM_I18N_ASSET}" {CRM_I18N_MARKER}></script>'
+	tag = (
+		f'<script defer charset="utf-8" src="{CRM_I18N_ASSET}" '
+		f'{CRM_I18N_MARKER}></script>'
+	)
 	return html.replace("</body>", f"{tag}\n</body>", 1)
 
 
