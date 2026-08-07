@@ -521,7 +521,10 @@ def enqueue_frappe_docs_sync(
 	return {"queued": True, "job_id": job.id, "products": selected}
 
 
-def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]:
+def audit_frappe_docs(
+	products: list[str] | str | None = None,
+	verify_source_content: bool = False,
+) -> dict[str, Any]:
 	"""Compare the live official chapter trees with their synchronized Wiki spaces."""
 	import frappe
 	import requests
@@ -582,6 +585,9 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 		low_chinese_content = []
 		untranslated_titles = []
 		bad_internal_links = []
+		stale_source = []
+		source_fetch_errors = []
+		fidelity_issues = []
 		for source_path, expectation in expected.items():
 			matches = by_source.get(source_path, [])
 			if len(matches) != 1:
@@ -607,6 +613,23 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 				low_chinese_content.append(source_path)
 			if f"](/{spec.destination_route}/" in content:
 				bad_internal_links.append(source_path)
+			if verify_source_content:
+				try:
+					source_title, source_markdown, _source_url = fetch_source_page(
+						source_path, session=session
+					)
+				except Exception as exc:
+					source_fetch_errors.append({"source_path": source_path, "error": str(exc)})
+					continue
+				if _content_source_hash(content) != _source_hash(source_title, source_markdown):
+					stale_source.append(source_path)
+				page_fidelity_issues = _translation_fidelity_issues(
+					source_markdown, _translated_markdown_body(content)
+				)
+				if page_fidelity_issues:
+					fidelity_issues.append(
+						{"source_path": source_path, "issues": page_fidelity_issues}
+					)
 
 		issues = {
 			"missing": missing,
@@ -620,6 +643,9 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 			"low_chinese_content": sorted(low_chinese_content),
 			"untranslated_titles": sorted(untranslated_titles),
 			"bad_internal_links": sorted(bad_internal_links),
+			"stale_source": sorted(stale_source),
+			"source_fetch_errors": source_fetch_errors,
+			"fidelity_issues": fidelity_issues,
 		}
 		results[slug] = {
 			"status": "passed" if not any(issues.values()) else "needs_attention",
@@ -935,6 +961,40 @@ def _translated_markdown_body(content: str) -> str:
 		content,
 		count=1,
 	).strip()
+
+
+def _translation_fidelity_issues(source: str, translated: str) -> list[str]:
+	"""Return conservative signals that a translation lost source structure or prose."""
+	issues = []
+	checks = {
+		"headings": r"(?m)^#{1,6}[ \t]+\S",
+		"code_fences": r"(?m)^[ \t]*(?:```|~~~)",
+		"images": r"!\[[^\]]*\]\(",
+		"table_rows": r"(?m)^[ \t]*\|.*\|[ \t]*$",
+		"list_items": r"(?m)^[ \t]*(?:[-+*]|\d+[.)])[ \t]+\S",
+		"blockquotes": r"(?m)^[ \t]*>[ \t]",
+	}
+	for label, pattern in checks.items():
+		source_count = len(re.findall(pattern, source))
+		translated_count = len(re.findall(pattern, translated))
+		if translated_count < source_count:
+			issues.append(f"{label}: expected at least {source_count}, got {translated_count}")
+
+	source_length = _markdown_prose_length(source)
+	translated_length = _markdown_prose_length(translated)
+	if source_length >= 200 and translated_length < source_length * 0.2:
+		issues.append(
+			f"prose_length: expected at least {int(source_length * 0.2)}, got {translated_length}"
+		)
+	return issues
+
+
+def _markdown_prose_length(markdown: str) -> int:
+	text = re.sub(r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~", "", markdown, flags=re.DOTALL)
+	text = re.sub(r"`[^`\n]+`", "", text)
+	text = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", text)
+	text = re.sub(r"https?://\S+|<[^>]+>", "", text)
+	return len(re.findall(r"[A-Za-z0-9\u3400-\u9fff]", text))
 
 
 def _is_probably_untranslated_title(source_title: str, translated_title: str) -> bool:

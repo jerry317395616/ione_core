@@ -18,6 +18,7 @@ from ione_core.frappe_docs_sync import (
 	_rewrite_internal_links,
 	_split_markdown,
 	_translated_markdown_body,
+	_translation_fidelity_issues,
 	fetch_source_page,
 	parse_sidebar,
 )
@@ -245,6 +246,41 @@ class TestFrappeDocsSync(TestCase):
 		content = _build_published_content("# 标题", "https://docs.frappe.io/builder/introduction", hash_value)
 		self.assertEqual(_content_source_hash(content), hash_value)
 		self.assertEqual(_translated_markdown_body(content), "# 标题")
+
+	def test_translation_fidelity_accepts_preserved_structure(self):
+		source = (
+			"# Report\n\nUse this report to review detailed accounting entries and balances. "
+			* 5
+			+ "\n\n- First item\n- Second item\n\n"
+			+ "| Field | Value |\n| --- | --- |\n| Status | Open |\n\n"
+			+ "![Chart](https://docs.frappe.io/files/chart.png)\n\n> Important note\n\n"
+			+ "```python\nprint('ok')\n```"
+		)
+		translated = (
+			"# 报表\n\n使用此报表查看详细的会计分录和余额。" * 5
+			+ "\n\n- 第一项\n- 第二项\n\n"
+			+ "| 字段 | 值 |\n| --- | --- |\n| 状态 | 打开 |\n\n"
+			+ "![图表](https://docs.frappe.io/files/chart.png)\n\n> 重要说明\n\n"
+			+ "```python\nprint('ok')\n```"
+		)
+
+		self.assertEqual(_translation_fidelity_issues(source, translated), [])
+
+	def test_translation_fidelity_flags_truncated_content(self):
+		source = (
+			"# Report\n\nUse this report to review detailed accounting entries and balances. "
+			* 8
+			+ "\n\n- First item\n- Second item\n\n"
+			+ "| Field | Value |\n| --- | --- |\n| Status | Open |\n\n"
+			+ "![Chart](https://docs.frappe.io/files/chart.png)\n\n> Important note"
+		)
+		issues = _translation_fidelity_issues(source, "# 报表\n\n摘要")
+
+		self.assertTrue(any(issue.startswith("images:") for issue in issues))
+		self.assertTrue(any(issue.startswith("table_rows:") for issue in issues))
+		self.assertTrue(any(issue.startswith("list_items:") for issue in issues))
+		self.assertTrue(any(issue.startswith("blockquotes:") for issue in issues))
+		self.assertTrue(any(issue.startswith("prose_length:") for issue in issues))
 
 	def test_untranslated_title_detection_preserves_technical_names(self):
 		self.assertTrue(_is_probably_untranslated_title("Introduction", "Introduction"))
