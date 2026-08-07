@@ -390,6 +390,111 @@ def enqueue_frappe_docs_sync(
 	return {"queued": True, "job_id": job.id, "products": selected}
 
 
+def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]:
+	"""Compare the live official chapter trees with their synchronized Wiki spaces."""
+	import frappe
+	import requests
+
+	selected = _normalize_products(products)
+	session = requests.Session()
+	session.trust_env = False
+	session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html"})
+	results: dict[str, Any] = {}
+	for slug in selected:
+		spec = PRODUCTS[slug]
+		try:
+			tree = discover_product(spec, session=session)
+		except Exception as exc:
+			results[slug] = {"status": "source_unavailable", "error": str(exc)}
+			continue
+
+		expected = _expected_source_hierarchy(spec, tree)
+		space_name = frappe.db.get_value("Wiki Space", {"route": spec.destination_route}, "name")
+		if not space_name:
+			results[slug] = {
+				"status": "missing",
+				"source_pages": sum(1 for node in expected.values() if node["kind"] == "page"),
+				"source_groups": sum(1 for node in expected.values() if node["kind"] == "group") - 1,
+			}
+			continue
+
+		documents = frappe.get_all(
+			"Wiki Document",
+			filters={"wiki_space": space_name},
+			fields=[
+				"name",
+				"source_path",
+				"route",
+				"is_group",
+				"is_published",
+				"parent_wiki_document",
+				"content",
+			],
+		)
+		by_source: dict[str, list[Any]] = {}
+		name_to_source = {document.name: document.source_path for document in documents}
+		unmanaged = []
+		for document in documents:
+			if document.source_path:
+				by_source.setdefault(document.source_path, []).append(document)
+			else:
+				unmanaged.append(document.name)
+
+		missing = sorted(set(expected) - set(by_source))
+		duplicates = sorted(source for source, matches in by_source.items() if len(matches) > 1)
+		extra = sorted(set(by_source) - set(expected))
+		hierarchy_mismatches = []
+		route_mismatches = []
+		unpublished = []
+		missing_source_markers = []
+		low_chinese_content = []
+		bad_internal_links = []
+		for source_path, expectation in expected.items():
+			matches = by_source.get(source_path, [])
+			if len(matches) != 1:
+				continue
+			document = matches[0]
+			actual_parent = name_to_source.get(document.parent_wiki_document)
+			if actual_parent != expectation["parent"]:
+				hierarchy_mismatches.append(source_path)
+			if document.route != expectation["route"]:
+				route_mismatches.append(source_path)
+			if not document.is_published:
+				unpublished.append(source_path)
+			if expectation["kind"] != "page":
+				continue
+			content = document.content or ""
+			if SOURCE_MARKER not in content:
+				missing_source_markers.append(source_path)
+			if len(re.findall(r"[\u3400-\u9fff]", content)) < 20:
+				low_chinese_content.append(source_path)
+			if f"](/{spec.destination_route}/" in content:
+				bad_internal_links.append(source_path)
+
+		issues = {
+			"missing": missing,
+			"duplicates": duplicates,
+			"extra_managed": extra,
+			"unmanaged": sorted(unmanaged),
+			"hierarchy_mismatches": sorted(hierarchy_mismatches),
+			"route_mismatches": sorted(route_mismatches),
+			"unpublished": sorted(unpublished),
+			"missing_source_markers": sorted(missing_source_markers),
+			"low_chinese_content": sorted(low_chinese_content),
+			"bad_internal_links": sorted(bad_internal_links),
+		}
+		results[slug] = {
+			"status": "passed" if not any(issues.values()) else "needs_attention",
+			"wiki_space": space_name,
+			"source_pages": sum(1 for node in expected.values() if node["kind"] == "page"),
+			"wiki_pages": sum(1 for document in documents if not document.is_group),
+			"source_groups": sum(1 for node in expected.values() if node["kind"] == "group") - 1,
+			"wiki_groups": sum(1 for document in documents if document.is_group) - 1,
+			"issues": issues,
+		}
+	return results
+
+
 def _sync_product(
 	spec: ProductSpec,
 	translator: QwenMarkdownTranslator,
@@ -622,6 +727,31 @@ def _destination_route(spec: ProductSpec, source_route: str) -> str:
 	prefix = f"{spec.source_prefix}/"
 	relative = source_route[len(prefix) :] if source_route.startswith(prefix) else source_route
 	return f"{spec.destination_route}/{relative.strip('/')}"
+
+
+def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dict[str, dict[str, Any]]:
+	expected: dict[str, dict[str, Any]] = {
+		f"root:{spec.slug}": {
+			"kind": "group",
+			"parent": None,
+			"route": spec.destination_route,
+		}
+	}
+
+	def collect(nodes: list[SourceNode], parent: str) -> None:
+		for node in nodes:
+			source_path = node.identity if node.kind == "group" else node.source_route
+			route = (
+				_destination_route(spec, node.source_route)
+				if node.source_route
+				else f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
+			)
+			expected[source_path] = {"kind": node.kind, "parent": parent, "route": route}
+			if node.kind == "group":
+				collect(node.children, source_path)
+
+	collect(tree, f"root:{spec.slug}")
+	return expected
 
 
 def _rewrite_internal_links(markdown: str, route_map: dict[str, str]) -> str:

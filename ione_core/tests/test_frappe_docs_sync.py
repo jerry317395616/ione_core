@@ -3,9 +3,11 @@ from unittest import TestCase
 from ione_core.frappe_docs_sync import (
 	ProductSpec,
 	QwenMarkdownTranslator,
+	SourceNode,
 	_build_published_content,
 	_content_source_hash,
 	_destination_route,
+	_expected_source_hierarchy,
 	_protect_markdown_literals,
 	_restore_markdown_literals,
 	_rewrite_internal_links,
@@ -98,3 +100,20 @@ class TestFrappeDocsSync(TestCase):
 			{"builder/data-script": "builder-zh-docs/data-script"},
 		)
 		self.assertEqual(result, "See [Data Script](/wiki/builder-zh-docs/data-script).")
+
+	def test_expected_hierarchy_preserves_nested_parentage(self):
+		spec = ProductSpec("builder", "Builder", "builder", "", "builder-zh-docs")
+		tree = [
+			SourceNode(
+				"Scripting",
+				"group",
+				"builder/scripting",
+				[SourceNode("Data Script", "page", "builder/data-script", identity="builder/data-script")],
+				"group:builder:0001:scripting",
+			)
+		]
+
+		hierarchy = _expected_source_hierarchy(spec, tree)
+
+		self.assertEqual(hierarchy["group:builder:0001:scripting"]["parent"], "root:builder")
+		self.assertEqual(hierarchy["builder/data-script"]["parent"], "group:builder:0001:scripting")
