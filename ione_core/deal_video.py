@@ -147,6 +147,9 @@ def render_deal_video(video_name: str) -> None:
 			error_message="",
 		)
 		session = requests.Session()
+		# The renderer is an internal service. Bench-wide HTTP proxy settings must not
+		# route its large request and artifacts through the outbound GitHub relay.
+		session.trust_env = False
 		response = session.post(
 			f"{base_url}/v1/jobs", json=payload, headers=_headers(token), timeout=60
 		)
