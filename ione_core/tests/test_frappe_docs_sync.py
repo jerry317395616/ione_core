@@ -16,6 +16,7 @@ from ione_core.frappe_docs_sync import (
 	_protected_literal_tokens,
 	_restore_markdown_literals,
 	_rewrite_internal_links,
+	_source_hash,
 	_split_markdown,
 	_translated_markdown_body,
 	_translation_fidelity_issues,
@@ -258,6 +259,12 @@ class TestFrappeDocsSync(TestCase):
 		content = _build_published_content("# 标题", "https://docs.frappe.io/builder/introduction", hash_value)
 		self.assertEqual(_content_source_hash(content), hash_value)
 		self.assertEqual(_translated_markdown_body(content), "# 标题")
+
+	def test_source_hash_ignores_cloudflare_email_protection_key(self):
+		first = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#1234abcd)"
+		second = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#deadbeef)"
+
+		self.assertEqual(_source_hash("Contact", first), _source_hash("Contact", second))
 
 	def test_translation_fidelity_accepts_preserved_structure(self):
 		source = (

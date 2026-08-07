@@ -26,6 +26,7 @@ PRESERVED_TITLE_WORDS = {
 	"crm",
 	"docker",
 	"erpnext",
+	"exotel",
 	"faq",
 	"frappe",
 	"github",
@@ -42,6 +43,7 @@ PRESERVED_TITLE_WORDS = {
 	"rest",
 	"sdk",
 	"sql",
+	"twilio",
 	"ui",
 	"url",
 	"ux",
@@ -1013,7 +1015,12 @@ def _is_probably_untranslated_title(source_title: str, translated_title: str) ->
 
 
 def _source_hash(title: str, markdown: str) -> str:
-	return hashlib.sha256(f"{title}\n{markdown}".encode()).hexdigest()
+	stable_markdown = re.sub(
+		r"(?<=/cdn-cgi/l/email-protection#)[0-9a-fA-F]+",
+		"protected",
+		markdown,
+	)
+	return hashlib.sha256(f"{title}\n{stable_markdown}".encode()).hexdigest()
 
 
 def _content_source_hash(content: str) -> str:
