@@ -94,9 +94,10 @@ def validate_order_by(meta, order_by: str | None, permitted: set[str]) -> str:
 
 def permitted_fields(doctype: str, permission_type: str, parenttype: str | None = None) -> set[str]:
 	import frappe
+	from frappe.model import get_permitted_fields
 
 	return set(
-		frappe.get_permitted_fields(
+		get_permitted_fields(
 			doctype,
 			parenttype=parenttype,
 			user=frappe.session.user,
