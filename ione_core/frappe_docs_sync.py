@@ -553,6 +553,57 @@ def enqueue_frappe_docs_sync(
 	return {"queued": True, "job_id": job.id, "products": selected}
 
 
+def repair_frappe_docs_public_access(
+	products: list[str] | str | None = None,
+) -> dict[str, Any]:
+	"""Repair public read access and legacy editor-SPA links without retranslating pages."""
+	import frappe
+
+	selected = _normalize_products(products)
+	results: dict[str, Any] = {}
+	for slug in selected:
+		spec = PRODUCTS[slug]
+		space_name = frappe.db.get_value("Wiki Space", {"route": spec.destination_route}, "name")
+		if not space_name:
+			results[slug] = {"status": "missing"}
+			continue
+
+		space = frappe.get_doc("Wiki Space", space_name)
+		roles_added = _ensure_public_read_roles(space)
+		if roles_added:
+			space.save(ignore_permissions=True)
+
+		documents = frappe.get_all(
+			"Wiki Document",
+			filters={"wiki_space": space_name, "is_group": 0},
+			fields=["name", "content"],
+			limit_page_length=0,
+		)
+		links_repaired = 0
+		for document in documents:
+			content = document.content or ""
+			repaired = _rewrite_legacy_wiki_links(content, {})
+			if repaired == content:
+				continue
+			frappe.db.set_value(
+				"Wiki Document", document.name, "content", repaired, update_modified=False
+			)
+			links_repaired += 1
+
+		frappe.db.commit()
+		results[slug] = {
+			"status": "repaired",
+			"wiki_space": space_name,
+			"public_roles_added": roles_added,
+			"links_repaired": links_repaired,
+		}
+
+	frappe.cache().delete_value("wiki_public_tree")
+	frappe.clear_cache()
+	frappe.db.commit()
+	return results
+
+
 def audit_frappe_docs(
 	products: list[str] | str | None = None,
 	verify_source_content: bool = False,
@@ -583,6 +634,17 @@ def audit_frappe_docs(
 				"source_groups": sum(1 for node in expected.values() if node["kind"] == "group") - 1,
 			}
 			continue
+		public_read_roles = set(
+			frappe.get_all(
+				"Wiki Space Role",
+				filters={
+					"parent": space_name,
+					"parenttype": "Wiki Space",
+					"permission_level": "Read",
+				},
+				pluck="role",
+			)
+		)
 
 		documents = frappe.get_all(
 			"Wiki Document",
@@ -643,7 +705,7 @@ def audit_frappe_docs(
 				missing_source_markers.append(source_path)
 			if len(re.findall(r"[\u3400-\u9fff]", _translated_markdown_body(content))) < MIN_TRANSLATED_BODY_CJK:
 				low_chinese_content.append(source_path)
-			if f"](/{spec.destination_route}/" in content:
+			if f"/wiki/{spec.destination_route}" in content:
 				bad_internal_links.append(source_path)
 			if verify_source_content:
 				try:
@@ -664,6 +726,7 @@ def audit_frappe_docs(
 					)
 
 		issues = {
+			"missing_read_roles": sorted({"All", "Guest"} - public_read_roles),
 			"missing": missing,
 			"duplicates": duplicates,
 			"extra_managed": extra,
@@ -733,8 +796,11 @@ def _sync_product(
 			source_hash = _source_hash(source_title, source_markdown)
 			current = existing and not force and _content_source_hash(existing.content or "") == source_hash
 			if current:
-				content = existing.content
-				stats["skipped"] += 1
+				content = _rewrite_legacy_wiki_links(existing.content or "", route_map)
+				if content == (existing.content or ""):
+					stats["skipped"] += 1
+				else:
+					current = False
 			else:
 				translated_markdown = translator.translate_markdown(source_markdown)
 				translated_markdown = _rewrite_internal_links(translated_markdown, route_map)
@@ -795,7 +861,9 @@ def _ensure_space(spec: ProductSpec):
 				"show_in_switcher": 1,
 				"allow_contributions": 1,
 			}
-		).insert(ignore_permissions=True)
+		)
+		_ensure_public_read_roles(space)
+		space.insert(ignore_permissions=True)
 	else:
 		space.update(
 			{
@@ -805,11 +873,27 @@ def _ensure_space(spec: ProductSpec):
 				"show_in_switcher": 1,
 			}
 		)
+		_ensure_public_read_roles(space)
 		space.save(ignore_permissions=True)
 	root.update({"wiki_space": space.name, "is_published": 1})
 	root.save(ignore_permissions=True)
 	frappe.db.commit()
 	return root, space
+
+
+def _ensure_public_read_roles(space: Any) -> list[str]:
+	existing = {
+		row.role
+		for row in (space.get("roles") or [])
+		if row.permission_level == "Read"
+	}
+	added = []
+	for role in ("Guest", "All"):
+		if role in existing:
+			continue
+		space.append("roles", {"role": role, "permission_level": "Read"})
+		added.append(role)
+	return added
 
 
 def _upsert_group(
@@ -972,8 +1056,17 @@ def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dic
 def _rewrite_internal_links(markdown: str, route_map: dict[str, str]) -> str:
 	for source_route, destination_route in sorted(route_map.items(), key=lambda item: len(item[0]), reverse=True):
 		markdown = markdown.replace(
-			f"https://{DOCS_HOST}/{source_route}", f"/wiki/{destination_route}"
+			f"https://{DOCS_HOST}/{source_route}", f"/{destination_route}"
 		)
+	return _rewrite_legacy_wiki_links(markdown, route_map)
+
+
+def _rewrite_legacy_wiki_links(markdown: str, route_map: dict[str, str]) -> str:
+	"""Point old editor-SPA links at Wiki's public root-route reader."""
+	root_routes = {spec.destination_route for spec in PRODUCTS.values()}
+	root_routes.update(route.split("/", 1)[0] for route in route_map.values())
+	for root_route in sorted(root_routes, key=len, reverse=True):
+		markdown = markdown.replace(f"/wiki/{root_route}", f"/{root_route}")
 	return markdown
 
 

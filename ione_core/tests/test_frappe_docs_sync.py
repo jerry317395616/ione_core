@@ -330,7 +330,20 @@ class TestFrappeDocsSync(TestCase):
 			markdown,
 			{"builder/data-script": "builder-zh-docs/data-script"},
 		)
-		self.assertEqual(result, "See [Data Script](/wiki/builder-zh-docs/data-script).")
+		self.assertEqual(result, "See [Data Script](/builder-zh-docs/data-script).")
+
+	def test_internal_links_repair_legacy_wiki_spa_routes(self):
+		markdown = "See [Data Script](/wiki/builder-zh-docs/data-script)."
+		result = _rewrite_internal_links(
+			markdown,
+			{"builder/data-script": "builder-zh-docs/data-script"},
+		)
+		self.assertEqual(result, "See [Data Script](/builder-zh-docs/data-script).")
+
+	def test_internal_links_repair_cross_product_legacy_routes(self):
+		markdown = "See [REST API](/wiki/framework-zh-docs/user/en/api/rest)."
+		result = _rewrite_internal_links(markdown, {})
+		self.assertEqual(result, "See [REST API](/framework-zh-docs/user/en/api/rest).")
 
 	def test_expected_hierarchy_preserves_nested_parentage(self):
 		spec = ProductSpec("builder", "Builder", "builder", "", "builder-zh-docs")
