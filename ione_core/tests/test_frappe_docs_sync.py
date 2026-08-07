@@ -48,6 +48,28 @@ class TestFrappeDocsSync(TestCase):
 			{0: "介绍", 1: "设置"},
 		)
 
+	def test_qwen_translation_disables_thinking_mode(self):
+		class Response:
+			def raise_for_status(self):
+				return None
+
+			def json(self):
+				return {"choices": [{"message": {"content": "译文"}}]}
+
+		class Session:
+			def __init__(self):
+				self.payload = None
+
+			def post(self, _url, **kwargs):
+				self.payload = kwargs["json"]
+				return Response()
+
+		session = Session()
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen", session)
+
+		self.assertEqual(translator._chat("translate"), "译文")
+		self.assertEqual(session.payload["chat_template_kwargs"], {"enable_thinking": False})
+
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (
 			'<aside class="wiki-sidebar"><ul class="wiki-tree">'

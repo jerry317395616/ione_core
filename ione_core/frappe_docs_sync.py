@@ -321,6 +321,7 @@ class QwenMarkdownTranslator:
 			"model": self.model_id,
 			"temperature": 0,
 			"max_tokens": 8192,
+			"chat_template_kwargs": {"enable_thinking": False},
 			"messages": [
 				{
 					"role": "system",
