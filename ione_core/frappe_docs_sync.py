@@ -1,0 +1,776 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import time
+from collections.abc import Iterable
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+from urllib.parse import urljoin, urlsplit
+
+DOCS_HOST = "docs.frappe.io"
+SOURCE_MARKER = "IONE_FRAPPE_DOCS_SOURCE"
+USER_AGENT = "I-ONE-Frappe-Docs-Sync/1.0 (+https://myyr.top)"
+REQUEST_TIMEOUT = (10, 60)
+MAX_SOURCE_BYTES = 5 * 1024 * 1024
+TRANSLATION_CHUNK_CHARACTERS = 6_000
+TITLE_BATCH_SIZE = 40
+
+
+@dataclass(frozen=True)
+class ProductSpec:
+	slug: str
+	name: str
+	source_prefix: str
+	entry_url: str
+	destination_route: str
+
+
+@dataclass
+class SourceNode:
+	title: str
+	kind: str
+	source_route: str = ""
+	children: list[SourceNode] = field(default_factory=list)
+	identity: str = ""
+
+
+PRODUCTS: dict[str, ProductSpec] = {
+	"erpnext": ProductSpec(
+		"erpnext", "ERPNext 中文文档", "erpnext", "https://docs.frappe.io/erpnext/introduction", "erpnext-zh-docs"
+	),
+	"framework": ProductSpec(
+		"framework",
+		"Frappe 框架中文文档",
+		"framework",
+		"https://docs.frappe.io/framework/user/en/introduction",
+		"framework-zh-docs",
+	),
+	"cloud": ProductSpec(
+		"cloud", "Frappe Cloud 中文文档", "cloud", "https://docs.frappe.io/cloud/features", "cloud-zh-docs"
+	),
+	"hr": ProductSpec(
+		"hr", "Frappe HR 中文文档", "hr", "https://docs.frappe.io/hr/introduction", "hr-zh-docs"
+	),
+	"learning": ProductSpec(
+		"learning",
+		"Frappe Learning 中文文档",
+		"learning",
+		"https://docs.frappe.io/learning/introduction",
+		"learning-zh-docs",
+	),
+	"crm": ProductSpec(
+		"crm", "Frappe CRM 中文文档", "crm", "https://docs.frappe.io/crm/introduction", "crm-zh-docs"
+	),
+	"builder": ProductSpec(
+		"builder",
+		"Frappe Builder 中文文档",
+		"builder",
+		"https://docs.frappe.io/builder/introduction",
+		"builder-zh-docs",
+	),
+	"insights": ProductSpec(
+		"insights",
+		"Frappe Insights 中文文档",
+		"insights",
+		"https://docs.frappe.io/insights/introduction",
+		"insights-zh-docs",
+	),
+	"education": ProductSpec(
+		"education",
+		"Frappe Education 中文文档",
+		"education",
+		"https://docs.frappe.io/education/introduction",
+		"education-zh-docs",
+	),
+	"helpdesk": ProductSpec(
+		"helpdesk",
+		"Frappe Helpdesk 中文文档",
+		"helpdesk",
+		"https://docs.frappe.io/helpdesk/installation",
+		"helpdesk-zh-docs",
+	),
+	"wiki": ProductSpec(
+		"wiki",
+		"Frappe Wiki 中文文档",
+		"wiki-v2",
+		"https://docs.frappe.io/wiki-v2/introduction",
+		"wiki-zh-docs",
+	),
+	"drive": ProductSpec(
+		"drive", "Frappe Drive 中文文档", "drive", "https://docs.frappe.io/drive/introduction", "drive-zh-docs"
+	),
+	"books": ProductSpec(
+		"books", "Frappe Books 中文文档", "books", "https://docs.frappe.io/books/introduction", "books-zh-docs"
+	),
+	"gantt": ProductSpec(
+		"gantt", "Frappe Gantt 中文文档", "gantt", "https://docs.frappe.io/gantt/introduction", "gantt-zh-docs"
+	),
+	"print-designer": ProductSpec(
+		"print-designer",
+		"Frappe Print Designer 中文文档",
+		"print-designer",
+		"https://docs.frappe.io/print-designer/introduction",
+		"print-designer-zh-docs",
+	),
+	"lending": ProductSpec(
+		"lending",
+		"Frappe Lending 中文文档",
+		"lending",
+		"https://docs.frappe.io/lending/introduction",
+		"lending-zh-docs",
+	),
+	"studio": ProductSpec(
+		"studio", "Frappe Studio 中文文档", "studio", "https://docs.frappe.io/studio/introduction", "studio-zh-docs"
+	),
+	"customer-guide": ProductSpec(
+		"customer-guide",
+		"Frappe 客户指南中文文档",
+		"customer-guide",
+		"https://docs.frappe.io/customer-guide/introduction",
+		"frappe-customer-guide-zh",
+	),
+	"partner-guide": ProductSpec(
+		"partner-guide",
+		"Frappe 合作伙伴指南中文文档",
+		"partner-guide",
+		"https://docs.frappe.io/partner-guide/about-frappe",
+		"frappe-partner-guide-zh",
+	),
+}
+
+
+def discover_product(spec: ProductSpec, session: Any | None = None) -> list[SourceNode]:
+	response = _docs_get(spec.entry_url, session=session)
+	return parse_sidebar(response.text, spec.source_prefix)
+
+
+def parse_sidebar(html: str, source_prefix: str) -> list[SourceNode]:
+	"""Parse the public Frappe Wiki sidebar without flattening its group hierarchy."""
+	from bs4 import BeautifulSoup
+
+	soup = BeautifulSoup(html, "html.parser")
+	sidebar = soup.select_one(".wiki-sidebar")
+	if sidebar is None:
+		raise ValueError("The documentation page does not expose a public Wiki sidebar.")
+
+	roots: list[SourceNode] = []
+	nodes_by_tag: dict[int, SourceNode] = {}
+	seen_pages: set[str] = set()
+	group_number = 0
+	for item in sidebar.select("li.wiki-item"):
+		classes = set(item.get("class", []))
+		kind = "group" if "is-group" in classes else "page" if "is-page" in classes else ""
+		if not kind:
+			continue
+
+		title_element = item.select_one(".wiki-title")
+		title = title_element.get_text(" ", strip=True) if title_element else ""
+		control = item.select_one("[data-route]")
+		route = (control.get("data-route") or "").strip("/") if control else ""
+		if not title:
+			continue
+		if kind == "page":
+			if not route.startswith(f"{source_prefix}/"):
+				continue
+			if route in seen_pages:
+				continue
+			seen_pages.add(route)
+
+		parent_tag = item.find_parent("li", class_="wiki-item")
+		parent = nodes_by_tag.get(id(parent_tag)) if parent_tag else None
+		if kind == "group":
+			group_number += 1
+			identity = f"group:{source_prefix}:{group_number:04d}:{_safe_slug(title)}"
+		else:
+			identity = route
+		node = SourceNode(title=title, kind=kind, source_route=route, identity=identity)
+		nodes_by_tag[id(item)] = node
+		if parent:
+			parent.children.append(node)
+		else:
+			roots.append(node)
+
+	return _prune_empty_groups(roots)
+
+
+def fetch_source_page(source_route: str, session: Any | None = None) -> tuple[str, str, str]:
+	url = f"https://{DOCS_HOST}/{source_route.strip('/')}"
+	response = _docs_get(url, session=session)
+	title, markdown = _extract_article(response.text, response.url)
+	return title, markdown, response.url
+
+
+def _extract_article(html: str, source_url: str) -> tuple[str, str]:
+	from bs4 import BeautifulSoup
+	from markdownify import markdownify
+
+	soup = BeautifulSoup(html, "html.parser")
+	content = soup.select_one(".prose") or soup.find("article") or soup.find("main")
+	if content is None:
+		raise ValueError("The documentation page did not contain readable article content.")
+	for element in content.select("script, style, nav, form, button, noscript, svg"):
+		element.decompose()
+	for element in content.select("a[href]"):
+		element["href"] = urljoin(source_url, element.get("href", ""))
+	for element in content.select("img[src]"):
+		element["src"] = urljoin(source_url, element.get("src", ""))
+
+	heading = content.find("h1") or soup.find("h1")
+	title = heading.get_text(" ", strip=True) if heading else ""
+	if not title and soup.title:
+		title = soup.title.get_text(" ", strip=True).split(" | ", 1)[0]
+	markdown = markdownify(str(content), heading_style="ATX", bullets="-")
+	markdown = re.sub(r"[ \t]+\n", "\n", markdown)
+	markdown = re.sub(r"\n{3,}", "\n\n", markdown).strip()
+	if len(markdown) < 40:
+		raise ValueError("The documentation page did not contain enough readable content.")
+	return title or "Frappe Documentation", markdown
+
+
+class QwenMarkdownTranslator:
+	def __init__(self, base_url: str, api_key: str, model_id: str, session: Any | None = None):
+		import requests
+
+		self.base_url = base_url.rstrip("/")
+		self.api_key = api_key
+		self.model_id = model_id.removeprefix("openai/")
+		self.session = session or requests.Session()
+		self.session.trust_env = False
+
+	@classmethod
+	def from_flow_model(
+		cls,
+		model_name: str | None = None,
+		base_url_override: str | None = None,
+	) -> QwenMarkdownTranslator:
+		from ione_core.translation_catalog import _get_flow_model
+
+		model = _get_flow_model(model_name)
+		base_url = (base_url_override or model.base_url or "").strip()
+		if not base_url:
+			raise ValueError("The selected Flow Model has no base URL.")
+		return cls(base_url, model.get_password("api_key"), model.model_id)
+
+	def translate_titles(self, titles: Iterable[str]) -> dict[str, str]:
+		unique_titles = list(dict.fromkeys(title for title in titles if title))
+		translations: dict[str, str] = {}
+		for offset in range(0, len(unique_titles), TITLE_BATCH_SIZE):
+			batch = unique_titles[offset : offset + TITLE_BATCH_SIZE]
+			rows = [{"id": index, "title": title} for index, title in enumerate(batch)]
+			prompt = (
+				"将下面的 Frappe 官方文档章节标题翻译为自然、准确、简洁的简体中文。"
+				"保留 ERPNext、Frappe、API、DocType、SQL、GitHub 等产品和技术名称。"
+				"只返回 JSON 数组。每项格式为 {\"id\":整数,\"translation\":\"译文\"}。\n"
+				+ json.dumps(rows, ensure_ascii=False)
+			)
+			content = self._chat(prompt)
+			parsed = _parse_json_array(content)
+			by_id = {int(row["id"]): str(row["translation"]).strip() for row in parsed}
+			if set(by_id) != set(range(len(batch))):
+				raise ValueError("The title translation response did not contain every requested id.")
+			translations.update({source: by_id[index] for index, source in enumerate(batch)})
+		return translations
+
+	def translate_markdown(self, markdown: str) -> str:
+		protected, literals = _protect_markdown_literals(markdown)
+		chunks = _split_markdown(protected, TRANSLATION_CHUNK_CHARACTERS)
+		translated_chunks = []
+		for index, chunk in enumerate(chunks, start=1):
+			prompt = (
+				f"这是同一篇 Frappe 官方技术文档的第 {index}/{len(chunks)} 段。"
+				"请完整翻译为专业、自然的简体中文。保持 Markdown 层级、列表、表格、链接、图片、"
+				"HTML 标签和 [[[IONE_LITERAL_数字]]] 占位符完全不变。保留产品名、命令、字段名、"
+				"API、DocType、路径和参数。不要概括、删减或解释。不要包裹新的代码围栏。\n\n"
+				+ chunk
+			)
+			translated_chunks.append(self._chat(prompt))
+		translated = "\n\n".join(part.strip() for part in translated_chunks if part.strip())
+		return _restore_markdown_literals(translated, literals)
+
+	def _chat(self, prompt: str) -> str:
+		headers = {"Content-Type": "application/json"}
+		if self.api_key:
+			headers["Authorization"] = f"Bearer {self.api_key}"
+		payload: dict[str, Any] = {
+			"model": self.model_id,
+			"temperature": 0,
+			"max_tokens": 8192,
+			"messages": [
+				{
+					"role": "system",
+					"content": "你是 I-ONE 的 Frappe 官方文档简体中文翻译编辑。忠于原文并严格保持技术格式。",
+				},
+				{"role": "user", "content": prompt},
+			],
+		}
+		last_error: Exception | None = None
+		for attempt in range(3):
+			try:
+				response = self.session.post(
+					f"{self.base_url}/chat/completions",
+					headers=headers,
+					json=payload,
+					timeout=330,
+				)
+				response.raise_for_status()
+				content = response.json()["choices"][0]["message"]["content"].strip()
+				return _strip_outer_fence(content)
+			except Exception as exc:
+				last_error = exc
+				time.sleep(2**attempt)
+		raise RuntimeError(f"Qwen document translation failed: {last_error}")
+
+
+def sync_frappe_docs(
+	products: list[str] | str | None = None,
+	force: bool = False,
+	max_pages_per_product: int = 0,
+	model_name: str | None = None,
+	base_url_override: str | None = None,
+) -> dict[str, Any]:
+	"""Synchronize selected official documentation spaces into the current site Wiki."""
+	import frappe
+	import requests
+
+	if "wiki" not in frappe.get_installed_apps():
+		frappe.throw("Frappe Wiki must be installed before documentation can be synchronized.")
+	selected = _normalize_products(products)
+	translator = QwenMarkdownTranslator.from_flow_model(model_name, base_url_override)
+	session = requests.Session()
+	session.trust_env = False
+	session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html"})
+	results: dict[str, Any] = {}
+	for slug in selected:
+		try:
+			results[slug] = _sync_product(
+				PRODUCTS[slug],
+				translator,
+				session,
+				force=force,
+				max_pages=max_pages_per_product,
+			)
+		except Exception as exc:
+			frappe.log_error(title=f"Frappe docs sync failed: {slug}", message=frappe.get_traceback())
+			results[slug] = {"status": "failed", "error": str(exc)}
+		_write_progress(results)
+	return results
+
+
+def enqueue_frappe_docs_sync(
+	products: list[str] | str | None = None,
+	force: bool = False,
+	max_pages_per_product: int = 0,
+	model_name: str | None = None,
+	base_url_override: str | None = None,
+) -> dict[str, Any]:
+	"""Queue the resumable synchronizer without holding an HTTP request open."""
+	import frappe
+
+	selected = _normalize_products(products)
+	job = frappe.enqueue(
+		"ione_core.frappe_docs_sync.sync_frappe_docs",
+		queue="long",
+		timeout=24 * 60 * 60,
+		job_name=f"frappe-docs-zh-{'-'.join(selected)}",
+		products=selected,
+		force=force,
+		max_pages_per_product=max_pages_per_product,
+		model_name=model_name,
+		base_url_override=base_url_override,
+	)
+	return {"queued": True, "job_id": job.id, "products": selected}
+
+
+def _sync_product(
+	spec: ProductSpec,
+	translator: QwenMarkdownTranslator,
+	session: Any,
+	force: bool,
+	max_pages: int,
+) -> dict[str, Any]:
+	import frappe
+
+	tree = discover_product(spec, session=session)
+	pages = list(_iter_pages(tree))
+	if max_pages:
+		allowed_routes = {node.source_route for node in pages[:max_pages]}
+		tree = _filter_tree_to_routes(tree, allowed_routes)
+		pages = list(_iter_pages(tree))
+	if not pages:
+		raise ValueError(f"No public documentation pages were discovered for {spec.slug}.")
+
+	titles = translator.translate_titles(node.title for node in _walk_nodes(tree))
+	root, space = _ensure_space(spec)
+	route_map = {
+		node.source_route: _destination_route(spec, node.source_route)
+		for node in pages
+	}
+	stats = {"status": "running", "discovered": len(pages), "created": 0, "updated": 0, "skipped": 0}
+
+	def publish_nodes(nodes: list[SourceNode], parent_name: str) -> None:
+		for sort_order, node in enumerate(nodes):
+			translated_title = titles.get(node.title, node.title)
+			if node.kind == "group":
+				group = _upsert_group(
+					spec, node, translated_title, parent_name, space.name, sort_order
+				)
+				publish_nodes(node.children, group.name)
+				continue
+
+			destination_route = route_map[node.source_route]
+			existing = _find_managed_document(space.name, node.source_route, destination_route, False)
+			source_title, source_markdown, source_url = fetch_source_page(node.source_route, session=session)
+			source_hash = _source_hash(source_title, source_markdown)
+			current = existing and not force and _content_source_hash(existing.content or "") == source_hash
+			if current:
+				content = existing.content
+				stats["skipped"] += 1
+			else:
+				translated_markdown = translator.translate_markdown(source_markdown)
+				translated_markdown = _rewrite_internal_links(translated_markdown, route_map)
+				content = _build_published_content(translated_markdown, source_url, source_hash)
+
+			created = existing is None
+			_upsert_page(
+				spec,
+				node,
+				translated_title,
+				parent_name,
+				space.name,
+				sort_order,
+				destination_route,
+				content,
+				existing,
+			)
+			if not current:
+				stats["created" if created else "updated"] += 1
+			frappe.db.commit()
+			_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
+
+	publish_nodes(tree, root.name)
+	stats["status"] = "completed"
+	stats["wiki_space"] = space.name
+	stats["route"] = spec.destination_route
+	frappe.clear_cache()
+	frappe.db.commit()
+	return stats
+
+
+def _ensure_space(spec: ProductSpec):
+	import frappe
+
+	space_name = frappe.db.get_value("Wiki Space", {"route": spec.destination_route}, "name")
+	space = frappe.get_doc("Wiki Space", space_name) if space_name else None
+	root = frappe.get_doc("Wiki Document", space.root_group) if space and space.root_group else None
+	if root is None:
+		root = frappe.get_doc(
+			{
+				"doctype": "Wiki Document",
+				"title": spec.name.removesuffix(" 中文文档"),
+				"slug": spec.destination_route,
+				"route": spec.destination_route,
+				"is_group": 1,
+				"is_published": 1,
+				"source_path": f"root:{spec.slug}",
+			}
+		).insert(ignore_permissions=True)
+	if space is None:
+		space = frappe.get_doc(
+			{
+				"doctype": "Wiki Space",
+				"space_name": spec.name,
+				"route": spec.destination_route,
+				"root_group": root.name,
+				"is_published": 1,
+				"show_in_switcher": 1,
+				"allow_contributions": 1,
+			}
+		).insert(ignore_permissions=True)
+	else:
+		space.update(
+			{
+				"space_name": spec.name,
+				"root_group": root.name,
+				"is_published": 1,
+				"show_in_switcher": 1,
+			}
+		)
+		space.save(ignore_permissions=True)
+	root.update({"wiki_space": space.name, "is_published": 1})
+	root.save(ignore_permissions=True)
+	frappe.db.commit()
+	return root, space
+
+
+def _upsert_group(
+	spec: ProductSpec,
+	node: SourceNode,
+	title: str,
+	parent: str,
+	space: str,
+	sort_order: int,
+):
+	import frappe
+
+	route = _destination_route(spec, node.source_route) if node.source_route else f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
+	doc = _find_managed_document(space, node.identity, route, True)
+	values = {
+		"title": title,
+		"slug": _safe_slug(node.title),
+		"route": route,
+		"source_path": node.identity,
+		"is_group": 1,
+		"is_published": 1,
+		"parent_wiki_document": parent,
+		"wiki_space": space,
+		"sort_order": sort_order,
+	}
+	if doc:
+		if doc.parent_wiki_document != parent:
+			doc.old_parent = doc.parent_wiki_document
+		doc.update(values)
+		doc.save(ignore_permissions=True)
+	else:
+		doc = frappe.get_doc({"doctype": "Wiki Document", **values}).insert(ignore_permissions=True)
+	frappe.db.set_value("Wiki Document", doc.name, "sort_order", sort_order, update_modified=False)
+	return doc
+
+
+def _upsert_page(
+	spec: ProductSpec,
+	node: SourceNode,
+	title: str,
+	parent: str,
+	space: str,
+	sort_order: int,
+	route: str,
+	content: str,
+	existing: Any | None,
+):
+	import frappe
+
+	doc = existing or _find_managed_document(space, node.source_route, route, False)
+	values = {
+		"title": title,
+		"slug": route.rsplit("/", 1)[-1],
+		"route": route,
+		"source_path": node.source_route,
+		"content": content,
+		"is_group": 0,
+		"is_published": 1,
+		"parent_wiki_document": parent,
+		"wiki_space": space,
+		"sort_order": sort_order,
+	}
+	if doc:
+		if doc.parent_wiki_document != parent:
+			doc.old_parent = doc.parent_wiki_document
+		doc.update(values)
+		doc.save(ignore_permissions=True)
+	else:
+		doc = frappe.get_doc({"doctype": "Wiki Document", **values}).insert(ignore_permissions=True)
+	frappe.db.set_value("Wiki Document", doc.name, "sort_order", sort_order, update_modified=False)
+	return doc
+
+
+def _find_managed_document(space: str, source_path: str, route: str, is_group: bool):
+	import frappe
+
+	name = frappe.db.get_value(
+		"Wiki Document",
+		{"wiki_space": space, "source_path": source_path, "is_group": int(is_group)},
+		"name",
+	)
+	if not name:
+		name = frappe.db.get_value(
+			"Wiki Document",
+			{"wiki_space": space, "route": route, "is_group": int(is_group)},
+			"name",
+		)
+	return frappe.get_doc("Wiki Document", name) if name else None
+
+
+def _docs_get(url: str, session: Any | None = None):
+	import requests
+
+	parsed = urlsplit(url)
+	if parsed.scheme != "https" or (parsed.hostname or "").lower() != DOCS_HOST:
+		raise ValueError("Only public HTTPS pages on docs.frappe.io can be synchronized.")
+	session = session or requests.Session()
+	session.trust_env = False
+	session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html,text/plain;q=0.9"})
+	response = session.get(url, timeout=REQUEST_TIMEOUT)
+	response.raise_for_status()
+	if len(response.content) > MAX_SOURCE_BYTES:
+		raise ValueError("The documentation page is larger than the allowed source size.")
+	resolved = urlsplit(response.url)
+	if resolved.scheme != "https" or (resolved.hostname or "").lower() != DOCS_HOST:
+		raise ValueError("The documentation request redirected outside docs.frappe.io.")
+	return response
+
+
+def _destination_route(spec: ProductSpec, source_route: str) -> str:
+	prefix = f"{spec.source_prefix}/"
+	relative = source_route[len(prefix) :] if source_route.startswith(prefix) else source_route
+	return f"{spec.destination_route}/{relative.strip('/')}"
+
+
+def _rewrite_internal_links(markdown: str, route_map: dict[str, str]) -> str:
+	for source_route, destination_route in sorted(route_map.items(), key=lambda item: len(item[0]), reverse=True):
+		markdown = markdown.replace(
+			f"https://{DOCS_HOST}/{source_route}", f"/wiki/{destination_route}"
+		)
+	return markdown
+
+
+def _build_published_content(markdown: str, source_url: str, source_hash: str) -> str:
+	return (
+		f"<!-- {SOURCE_MARKER}\nsource_url: {source_url}\nsource_hash: {source_hash}\n-->\n\n"
+		f"> 本页译自 [Frappe 官方文档]({source_url})。内容与官方章节保持同步。\n\n"
+		f"{markdown.strip()}\n"
+	)
+
+
+def _source_hash(title: str, markdown: str) -> str:
+	return hashlib.sha256(f"{title}\n{markdown}".encode()).hexdigest()
+
+
+def _content_source_hash(content: str) -> str:
+	match = re.search(rf"<!-- {SOURCE_MARKER}\b.*?\nsource_hash:\s*([0-9a-f]{{64}})\s*\n-->", content, re.DOTALL)
+	return match.group(1) if match else ""
+
+
+def _protect_markdown_literals(markdown: str) -> tuple[str, list[str]]:
+	literals: list[str] = []
+	pattern = re.compile(r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~|`[^`\n]+`", re.DOTALL)
+
+	def replace(match: re.Match[str]) -> str:
+		index = len(literals)
+		literals.append(match.group(0))
+		return f"[[[IONE_LITERAL_{index:04d}]]]"
+
+	return pattern.sub(replace, markdown), literals
+
+
+def _restore_markdown_literals(markdown: str, literals: list[str]) -> str:
+	for index, literal in enumerate(literals):
+		placeholder = f"[[[IONE_LITERAL_{index:04d}]]]"
+		if placeholder not in markdown:
+			raise ValueError(f"The translated Markdown lost protected literal {placeholder}.")
+		markdown = markdown.replace(placeholder, literal)
+	if re.search(r"\[\[\[IONE_LITERAL_\d+\]\]\]", markdown):
+		raise ValueError("The translated Markdown contains an unknown protected literal.")
+	return markdown
+
+
+def _split_markdown(markdown: str, maximum: int) -> list[str]:
+	blocks = re.split(r"\n{2,}", markdown.strip())
+	chunks: list[str] = []
+	current: list[str] = []
+	current_length = 0
+	for block in blocks:
+		block_length = len(block) + 2
+		if current and current_length + block_length > maximum:
+			chunks.append("\n\n".join(current))
+			current = []
+			current_length = 0
+		if len(block) > maximum:
+			lines = block.splitlines()
+			for line in lines:
+				if current and current_length + len(line) + 1 > maximum:
+					chunks.append("\n".join(current))
+					current = []
+					current_length = 0
+				current.append(line)
+				current_length += len(line) + 1
+			continue
+		current.append(block)
+		current_length += block_length
+	if current:
+		chunks.append("\n\n".join(current))
+	return chunks or [""]
+
+
+def _parse_json_array(content: str) -> list[dict[str, Any]]:
+	content = _strip_outer_fence(content)
+	start = content.find("[")
+	end = content.rfind("]")
+	if start < 0 or end < start:
+		raise ValueError("The translation response did not contain a JSON array.")
+	value = json.loads(content[start : end + 1])
+	if not isinstance(value, list):
+		raise ValueError("The translation response was not a JSON array.")
+	return value
+
+
+def _strip_outer_fence(content: str) -> str:
+	content = content.strip()
+	if content.startswith("```"):
+		content = re.sub(r"^```(?:json|markdown|md)?\s*|\s*```$", "", content, flags=re.IGNORECASE)
+	return content.strip()
+
+
+def _safe_slug(value: str) -> str:
+	slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+	return slug or hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+
+
+def _walk_nodes(nodes: Iterable[SourceNode]):
+	for node in nodes:
+		yield node
+		yield from _walk_nodes(node.children)
+
+
+def _iter_pages(nodes: Iterable[SourceNode]):
+	return (node for node in _walk_nodes(nodes) if node.kind == "page")
+
+
+def _prune_empty_groups(nodes: list[SourceNode]) -> list[SourceNode]:
+	result: list[SourceNode] = []
+	for node in nodes:
+		if node.kind == "group":
+			node.children = _prune_empty_groups(node.children)
+			if not node.children:
+				continue
+		result.append(node)
+	return result
+
+
+def _filter_tree_to_routes(nodes: list[SourceNode], routes: set[str]) -> list[SourceNode]:
+	filtered: list[SourceNode] = []
+	for node in nodes:
+		if node.kind == "page":
+			if node.source_route in routes:
+				filtered.append(node)
+			continue
+		children = _filter_tree_to_routes(node.children, routes)
+		if children:
+			filtered.append(SourceNode(node.title, node.kind, node.source_route, children, node.identity))
+	return filtered
+
+
+def _normalize_products(products: list[str] | str | None) -> list[str]:
+	if products is None:
+		return list(PRODUCTS)
+	if isinstance(products, str):
+		products = [part.strip() for part in products.split(",") if part.strip()]
+	unknown = [slug for slug in products if slug not in PRODUCTS]
+	if unknown:
+		raise ValueError(f"Unknown Frappe documentation products: {', '.join(unknown)}")
+	return list(dict.fromkeys(products))
+
+
+def _write_progress(results: dict[str, Any]) -> None:
+	try:
+		import frappe
+
+		path = Path(frappe.get_site_path("private", "files", "frappe-docs-zh-progress.json"))
+		path.parent.mkdir(parents=True, exist_ok=True)
+		current = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+		current.update(results)
+		path.write_text(json.dumps(current, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+	except Exception:
+		return
