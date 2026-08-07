@@ -933,11 +933,17 @@ def _normalize_products(products: list[str] | str | None) -> list[str]:
 def _write_progress(results: dict[str, Any]) -> None:
 	try:
 		import frappe
+		from filelock import FileLock
 
 		path = Path(frappe.get_site_path("private", "files", "frappe-docs-zh-progress.json"))
 		path.parent.mkdir(parents=True, exist_ok=True)
-		current = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-		current.update(results)
-		path.write_text(json.dumps(current, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+		with FileLock(f"{path}.lock", timeout=30):
+			current = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+			current.update(results)
+			temporary = path.with_suffix(f"{path.suffix}.tmp")
+			temporary.write_text(
+				json.dumps(current, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
+			)
+			temporary.replace(path)
 	except Exception:
 		return
