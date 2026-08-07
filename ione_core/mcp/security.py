@@ -8,6 +8,7 @@ import re
 import zipfile
 from pathlib import PurePath
 from typing import Any
+from xml.etree import ElementTree
 
 DENIED_DOCTYPES = {
 	"Access Log",
@@ -58,6 +59,7 @@ ORDER_BY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(?:\s+(?:asc|desc))?$", re
 SAFE_FILE_EXTENSIONS = {".csv", ".json", ".md", ".txt"}
 MAX_DOCX_BYTES = 5 * 1024 * 1024
 MAX_DOCX_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
+MAX_DOCX_TEXT_CHARACTERS = 300000
 REQUIRED_DOCX_PARTS = {"[Content_Types].xml", "word/document.xml"}
 SENSITIVE_KEYS = {"api_key", "api_secret", "authorization", "password", "secret", "token"}
 
@@ -229,8 +231,7 @@ def sanitize_for_audit(value: Any, *, max_length: int = 2000) -> str:
 	def mask(item: Any) -> Any:
 		if isinstance(item, dict):
 			return {
-				key: "***" if key.lower() in SENSITIVE_KEYS else mask(child)
-				for key, child in item.items()
+				key: "***" if key.lower() in SENSITIVE_KEYS else mask(child) for key, child in item.items()
 			}
 		if isinstance(item, list):
 			return [mask(child) for child in item[:50]]
@@ -286,3 +287,43 @@ def validate_docx_file(file_name: str, content_base64: str) -> tuple[str, bytes]
 	except zipfile.BadZipFile as exc:
 		raise ValueError("Word attachment is not a valid DOCX package") from exc
 	return name, payload
+
+
+def extract_docx_text(payload: bytes) -> str:
+	"""Extract paragraph text from a validated, bounded DOCX package."""
+	if not isinstance(payload, bytes) or not payload or len(payload) > MAX_DOCX_BYTES:
+		raise ValueError("Word attachment exceeds the 5 MB limit or is empty")
+	if not payload.startswith(b"PK\x03\x04"):
+		raise ValueError("Word attachment is not a valid DOCX package")
+	try:
+		with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+			names = set(archive.namelist())
+			if not REQUIRED_DOCX_PARTS.issubset(names):
+				raise ValueError("Word attachment is missing required DOCX parts")
+			if len(names) > 500 or any(item.flag_bits & 0x1 for item in archive.infolist()):
+				raise ValueError("Word attachment package is not supported")
+			if sum(item.file_size for item in archive.infolist()) > MAX_DOCX_UNCOMPRESSED_BYTES:
+				raise ValueError("Word attachment expands beyond the 25 MB limit")
+			document_xml = archive.read("word/document.xml")
+	except zipfile.BadZipFile as exc:
+		raise ValueError("Word attachment is not a valid DOCX package") from exc
+
+	try:
+		root = ElementTree.fromstring(document_xml)
+	except ElementTree.ParseError as exc:
+		raise ValueError("Word attachment contains invalid document XML") from exc
+
+	namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+	paragraphs = []
+	character_count = 0
+	for paragraph in root.iter(f"{namespace}p"):
+		text = "".join(node.text or "" for node in paragraph.iter(f"{namespace}t")).strip()
+		if not text:
+			continue
+		character_count += len(text)
+		if character_count > MAX_DOCX_TEXT_CHARACTERS:
+			raise ValueError("Word attachment text exceeds the 300,000 character limit")
+		paragraphs.append(text)
+	if not paragraphs:
+		raise ValueError("Word attachment contains no readable text")
+	return "\n".join(paragraphs)

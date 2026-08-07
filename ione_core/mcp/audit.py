@@ -15,6 +15,11 @@ def request_summary(arguments) -> str:
 			summary[key] = {"characters": len(value or "")}
 		elif key == "content_base64":
 			summary[key] = {"characters": len(value or "")}
+		elif key == "slides" and isinstance(value, list):
+			summary[key] = {
+				"count": len(value),
+				"layouts": [item.get("kind") for item in value if isinstance(item, dict)],
+			}
 		elif key == "filters" and isinstance(value, dict):
 			summary[key] = {"fields": sorted(value)}
 		else:
@@ -27,7 +32,19 @@ def result_summary(result) -> str:
 		return sanitize_for_audit({"result_type": type(result).__name__})
 	summary = {
 		key: result[key]
-		for key in ("doctype", "name", "docstatus", "modified", "file", "count", "lead", "deal", "created")
+		for key in (
+			"doctype",
+			"name",
+			"docstatus",
+			"modified",
+			"file",
+			"count",
+			"lead",
+			"deal",
+			"presentation",
+			"slide_count",
+			"created",
+		)
 		if key in result
 	}
 	if isinstance(result.get("records"), list):

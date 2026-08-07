@@ -9,6 +9,7 @@ from ione_core.mcp.runtime import ToolAnnotations
 from ione_core.mcp.security import (
 	DENIED_DOCTYPES,
 	ensure_doctype_permission,
+	extract_docx_text,
 	permitted_fields,
 	require_login,
 	safe_document,
@@ -22,8 +23,15 @@ from ione_core.mcp.security import (
 )
 from ione_core.mcp.server import mcp
 
-READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
-DRAFT_WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+READ_ONLY = ToolAnnotations(
+	readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+)
+DRAFT_WRITE = ToolAnnotations(
+	readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False
+)
+UPSERT_WRITE = ToolAnnotations(
+	readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False
+)
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -58,9 +66,7 @@ def frappe_search_doctypes(query: str, limit: int = 20) -> dict[str, Any]:
 		order_by="name asc",
 	)
 	visible = [
-		name
-		for name in names
-		if name not in DENIED_DOCTYPES and frappe.has_permission(name, ptype="read")
+		name for name in names if name not in DENIED_DOCTYPES and frappe.has_permission(name, ptype="read")
 	][:limit]
 	return {"query": query, "doctypes": visible, "count": len(visible)}
 
@@ -87,7 +93,9 @@ def frappe_get_doctype_meta(doctype: str) -> dict[str, Any]:
 				"fieldname": field.fieldname,
 				"label": field.label,
 				"fieldtype": field.fieldtype,
-				"options": field.options if field.fieldtype in {"Link", "Select", "Table", "Table MultiSelect"} else None,
+				"options": field.options
+				if field.fieldtype in {"Link", "Select", "Table", "Table MultiSelect"}
+				else None,
 				"required": bool(field.reqd),
 				"read_only": bool(field.read_only),
 				"readable": field.fieldname in readable,
@@ -222,6 +230,52 @@ def frappe_list_attachments(
 						remaining_text_bytes -= encoded_size
 		attachments.append(item)
 	return {"doctype": doctype, "name": document_name, "attachments": attachments, "count": len(attachments)}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@audited_tool("frappe_read_word_attachment", "读取")
+def frappe_read_word_attachment(doctype: str, document_name: str, file_name: str) -> dict[str, Any]:
+	"""Read text from one small DOCX attachment after checking parent document permission.
+
+	Args:
+		doctype: Parent business DocType.
+		document_name: Parent document name.
+		file_name: Exact attached .docx file name returned by frappe_list_attachments.
+	"""
+	ensure_doctype_permission(doctype, "read")
+	doc = frappe.get_doc(doctype, document_name)
+	doc.check_permission("read")
+	name = str(file_name or "").strip()
+	if not name.lower().endswith(".docx"):
+		raise ValueError("Only .docx Word attachments can be read")
+	file_row = frappe.get_all(
+		"File",
+		filters={
+			"attached_to_doctype": doctype,
+			"attached_to_name": document_name,
+			"file_name": name,
+		},
+		fields=["name", "file_name", "file_url", "file_size", "modified"],
+		order_by="modified desc",
+		limit_page_length=1,
+	)
+	if not file_row:
+		frappe.throw(f"Word attachment {name} was not found on {doctype} {document_name}")
+	row = file_row[0]
+	if str(row.file_url or "").startswith(("http://", "https://")):
+		frappe.throw("Remote Word attachments cannot be read through MCP")
+	payload = frappe.get_doc("File", row.name).get_content()
+	if isinstance(payload, str):
+		payload = payload.encode("utf-8")
+	text = extract_docx_text(bytes(payload))
+	return {
+		"doctype": doctype,
+		"name": document_name,
+		"file_name": row.file_name,
+		"file_url": row.file_url,
+		"characters": len(text),
+		"content": text,
+	}
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
@@ -371,3 +425,84 @@ def frappe_convert_lead_to_deal(
 		raise
 	frappe.get_doc("CRM Deal", deal).check_permission("read")
 	return {"lead": lead, "deal": deal, "created": True}
+
+
+@mcp.tool(annotations=UPSERT_WRITE)
+@audited_tool("frappe_upsert_deal_presentation", "生成演示")
+def frappe_upsert_deal_presentation(
+	deal: str,
+	title: str,
+	slides: list[dict[str, Any]],
+	make_public: bool | None = None,
+) -> dict[str, Any]:
+	"""Create or update a Frappe Slides presentation linked to one CRM Deal.
+
+	The slide input is a bounded business-content schema. The server renders it into editable
+	Frappe Slides elements and reuses the Deal's linked presentation on repeated calls.
+
+	Args:
+		deal: Exact CRM Deal document name.
+		title: Customer-facing presentation title.
+		slides: Four to twenty slide objects using cover, section, content, metrics, timeline or closing layouts.
+		make_public: Set public link access only when explicitly requested; omit to preserve the current setting.
+	"""
+	if "slides" not in frappe.get_installed_apps() or not frappe.db.exists("DocType", "Presentation"):
+		frappe.throw("Frappe Slides is not installed on this site")
+
+	from ione_core.mcp.slides import build_presentation_slides
+	from ione_core.setup.slides_integration import ensure_deal_presentation_field
+
+	ensure_deal_presentation_field()
+	ensure_doctype_permission("CRM Deal", "write")
+	deal_doc = frappe.get_doc("CRM Deal", deal)
+	deal_doc.check_permission("write")
+	presentation_title = " ".join(str(title or "").split())
+	if not presentation_title or len(presentation_title) > 140:
+		raise ValueError("title is required and must not exceed 140 characters")
+	rendered_slides = build_presentation_slides(slides)
+
+	linked_name = deal_doc.get("custom_customer_presentation")
+	created = not bool(linked_name and frappe.db.exists("Presentation", linked_name))
+	if created:
+		ensure_doctype_permission("Presentation", "create")
+		presentation = frappe.new_doc("Presentation")
+		presentation.title = presentation_title
+		presentation.theme = "Light"
+		presentation.thumbnail = "/assets/slides/frontend/images/layouts/light/thumbnail-3.webp"
+	else:
+		ensure_doctype_permission("Presentation", "write")
+		presentation = frappe.get_doc("Presentation", linked_name)
+		presentation.check_permission("write")
+		presentation.title = presentation_title
+
+	if make_public is not None:
+		presentation.is_public = int(bool(make_public))
+	presentation.set("slides", [])
+	for slide in rendered_slides:
+		presentation.append("slides", slide)
+
+	savepoint = "ione_mcp_deal_presentation"
+	frappe.db.savepoint(savepoint)
+	try:
+		if created:
+			presentation.insert()
+		else:
+			presentation.save()
+		if deal_doc.get("custom_customer_presentation") != presentation.name:
+			deal_doc.db_set("custom_customer_presentation", presentation.name)
+	except Exception:
+		frappe.db.rollback(save_point=savepoint)
+		raise
+
+	editor_path = f"/slides/presentation/{presentation.name}"
+	slideshow_path = f"/slides/slideshow/{presentation.name}"
+	return {
+		"deal": deal_doc.name,
+		"presentation": presentation.name,
+		"title": presentation.title,
+		"slide_count": len(rendered_slides),
+		"created": created,
+		"is_public": bool(presentation.is_public),
+		"editor_url": frappe.utils.get_url(editor_path),
+		"slideshow_url": frappe.utils.get_url(slideshow_path),
+	}

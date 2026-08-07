@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from ione_core.mcp.audit import request_summary
 from ione_core.mcp.security import (
+	extract_docx_text,
 	permitted_fields,
 	sanitize_for_audit,
 	validate_docx_file,
@@ -96,3 +97,22 @@ class TestMCPSecurity(TestCase):
 		)
 		self.assertIn("characters", result)
 		self.assertNotIn(secret_content, result)
+
+	def test_extracts_text_from_word_attachment(self):
+		buffer = io.BytesIO()
+		with zipfile.ZipFile(buffer, "w") as archive:
+			archive.writestr("[Content_Types].xml", "<Types />")
+			archive.writestr(
+				"word/document.xml",
+				'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+				"<w:body><w:p><w:r><w:t>客户需求</w:t></w:r></w:p>"
+				"<w:p><w:r><w:t>建设统一数据平台</w:t></w:r></w:p></w:body></w:document>",
+			)
+		self.assertEqual(extract_docx_text(buffer.getvalue()), "客户需求\n建设统一数据平台")
+
+	def test_audit_summary_does_not_store_slide_content(self):
+		result = request_summary(
+			{"deal": "CRM-DEAL-1", "slides": [{"kind": "cover", "title": "Sensitive plan"}]}
+		)
+		self.assertIn('"count": 1', result)
+		self.assertNotIn("Sensitive plan", result)

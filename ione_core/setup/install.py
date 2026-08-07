@@ -68,6 +68,7 @@ def after_install():
 	ensure_flow_tools()
 	ensure_education_workspace()
 	ensure_healthcare_workspace()
+	ensure_slides_integration()
 	sync_translation_overrides()
 
 
@@ -79,6 +80,7 @@ def after_migrate():
 	ensure_flow_tools()
 	ensure_education_workspace()
 	ensure_healthcare_workspace()
+	ensure_slides_integration()
 	ensure_runtime_config()
 	sync_translation_overrides()
 
@@ -111,6 +113,12 @@ def ensure_healthcare_workspace():
 	from ione_core.setup.healthcare_workspace import ensure_healthcare_workspace as ensure
 
 	return ensure()
+
+
+def ensure_slides_integration():
+	from ione_core.setup.slides_integration import ensure_deal_presentation_field
+
+	return ensure_deal_presentation_field()
 
 
 def migrate_agent_fields():
