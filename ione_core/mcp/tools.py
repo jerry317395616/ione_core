@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe_mcp import ToolAnnotations
 
 from ione_core.mcp.audit import audited_tool
+from ione_core.mcp.runtime import ToolAnnotations
 from ione_core.mcp.security import (
 	DENIED_DOCTYPES,
 	ensure_doctype_permission,

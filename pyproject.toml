@@ -9,7 +9,6 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "beautifulsoup4>=4.12",
-    "frappe-mcp==0.1.0",
     "markdownify>=0.13",
     "requests>=2.31",
 ]
