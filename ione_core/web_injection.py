@@ -2,6 +2,52 @@ from __future__ import annotations
 
 CRM_I18N_ASSET = "/assets/ione_core/js/crm_i18n_20260804.js?v=20260804-3"
 CRM_I18N_MARKER = 'data-ione-crm-i18n="20260804-3"'
+UTF8_PRIVATE_FILE_CONTENT_TYPES = {
+	"application/csv",
+	"application/json",
+	"application/markdown",
+	"text/csv",
+	"text/markdown",
+	"text/plain",
+}
+
+
+def utf8_private_file_content_type(
+	*,
+	path: str,
+	method: str,
+	status_code: int,
+	content_type: str,
+) -> str | None:
+	"""Return a UTF-8 content type for private text attachments when needed."""
+	normalized_path = (path or "").split("?", 1)[0]
+	normalized_content_type = (content_type or "").strip()
+	mime_type = normalized_content_type.split(";", 1)[0].strip().lower()
+	if (
+		method.upper() != "GET"
+		or status_code != 200
+		or not normalized_path.startswith("/private/files/")
+		or "charset=" in normalized_content_type.lower()
+		or mime_type not in UTF8_PRIVATE_FILE_CONTENT_TYPES
+	):
+		return None
+	return f"{mime_type}; charset=utf-8"
+
+
+def ensure_utf8_private_file_response(response, request) -> None:
+	"""Declare UTF-8 for private text files so browsers render Chinese correctly."""
+	try:
+		content_type = utf8_private_file_content_type(
+			path=request.path,
+			method=request.method,
+			status_code=response.status_code,
+			content_type=response.headers.get("Content-Type", ""),
+		)
+		if content_type:
+			response.headers["Content-Type"] = content_type
+	except (AttributeError, RuntimeError, TypeError):
+		# Response hooks must not make private file downloads unavailable.
+		return
 
 
 def is_crm_html_response(

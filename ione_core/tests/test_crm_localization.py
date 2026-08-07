@@ -7,10 +7,47 @@ from ione_core.web_injection import (
 	CRM_I18N_MARKER,
 	inject_crm_i18n_asset,
 	is_crm_html_response,
+	utf8_private_file_content_type,
 )
 
 
 class TestCrmLocalization(TestCase):
+	def test_private_markdown_response_declares_utf8(self):
+		self.assertEqual(
+			utf8_private_file_content_type(
+				path="/private/files/lead_analysis.md",
+				method="GET",
+				status_code=200,
+				content_type="text/markdown",
+			),
+			"text/markdown; charset=utf-8",
+		)
+
+	def test_private_file_response_preserves_existing_charset(self):
+		self.assertIsNone(
+			utf8_private_file_content_type(
+				path="/private/files/lead_analysis.md",
+				method="GET",
+				status_code=200,
+				content_type="text/markdown; charset=utf-8",
+			)
+		)
+
+	def test_public_or_binary_response_is_not_changed(self):
+		for path, content_type in (
+			("/files/lead_analysis.md", "text/markdown"),
+			("/private/files/report.pdf", "application/pdf"),
+		):
+			with self.subTest(path=path):
+				self.assertIsNone(
+					utf8_private_file_content_type(
+						path=path,
+						method="GET",
+						status_code=200,
+						content_type=content_type,
+					)
+				)
+
 	def test_catalog_contains_crm_labels(self):
 		catalog = read_translation_catalog()
 		expected = {
