@@ -69,6 +69,7 @@ def after_install():
 	ensure_education_workspace()
 	ensure_healthcare_workspace()
 	ensure_slides_integration()
+	ensure_video_integration()
 	sync_translation_overrides()
 
 
@@ -81,6 +82,7 @@ def after_migrate():
 	ensure_education_workspace()
 	ensure_healthcare_workspace()
 	ensure_slides_integration()
+	ensure_video_integration()
 	ensure_runtime_config()
 	sync_translation_overrides()
 
@@ -119,6 +121,12 @@ def ensure_slides_integration():
 	from ione_core.setup.slides_integration import ensure_deal_presentation_field
 
 	return ensure_deal_presentation_field()
+
+
+def ensure_video_integration():
+	from ione_core.setup.video_integration import ensure_deal_video_field
+
+	return ensure_deal_video_field()
 
 
 def migrate_agent_fields():

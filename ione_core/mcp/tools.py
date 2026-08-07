@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
+from bs4 import BeautifulSoup
 
 from ione_core.mcp.audit import audited_tool
 from ione_core.mcp.runtime import ToolAnnotations
@@ -518,4 +520,216 @@ def frappe_upsert_deal_presentation(
 		"is_public": is_public,
 		"editor_url": frappe.utils.get_url(editor_path),
 		"slideshow_url": frappe.utils.get_url(slideshow_path),
+	}
+
+
+def _presentation_text(presentation_name: str) -> dict[str, Any] | None:
+	if not presentation_name or not frappe.db.exists("Presentation", presentation_name):
+		return None
+	presentation = frappe.get_doc("Presentation", presentation_name)
+	presentation.check_permission("read")
+	slides = []
+	for index, slide in enumerate(presentation.get("slides") or [], start=1):
+		texts = []
+		try:
+			elements = json.loads(slide.get("elements") or "[]")
+		except (TypeError, ValueError):
+			elements = []
+		for element in elements:
+			content = str(element.get("content") or "") if isinstance(element, dict) else ""
+			if content:
+				text = BeautifulSoup(content, "html.parser").get_text(" ", strip=True)
+				if text:
+					texts.append(text)
+		slides.append({"index": index, "text": "\n".join(texts)[:3000]})
+	return {
+		"name": presentation.name,
+		"title": presentation.title,
+		"modified": serializable(presentation.modified),
+		"slides": slides,
+	}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@audited_tool("frappe_get_deal_video_sources", "读取视频资料")
+def frappe_get_deal_video_sources(deal: str) -> dict[str, Any]:
+	"""Read the bounded, permission-aware source package for one CRM Deal video.
+
+	The package includes the Deal, attachment metadata, the latest Word proposal text and the
+	linked Frappe Suite Slides text. Private file URLs are never fetched by the agent.
+
+	Args:
+		deal: Exact CRM Deal document name.
+	"""
+	ensure_doctype_permission("CRM Deal", "read")
+	deal_doc = frappe.get_doc("CRM Deal", deal)
+	deal_doc.check_permission("read")
+	deal_meta = frappe.get_meta("CRM Deal")
+	rows = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "CRM Deal", "attached_to_name": deal},
+		fields=["name", "file_name", "file_url", "file_size", "is_private", "creation", "modified"],
+		order_by="modified desc",
+		limit_page_length=50,
+	)
+	attachments = serializable(rows)
+	proposal = None
+	docx_rows = [row for row in rows if str(row.file_name or "").lower().endswith(".docx")]
+	# `rows` is already newest-first. Stable sorting only lifts formal proposal files
+	# above other Word attachments while preserving that recency order.
+	docx_rows.sort(key=lambda row: 0 if str(row.file_name or "").lower().startswith("proposal_") else 1)
+	if docx_rows:
+		row = docx_rows[0]
+		if not str(row.file_url or "").startswith(("http://", "https://")):
+			payload = frappe.get_doc("File", row.name).get_content()
+			if isinstance(payload, str):
+				payload = payload.encode("utf-8")
+			proposal = {
+				"file_name": row.file_name,
+				"modified": serializable(row.modified),
+				"content": extract_docx_text(bytes(payload)),
+			}
+	presentation = _presentation_text(str(deal_doc.get("custom_customer_presentation") or ""))
+	return {
+		"deal": safe_document(deal_doc, deal_meta),
+		"attachments": attachments,
+		"proposal": proposal,
+		"presentation": presentation,
+	}
+
+
+@mcp.tool(annotations=UPSERT_WRITE)
+@audited_tool("frappe_upsert_deal_video", "生成视频分镜")
+def frappe_upsert_deal_video(
+	deal: str,
+	title: str,
+	manifest: dict[str, Any],
+) -> dict[str, Any]:
+	"""Create or update one controlled promotional-video storyboard linked to a CRM Deal.
+
+	The input is validated as business content only. It cannot contain React, JavaScript or shell code.
+	Repeated calls reuse the video linked to the Deal and preserve previous rendered artifacts.
+
+	Args:
+		deal: Exact CRM Deal document name.
+		title: Customer-facing video title.
+		manifest: Bounded video manifest containing six to twelve approved scene objects.
+	"""
+	from ione_core.mcp.video import KIND_LABELS, TEMPLATE_LABELS, manifest_hash, normalize_video_manifest
+	from ione_core.setup.video_integration import ensure_deal_video_field
+
+	ensure_deal_video_field()
+	ensure_doctype_permission("CRM Deal", "write")
+	deal_doc = frappe.get_doc("CRM Deal", deal)
+	deal_doc.check_permission("write")
+	payload = dict(manifest or {})
+	payload["title"] = title
+	normalized = normalize_video_manifest(payload)
+	linked_name = str(deal_doc.get("custom_customer_video") or "")
+	created = not bool(linked_name and frappe.db.exists("I-ONE Deal Video", linked_name))
+	if created:
+		ensure_doctype_permission("I-ONE Deal Video", "create")
+		video = frappe.new_doc("I-ONE Deal Video")
+		video.deal = deal_doc.name
+	else:
+		ensure_doctype_permission("I-ONE Deal Video", "write")
+		video = frappe.get_doc("I-ONE Deal Video", linked_name)
+		video.check_permission("write")
+		if video.status in {"已排队", "渲染中"}:
+			frappe.throw("当前视频正在渲染, 不能修改分镜")
+
+	video.title = normalized["title"]
+	video.customer = normalized["customer"]
+	video.brand = normalized["brand"]
+	video.template = TEMPLATE_LABELS[normalized["template"]]
+	video.aspect_ratio = normalized["aspect_ratio"]
+	video.language = normalized["language"]
+	video.call_to_action = normalized["call_to_action"]
+	video.status = "待审核"
+	video.progress = 0
+	video.current_step = "分镜待确认"
+	video.error_message = ""
+	video.source_hash = manifest_hash(
+		normalized,
+		deal_doc.modified,
+		deal_doc.get("custom_customer_presentation"),
+	)
+	video.set("scenes", [])
+	for index, scene in enumerate(normalized["scenes"], start=1):
+		video.append(
+			"scenes",
+			{
+				"scene_order": index,
+				"scene_type": KIND_LABELS[scene["kind"]],
+				"title": scene["title"],
+				"subtitle": scene["subtitle"],
+				"bullets": "\n".join(scene["bullets"]),
+				"narration": scene["narration"],
+				"duration_seconds": scene["duration_seconds"],
+				"asset_file": scene["asset_file"],
+				"evidence": scene["evidence"],
+			},
+		)
+
+	savepoint = "ione_mcp_deal_video"
+	frappe.db.savepoint(savepoint)
+	try:
+		if created:
+			video.insert()
+		else:
+			video.save()
+		if deal_doc.get("custom_customer_video") != video.name:
+			deal_doc.db_set("custom_customer_video", video.name)
+	except Exception:
+		frappe.db.rollback(save_point=savepoint)
+		raise
+	return {
+		"deal": deal_doc.name,
+		"video": video.name,
+		"title": video.title,
+		"status": video.status,
+		"scene_count": len(video.scenes),
+		"duration_seconds": video.duration_seconds,
+		"created": created,
+		"form_url": frappe.utils.get_url(f"/app/i-one-deal-video/{video.name}"),
+	}
+
+
+@mcp.tool(annotations=UPSERT_WRITE)
+@audited_tool("frappe_submit_deal_video_render", "提交视频渲染")
+def frappe_submit_deal_video_render(video: str, quality: str = "final") -> dict[str, Any]:
+	"""Approve and enqueue one Deal video storyboard for asynchronous rendering.
+
+	Args:
+		video: Exact I-ONE Deal Video document name.
+		quality: draft for 720p or final for 1080p.
+	"""
+	from ione_core.deal_video import queue_deal_video_render
+
+	ensure_doctype_permission("I-ONE Deal Video", "write")
+	return queue_deal_video_render(video, quality)
+
+
+@mcp.tool(annotations=READ_ONLY)
+@audited_tool("frappe_get_deal_video_render_status", "读取视频状态")
+def frappe_get_deal_video_render_status(video: str) -> dict[str, Any]:
+	"""Return progress and output links for one permission-visible Deal video.
+
+	Args:
+		video: Exact I-ONE Deal Video document name.
+	"""
+	ensure_doctype_permission("I-ONE Deal Video", "read")
+	doc = frappe.get_doc("I-ONE Deal Video", video)
+	doc.check_permission("read")
+	return {
+		"video": doc.name,
+		"deal": doc.deal,
+		"status": doc.status,
+		"progress": doc.progress,
+		"current_step": doc.current_step,
+		"render_version": doc.render_version,
+		"output_video": doc.output_video,
+		"output_cover": doc.output_cover,
+		"output_subtitles": doc.output_subtitles,
+		"error_message": doc.error_message,
 	}
