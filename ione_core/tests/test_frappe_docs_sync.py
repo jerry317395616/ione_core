@@ -8,6 +8,7 @@ from ione_core.frappe_docs_sync import (
 	_content_source_hash,
 	_destination_route,
 	_expected_source_hierarchy,
+	_extract_title_translations,
 	_protect_markdown_literals,
 	_restore_markdown_literals,
 	_rewrite_internal_links,
@@ -33,6 +34,19 @@ class TestFrappeDocsSync(TestCase):
 			)
 
 		self.assertEqual(translator.base_url, "http://10.144.133.1:1234/v1")
+
+	def test_title_translation_parser_accepts_compatible_keys_and_ignores_bad_rows(self):
+		content = (
+			'[{"id": 0, "translation": "介绍"}, '
+			'{"id": "1", "translated_title": "设置"}, '
+			'{"id": 2, "title": "Missing translation"}, '
+			'{"id": 99, "translation": "Unexpected"}]'
+		)
+
+		self.assertEqual(
+			_extract_title_translations(content, {0, 1, 2}),
+			{0: "介绍", 1: "设置"},
+		)
 
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (

@@ -17,6 +17,7 @@ REQUEST_TIMEOUT = (10, 60)
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
 TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
+TITLE_TRANSLATION_ATTEMPTS = 3
 
 
 @dataclass(frozen=True)
@@ -265,18 +266,34 @@ class QwenMarkdownTranslator:
 		translations: dict[str, str] = {}
 		for offset in range(0, len(unique_titles), TITLE_BATCH_SIZE):
 			batch = unique_titles[offset : offset + TITLE_BATCH_SIZE]
-			rows = [{"id": index, "title": title} for index, title in enumerate(batch)]
-			prompt = (
-				"将下面的 Frappe 官方文档章节标题翻译为自然、准确、简洁的简体中文。"
-				"保留 ERPNext、Frappe、API、DocType、SQL、GitHub 等产品和技术名称。"
-				"只返回 JSON 数组。每项格式为 {\"id\":整数,\"translation\":\"译文\"}。\n"
-				+ json.dumps(rows, ensure_ascii=False)
-			)
-			content = self._chat(prompt)
-			parsed = _parse_json_array(content)
-			by_id = {int(row["id"]): str(row["translation"]).strip() for row in parsed}
-			if set(by_id) != set(range(len(batch))):
-				raise ValueError("The title translation response did not contain every requested id.")
+			pending = dict(enumerate(batch))
+			by_id: dict[int, str] = {}
+			for attempt in range(TITLE_TRANSLATION_ATTEMPTS):
+				rows = [{"id": index, "title": title} for index, title in pending.items()]
+				prompt = (
+					"将下面的 Frappe 官方文档章节标题翻译为自然、准确、简洁的简体中文。"
+					"保留 ERPNext、Frappe、API、DocType、SQL、GitHub 等产品和技术名称。"
+					"必须返回全部 id, 且只返回 JSON 数组。每项格式为 "
+					'{"id":整数,"translation":"译文"}。\n' + json.dumps(rows, ensure_ascii=False)
+				)
+				try:
+					resolved = _extract_title_translations(self._chat(prompt), set(pending))
+				except (TypeError, ValueError, json.JSONDecodeError):
+					resolved = {}
+				by_id.update(resolved)
+				pending = {index: title for index, title in pending.items() if index not in resolved}
+				if not pending:
+					break
+				if attempt + 1 < TITLE_TRANSLATION_ATTEMPTS:
+					time.sleep(2**attempt)
+
+			for index, title in pending.items():
+				prompt = (
+					"把下面这个 Frappe 官方文档标题翻译成简洁、自然的简体中文。"
+					"保留产品名和技术名, 只返回译文本身, 不要解释:\n" + title
+				)
+				translated = _clean_single_title_translation(self._chat(prompt))
+				by_id[index] = translated or title
 			translations.update({source: by_id[index] for index, source in enumerate(batch)})
 		return translations
 
@@ -871,6 +888,45 @@ def _parse_json_array(content: str) -> list[dict[str, Any]]:
 	if not isinstance(value, list):
 		raise ValueError("The translation response was not a JSON array.")
 	return value
+
+
+def _extract_title_translations(content: str, expected_ids: set[int]) -> dict[int, str]:
+	translations: dict[int, str] = {}
+	for row in _parse_json_array(content):
+		if not isinstance(row, dict):
+			continue
+		try:
+			row_id = int(row.get("id"))
+		except (TypeError, ValueError):
+			continue
+		if row_id not in expected_ids:
+			continue
+		value = next(
+			(
+				row.get(key)
+				for key in ("translation", "translated_title", "translated", "title_zh", "chinese")
+				if row.get(key)
+			),
+			None,
+		)
+		if value is not None and str(value).strip():
+			translations[row_id] = str(value).strip()
+	return translations
+
+
+def _clean_single_title_translation(content: str) -> str:
+	content = _strip_outer_fence(content).strip()
+	try:
+		value = json.loads(content)
+		if isinstance(value, str):
+			return value.strip()
+		if isinstance(value, dict):
+			for key in ("translation", "translated_title", "translated", "title_zh", "chinese"):
+				if value.get(key):
+					return str(value[key]).strip()
+	except (TypeError, ValueError, json.JSONDecodeError):
+		pass
+	return content.strip().strip("\"'")
 
 
 def _strip_outer_fence(content: str) -> str:
