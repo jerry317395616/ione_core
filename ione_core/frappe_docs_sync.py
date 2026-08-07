@@ -19,6 +19,35 @@ MAX_SOURCE_BYTES = 5 * 1024 * 1024
 TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
+MIN_TRANSLATED_BODY_CJK = 8
+PRESERVED_TITLE_WORDS = {
+	"api",
+	"cli",
+	"crm",
+	"docker",
+	"erpnext",
+	"faq",
+	"frappe",
+	"github",
+	"html",
+	"http",
+	"https",
+	"javascript",
+	"jinja",
+	"json",
+	"lms",
+	"oauth",
+	"pos",
+	"python",
+	"rest",
+	"sdk",
+	"sql",
+	"ui",
+	"url",
+	"ux",
+	"webhook",
+	"webhooks",
+}
 
 
 @dataclass(frozen=True)
@@ -442,6 +471,7 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 			filters={"wiki_space": space_name},
 			fields=[
 				"name",
+				"title",
 				"source_path",
 				"route",
 				"is_group",
@@ -467,6 +497,7 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 		unpublished = []
 		missing_source_markers = []
 		low_chinese_content = []
+		untranslated_titles = []
 		bad_internal_links = []
 		for source_path, expectation in expected.items():
 			matches = by_source.get(source_path, [])
@@ -480,12 +511,16 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 				route_mismatches.append(source_path)
 			if not document.is_published:
 				unpublished.append(source_path)
+			if source_path != f"root:{spec.slug}" and _is_probably_untranslated_title(
+				expectation.get("title", ""), document.title or ""
+			):
+				untranslated_titles.append(source_path)
 			if expectation["kind"] != "page":
 				continue
 			content = document.content or ""
 			if SOURCE_MARKER not in content:
 				missing_source_markers.append(source_path)
-			if len(re.findall(r"[\u3400-\u9fff]", content)) < 20:
+			if len(re.findall(r"[\u3400-\u9fff]", _translated_markdown_body(content))) < MIN_TRANSLATED_BODY_CJK:
 				low_chinese_content.append(source_path)
 			if f"](/{spec.destination_route}/" in content:
 				bad_internal_links.append(source_path)
@@ -500,6 +535,7 @@ def audit_frappe_docs(products: list[str] | str | None = None) -> dict[str, Any]
 			"unpublished": sorted(unpublished),
 			"missing_source_markers": sorted(missing_source_markers),
 			"low_chinese_content": sorted(low_chinese_content),
+			"untranslated_titles": sorted(untranslated_titles),
 			"bad_internal_links": sorted(bad_internal_links),
 		}
 		results[slug] = {
@@ -765,6 +801,7 @@ def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dic
 			"kind": "group",
 			"parent": None,
 			"route": spec.destination_route,
+			"title": spec.name,
 		}
 	}
 
@@ -776,7 +813,12 @@ def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dic
 				if node.source_route
 				else f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
 			)
-			expected[source_path] = {"kind": node.kind, "parent": parent, "route": route}
+			expected[source_path] = {
+				"kind": node.kind,
+				"parent": parent,
+				"route": route,
+				"title": node.title,
+			}
 			if node.kind == "group":
 				collect(node.children, source_path)
 
@@ -798,6 +840,25 @@ def _build_published_content(markdown: str, source_url: str, source_hash: str) -
 		f"> 本页译自 [Frappe 官方文档]({source_url})。内容与官方章节保持同步。\n\n"
 		f"{markdown.strip()}\n"
 	)
+
+
+def _translated_markdown_body(content: str) -> str:
+	content = re.sub(rf"<!-- {SOURCE_MARKER}\b.*?-->\s*", "", content, count=1, flags=re.DOTALL)
+	return re.sub(
+		r"^> 本页译自 \[Frappe 官方文档\]\([^\n]+\)。内容与官方章节保持同步。\s*",
+		"",
+		content,
+		count=1,
+	).strip()
+
+
+def _is_probably_untranslated_title(source_title: str, translated_title: str) -> bool:
+	if source_title.strip().casefold() != translated_title.strip().casefold():
+		return False
+	if re.search(r"[\u3400-\u9fff]", translated_title):
+		return False
+	words = re.findall(r"[A-Za-z][A-Za-z0-9.+#-]*", translated_title.casefold())
+	return bool(words) and any(word not in PRESERVED_TITLE_WORDS for word in words)
 
 
 def _source_hash(title: str, markdown: str) -> str:

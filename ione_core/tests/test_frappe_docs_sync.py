@@ -10,10 +10,12 @@ from ione_core.frappe_docs_sync import (
 	_docs_get,
 	_expected_source_hierarchy,
 	_extract_title_translations,
+	_is_probably_untranslated_title,
 	_protect_markdown_literals,
 	_restore_markdown_literals,
 	_rewrite_internal_links,
 	_split_markdown,
+	_translated_markdown_body,
 	parse_sidebar,
 )
 
@@ -161,6 +163,12 @@ class TestFrappeDocsSync(TestCase):
 		hash_value = "a" * 64
 		content = _build_published_content("# 标题", "https://docs.frappe.io/builder/introduction", hash_value)
 		self.assertEqual(_content_source_hash(content), hash_value)
+		self.assertEqual(_translated_markdown_body(content), "# 标题")
+
+	def test_untranslated_title_detection_preserves_technical_names(self):
+		self.assertTrue(_is_probably_untranslated_title("Introduction", "Introduction"))
+		self.assertFalse(_is_probably_untranslated_title("Introduction", "介绍"))
+		self.assertFalse(_is_probably_untranslated_title("REST API", "REST API"))
 
 	def test_internal_links_use_wiki_public_route(self):
 		markdown = "See [Data Script](https://docs.frappe.io/builder/data-script)."
