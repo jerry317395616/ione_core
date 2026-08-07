@@ -14,6 +14,7 @@ DOCS_HOST = "docs.frappe.io"
 SOURCE_MARKER = "IONE_FRAPPE_DOCS_SOURCE"
 USER_AGENT = "I-ONE-Frappe-Docs-Sync/1.0 (+https://myyr.top)"
 REQUEST_TIMEOUT = (10, 60)
+DOCS_REQUEST_ATTEMPTS = 4
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
 TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
@@ -731,8 +732,19 @@ def _docs_get(url: str, session: Any | None = None):
 	session = session or requests.Session()
 	session.trust_env = False
 	session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html,text/plain;q=0.9"})
-	response = session.get(url, timeout=REQUEST_TIMEOUT)
-	response.raise_for_status()
+	last_error: requests.RequestException | None = None
+	for attempt in range(DOCS_REQUEST_ATTEMPTS):
+		try:
+			response = session.get(url, timeout=REQUEST_TIMEOUT)
+			response.raise_for_status()
+			break
+		except requests.RequestException as exc:
+			last_error = exc
+			if attempt + 1 == DOCS_REQUEST_ATTEMPTS:
+				raise
+			time.sleep(2**attempt)
+	else:
+		raise RuntimeError(f"Frappe documentation request failed: {last_error}")
 	if len(response.content) > MAX_SOURCE_BYTES:
 		raise ValueError("The documentation page is larger than the allowed source size.")
 	resolved = urlsplit(response.url)

@@ -7,6 +7,7 @@ from ione_core.frappe_docs_sync import (
 	_build_published_content,
 	_content_source_hash,
 	_destination_route,
+	_docs_get,
 	_expected_source_hierarchy,
 	_extract_title_translations,
 	_protect_markdown_literals,
@@ -69,6 +70,38 @@ class TestFrappeDocsSync(TestCase):
 
 		self.assertEqual(translator._chat("translate"), "译文")
 		self.assertEqual(session.payload["chat_template_kwargs"], {"enable_thinking": False})
+
+	def test_docs_request_retries_transient_network_failure(self):
+		from unittest.mock import patch
+
+		import requests
+
+		class Response:
+			url = "https://docs.frappe.io/builder/introduction"
+			content = b"documentation"
+
+			def raise_for_status(self):
+				return None
+
+		class Session:
+			def __init__(self):
+				self.calls = 0
+				self.headers = {}
+				self.trust_env = True
+
+			def get(self, _url, **_kwargs):
+				self.calls += 1
+				if self.calls == 1:
+					raise requests.Timeout("temporary")
+				return Response()
+
+		session = Session()
+		with patch("ione_core.frappe_docs_sync.time.sleep"):
+			response = _docs_get("https://docs.frappe.io/builder/introduction", session)
+
+		self.assertEqual(response.content, b"documentation")
+		self.assertEqual(session.calls, 2)
+		self.assertFalse(session.trust_env)
 
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (
