@@ -419,12 +419,18 @@ class QwenMarkdownTranslator:
 				prompt += f"上一次结果的占位符校验失败: {last_error}。请重新完整翻译。"
 			translated = self._chat(prompt + "\n\n" + text).strip()
 			actual_literals = _protected_literal_tokens(translated)
-			if actual_literals == required_literals:
+			fidelity_issues = _translation_fidelity_issues(text, translated)
+			if actual_literals == required_literals and not fidelity_issues:
 				return translated
-			last_error = f"expected {required_literals}, got {actual_literals}"
+			problems = []
+			if actual_literals != required_literals:
+				problems.append(f"expected literals {required_literals}, got {actual_literals}")
+			if fidelity_issues:
+				problems.append("structure " + "; ".join(fidelity_issues))
+			last_error = "; ".join(problems)
 			if attempt + 1 < TITLE_TRANSLATION_ATTEMPTS:
 				time.sleep(2**attempt)
-		raise ValueError(f"The translated Markdown did not preserve protected literals: {last_error}")
+		raise ValueError(f"The translated Markdown did not preserve source fidelity: {last_error}")
 
 	def _chat(self, prompt: str) -> str:
 		headers = {"Content-Type": "application/json"}

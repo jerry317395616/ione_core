@@ -227,6 +227,18 @@ class TestFrappeDocsSync(TestCase):
 			["[[[IONE_LITERAL_0001]]]"],
 		)
 
+	def test_markdown_translation_retries_when_structure_is_missing(self):
+		from unittest.mock import patch
+
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		responses = iter(["只有正文", "# 标题\n\n完整正文"])
+		translator._chat = lambda _prompt: next(responses)
+
+		with patch("ione_core.frappe_docs_sync.time.sleep"):
+			translated = translator._translate_markdown_chunk("# Title\n\nFull text", 1, 1)
+
+		self.assertEqual(translated, "# 标题\n\n完整正文")
+
 	def test_markdown_chunks_respect_target_size_for_normal_blocks(self):
 		source = "alpha\n\n" + "beta " * 20 + "\n\ngamma"
 		chunks = _split_markdown(source, 40)
