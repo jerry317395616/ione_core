@@ -175,7 +175,6 @@ def frappe_list_attachments(
 			"file_name",
 			"file_url",
 			"is_private",
-			"is_remote_file",
 			"file_size",
 			"creation",
 			"modified",
@@ -190,7 +189,7 @@ def frappe_list_attachments(
 		file_name = str(row.get("file_name") or "")
 		if (
 			include_text_content
-			and not row.get("is_remote_file")
+			and not str(row.get("file_url") or "").startswith(("http://", "https://"))
 			and file_name.lower().endswith((".txt", ".md", ".csv", ".json"))
 		):
 			file_size = int(row.get("file_size") or 0)
