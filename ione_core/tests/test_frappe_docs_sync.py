@@ -4,6 +4,7 @@ from ione_core.frappe_docs_sync import (
 	ProductSpec,
 	QwenMarkdownTranslator,
 	SourceNode,
+	TranslationInputTooLargeError,
 	_build_published_content,
 	_content_source_hash,
 	_destination_route,
@@ -271,6 +272,36 @@ class TestFrappeDocsSync(TestCase):
 		self.assertGreater(len(chunks), 1)
 		self.assertEqual("".join(chunk.separator_before + chunk.text for chunk in chunks), source)
 		self.assertTrue(all(chunk.separator_before in {"", "\n"} for chunk in chunks))
+
+	def test_markdown_chunks_hard_split_an_oversized_single_line(self):
+		source = "| " + "very-long-cell-value " * 2_000 + "|"
+		chunks = _split_markdown(source, 500)
+
+		self.assertGreater(len(chunks), 1)
+		self.assertTrue(all(len(chunk.text) <= 500 for chunk in chunks))
+		self.assertEqual("".join(chunk.separator_before + chunk.text for chunk in chunks), source)
+
+	def test_markdown_translation_protects_heading_and_blockquote_prefixes(self):
+		source = "# Heading\n\n> Important note"
+		protected, literals = _protect_markdown_literals(source)
+
+		self.assertNotIn("# ", protected)
+		self.assertNotIn("> ", protected)
+		self.assertEqual(_restore_markdown_literals(protected, literals), source)
+
+	def test_markdown_translation_splits_an_oversized_request_error(self):
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		source = "Paragraph one " * 99 + "Paragraph one\n\n" + "Paragraph two " * 99 + "Paragraph two"
+
+		def translate(text, _index, _total):
+			if len(text) > 1_000:
+				raise TranslationInputTooLargeError("simulated context limit")
+			return text
+
+		translator._translate_markdown_chunk = translate
+		translated = translator._translate_markdown_chunk_resilient(source, 1, 1)
+
+		self.assertEqual(translated, source)
 
 	def test_source_hash_marker_round_trip(self):
 		hash_value = "a" * 64

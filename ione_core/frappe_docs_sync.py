@@ -76,6 +76,10 @@ class TranslationChunk:
 	separator_before: str = ""
 
 
+class TranslationInputTooLargeError(RuntimeError):
+	pass
+
+
 PRODUCTS: dict[str, ProductSpec] = {
 	"erpnext": ProductSpec(
 		"erpnext", "ERPNext 中文文档", "erpnext", "https://docs.frappe.io/erpnext/introduction", "erpnext-zh-docs"
@@ -415,7 +419,7 @@ class QwenMarkdownTranslator:
 	) -> str:
 		try:
 			return self._translate_markdown_chunk(text, index, total)
-		except ValueError:
+		except (ValueError, TranslationInputTooLargeError):
 			if depth >= 3 or len(text) < 600:
 				raise
 			subchunks = _split_markdown(text, max(300, len(text) // 2))
@@ -484,9 +488,17 @@ class QwenMarkdownTranslator:
 					json=payload,
 					timeout=330,
 				)
+				if getattr(response, "status_code", None) == 400:
+					detail = str(getattr(response, "text", ""))[:1_000]
+					if "context length" in detail.casefold() or "maximum context" in detail.casefold():
+						raise TranslationInputTooLargeError(
+							f"Qwen rejected an oversized translation request: {detail}"
+						)
 				response.raise_for_status()
 				content = response.json()["choices"][0]["message"]["content"].strip()
 				return _strip_outer_fence(content)
+			except TranslationInputTooLargeError:
+				raise
 			except Exception as exc:
 				last_error = exc
 				time.sleep(2**attempt)
@@ -1148,8 +1160,9 @@ def _content_source_hash(content: str) -> str:
 def _protect_markdown_literals(markdown: str) -> tuple[str, list[str]]:
 	literals: list[str] = []
 	pattern = re.compile(
-		r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~|`[^`\n]+`|(?<=\()https?://[^)\s]+(?=\))|</?[A-Za-z][^>\n]*>",
-		re.DOTALL,
+		r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~|^[ \t]*(?:#{1,6}[ \t]+|(?:>[ \t]*)+)|"
+		r"`[^`\n]+`|(?<=\()https?://[^)\s]+(?=\))|</?[A-Za-z][^>\n]*>",
+		re.DOTALL | re.MULTILINE,
 	)
 
 	def replace(match: re.Match[str]) -> str:
@@ -1228,7 +1241,40 @@ def _split_markdown(markdown: str, maximum: int) -> list[TranslationChunk]:
 			chunks.append(TranslationChunk(line_text, line_separator))
 
 	flush()
-	return chunks or [TranslationChunk("")]
+	bounded: list[TranslationChunk] = []
+	for chunk in chunks:
+		if len(chunk.text) <= maximum:
+			bounded.append(chunk)
+			continue
+		parts = _hard_split_text(chunk.text, maximum)
+		parts[0] = TranslationChunk(parts[0].text, chunk.separator_before + parts[0].separator_before)
+		bounded.extend(parts)
+	return bounded or [TranslationChunk("")]
+
+
+def _hard_split_text(text: str, maximum: int) -> list[TranslationChunk]:
+	"""Bound an indivisible Markdown line while preserving its exact separators."""
+	parts: list[TranslationChunk] = []
+	separator = ""
+	remaining = text
+	while len(remaining) > maximum:
+		window = remaining[: maximum + 1]
+		matches = list(re.finditer(r"\s+", window))
+		boundary = next(
+			(match for match in reversed(matches) if match.start() >= maximum // 2),
+			None,
+		)
+		if boundary:
+			parts.append(TranslationChunk(remaining[: boundary.start()], separator))
+			separator = boundary.group(0)
+			remaining = remaining[boundary.end() :]
+		else:
+			parts.append(TranslationChunk(remaining[:maximum], separator))
+			separator = ""
+			remaining = remaining[maximum:]
+	if remaining or separator:
+		parts.append(TranslationChunk(remaining, separator))
+	return parts
 
 
 def _parse_json_array(content: str) -> list[dict[str, Any]]:
