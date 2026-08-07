@@ -9,6 +9,7 @@ from ione_core.frappe_docs_sync import (
 	_destination_route,
 	_docs_get,
 	_expected_source_hierarchy,
+	_extract_markdown_document,
 	_extract_title_translations,
 	_is_probably_untranslated_title,
 	_protect_markdown_literals,
@@ -17,6 +18,7 @@ from ione_core.frappe_docs_sync import (
 	_rewrite_internal_links,
 	_split_markdown,
 	_translated_markdown_body,
+	fetch_source_page,
 	parse_sidebar,
 )
 
@@ -105,6 +107,66 @@ class TestFrappeDocsSync(TestCase):
 		self.assertEqual(response.content, b"documentation")
 		self.assertEqual(session.calls, 2)
 		self.assertFalse(session.trust_env)
+
+	def test_source_fetch_falls_back_to_official_markdown(self):
+		import requests
+
+		class Response:
+			url = "https://docs.frappe.io/erpnext/module-settings.md"
+			content = b"markdown"
+			text = (
+				'---\ntitle: "Module Settings"\n'
+				'url: "https://docs.frappe.io/erpnext/module-settings"\n---\n\n'
+				"Configure [System Settings](/erpnext/system-settings) for your organization."
+			)
+
+			def raise_for_status(self):
+				return None
+
+		class Session:
+			def __init__(self):
+				self.headers = {}
+				self.trust_env = True
+				self.urls = []
+
+			def get(self, url, **_kwargs):
+				self.urls.append(url)
+				if not url.endswith(".md"):
+					raise requests.TooManyRedirects("loop")
+				return Response()
+
+		session = Session()
+		title, markdown, source_url = fetch_source_page(
+			"erpnext/module-settings", session=session
+		)
+
+		self.assertEqual(title, "Module Settings")
+		self.assertEqual(source_url, "https://docs.frappe.io/erpnext/module-settings")
+		self.assertIn(
+			"](https://docs.frappe.io/erpnext/system-settings)",
+			markdown,
+		)
+		self.assertEqual(
+			session.urls,
+			[
+				"https://docs.frappe.io/erpnext/module-settings",
+				"https://docs.frappe.io/erpnext/module-settings.md",
+			],
+		)
+
+	def test_extracts_markdown_frontmatter_and_media_urls(self):
+		title, markdown, source_url = _extract_markdown_document(
+			'---\ntitle: "Enrollment\\n"\n'
+			'url: "https://docs.frappe.io/education/enrollment"\n---\n\n'
+			"# Enrollment\n\n![Example](/files/enrollment.png)\n\n"
+			'<iframe src="/files/example.html"></iframe>',
+			"https://docs.frappe.io/education/enrollment",
+		)
+
+		self.assertEqual(title, "Enrollment")
+		self.assertEqual(source_url, "https://docs.frappe.io/education/enrollment")
+		self.assertIn("https://docs.frappe.io/files/enrollment.png", markdown)
+		self.assertIn('src="https://docs.frappe.io/files/example.html"', markdown)
 
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (

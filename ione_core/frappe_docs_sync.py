@@ -234,10 +234,25 @@ def parse_sidebar(html: str, source_prefix: str) -> list[SourceNode]:
 
 
 def fetch_source_page(source_route: str, session: Any | None = None) -> tuple[str, str, str]:
+	import requests
+
 	url = f"https://{DOCS_HOST}/{source_route.strip('/')}"
-	response = _docs_get(url, session=session)
-	title, markdown = _extract_article(response.text, response.url)
-	return title, markdown, response.url
+	try:
+		response = _docs_get(url, session=session)
+		title, markdown = _extract_article(response.text, response.url)
+		return title, markdown, response.url
+	except (requests.RequestException, ValueError) as html_error:
+		# Frappe Wiki exposes the canonical source as Markdown. It is also the
+		# reliable escape hatch for occasional empty HTML renders and redirect loops.
+		try:
+			response = _docs_get(f"{url}.md", session=session)
+			title, markdown, source_url = _extract_markdown_document(response.text, url)
+			return title, markdown, source_url
+		except (requests.RequestException, ValueError) as markdown_error:
+			raise RuntimeError(
+				f"Unable to read official documentation route {source_route}: "
+				f"HTML failed with {html_error}; Markdown failed with {markdown_error}"
+			) from markdown_error
 
 
 def _extract_article(html: str, source_url: str) -> tuple[str, str]:
@@ -265,6 +280,56 @@ def _extract_article(html: str, source_url: str) -> tuple[str, str]:
 	if len(markdown) < 40:
 		raise ValueError("The documentation page did not contain enough readable content.")
 	return title or "Frappe Documentation", markdown
+
+
+def _extract_markdown_document(markdown: str, fallback_url: str) -> tuple[str, str, str]:
+	metadata: dict[str, str] = {}
+	body = markdown.lstrip("\ufeff")
+	frontmatter = re.match(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", body, flags=re.DOTALL)
+	if frontmatter:
+		for line in frontmatter.group(1).splitlines():
+			key, separator, value = line.partition(":")
+			if not separator:
+				continue
+			value = value.strip()
+			if value.startswith('"') and value.endswith('"'):
+				try:
+					value = json.loads(value)
+				except json.JSONDecodeError:
+					value = value[1:-1]
+			metadata[key.strip().lower()] = str(value).strip()
+		body = body[frontmatter.end() :]
+
+	body = re.sub(r"[ \t]+\n", "\n", body)
+	body = re.sub(r"\n{3,}", "\n\n", body).strip()
+	if len(body) < 40:
+		raise ValueError("The official Markdown page did not contain enough readable content.")
+
+	source_url = metadata.get("url") or fallback_url
+	resolved = urlsplit(source_url)
+	if resolved.scheme != "https" or (resolved.hostname or "").lower() != DOCS_HOST:
+		raise ValueError("The official Markdown metadata referenced an untrusted source URL.")
+
+	title = metadata.get("title") or _markdown_heading(body) or "Frappe Documentation"
+	return title.strip(), _absolutize_docs_links(body), source_url
+
+
+def _markdown_heading(markdown: str) -> str:
+	match = re.search(r"^#\s+(.+?)\s*$", markdown, flags=re.MULTILINE)
+	return match.group(1).strip() if match else ""
+
+
+def _absolutize_docs_links(markdown: str) -> str:
+	markdown = re.sub(
+		r"(\]\()/(?!/)([^)\s]+)",
+		lambda match: f"{match.group(1)}https://{DOCS_HOST}/{match.group(2)}",
+		markdown,
+	)
+	return re.sub(
+		r"(\b(?:href|src)=[\"'])/(?!/)([^\"']+)",
+		lambda match: f"{match.group(1)}https://{DOCS_HOST}/{match.group(2)}",
+		markdown,
+	)
 
 
 class QwenMarkdownTranslator:
@@ -794,6 +859,8 @@ def _docs_get(url: str, session: Any | None = None):
 			break
 		except requests.RequestException as exc:
 			last_error = exc
+			if isinstance(exc, requests.TooManyRedirects):
+				raise
 			if attempt + 1 == DOCS_REQUEST_ATTEMPTS:
 				raise
 			time.sleep(2**attempt)
