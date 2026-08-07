@@ -37,6 +37,12 @@ class SourceNode:
 	identity: str = ""
 
 
+@dataclass(frozen=True)
+class TranslationChunk:
+	text: str
+	separator_before: str = ""
+
+
 PRODUCTS: dict[str, ProductSpec] = {
 	"erpnext": ProductSpec(
 		"erpnext", "ERPNext 中文文档", "erpnext", "https://docs.frappe.io/erpnext/introduction", "erpnext-zh-docs"
@@ -284,10 +290,10 @@ class QwenMarkdownTranslator:
 				"请完整翻译为专业、自然的简体中文。保持 Markdown 层级、列表、表格、链接、图片、"
 				"HTML 标签和 [[[IONE_LITERAL_数字]]] 占位符完全不变。保留产品名、命令、字段名、"
 				"API、DocType、路径和参数。不要概括、删减或解释。不要包裹新的代码围栏。\n\n"
-				+ chunk
+				+ chunk.text
 			)
-			translated_chunks.append(self._chat(prompt))
-		translated = "\n\n".join(part.strip() for part in translated_chunks if part.strip())
+			translated_chunks.append(chunk.separator_before + self._chat(prompt).strip())
+		translated = "".join(translated_chunks)
 		return _restore_markdown_literals(translated, literals)
 
 	def _chat(self, prompt: str) -> str:
@@ -645,7 +651,10 @@ def _content_source_hash(content: str) -> str:
 
 def _protect_markdown_literals(markdown: str) -> tuple[str, list[str]]:
 	literals: list[str] = []
-	pattern = re.compile(r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~|`[^`\n]+`", re.DOTALL)
+	pattern = re.compile(
+		r"```[^\n]*\n.*?```|~~~[^\n]*\n.*?~~~|`[^`\n]+`|(?<=\()https?://[^)\s]+(?=\))|</?[A-Za-z][^>\n]*>",
+		re.DOTALL,
+	)
 
 	def replace(match: re.Match[str]) -> str:
 		index = len(literals)
@@ -666,32 +675,60 @@ def _restore_markdown_literals(markdown: str, literals: list[str]) -> str:
 	return markdown
 
 
-def _split_markdown(markdown: str, maximum: int) -> list[str]:
-	blocks = re.split(r"\n{2,}", markdown.strip())
-	chunks: list[str] = []
-	current: list[str] = []
-	current_length = 0
-	for block in blocks:
-		block_length = len(block) + 2
-		if current and current_length + block_length > maximum:
-			chunks.append("\n\n".join(current))
-			current = []
-			current_length = 0
-		if len(block) > maximum:
-			lines = block.splitlines()
-			for line in lines:
-				if current and current_length + len(line) + 1 > maximum:
-					chunks.append("\n".join(current))
-					current = []
-					current_length = 0
-				current.append(line)
-				current_length += len(line) + 1
+def _split_markdown(markdown: str, maximum: int) -> list[TranslationChunk]:
+	parts = re.split(r"(\n{2,})", markdown.strip())
+	blocks: list[tuple[str, str]] = []
+	separator = ""
+	for part in parts:
+		if not part:
 			continue
-		current.append(block)
-		current_length += block_length
-	if current:
-		chunks.append("\n\n".join(current))
-	return chunks or [""]
+		if re.fullmatch(r"\n{2,}", part):
+			separator = part
+			continue
+		blocks.append((separator, part))
+		separator = ""
+
+	chunks: list[TranslationChunk] = []
+	current_text = ""
+	current_separator = ""
+
+	def flush() -> None:
+		nonlocal current_text, current_separator
+		if current_text:
+			chunks.append(TranslationChunk(current_text, current_separator))
+			current_text = ""
+			current_separator = ""
+
+	for block_separator, block in blocks:
+		if len(block) <= maximum:
+			addition = (block_separator if current_text else "") + block
+			if current_text and len(current_text) + len(addition) > maximum:
+				flush()
+				current_separator = block_separator
+				current_text = block
+			else:
+				if not current_text:
+					current_separator = block_separator
+				current_text += addition
+			continue
+
+		flush()
+		lines = block.split("\n")
+		line_text = ""
+		line_separator = block_separator
+		for line in lines:
+			addition = ("\n" if line_text else "") + line
+			if line_text and len(line_text) + len(addition) > maximum:
+				chunks.append(TranslationChunk(line_text, line_separator))
+				line_text = line
+				line_separator = "\n"
+			else:
+				line_text += addition
+		if line_text:
+			chunks.append(TranslationChunk(line_text, line_separator))
+
+	flush()
+	return chunks or [TranslationChunk("")]
 
 
 def _parse_json_array(content: str) -> list[dict[str, Any]]:

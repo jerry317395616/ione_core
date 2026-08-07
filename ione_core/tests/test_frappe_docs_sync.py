@@ -62,15 +62,29 @@ class TestFrappeDocsSync(TestCase):
 		)
 
 	def test_protected_markdown_round_trip(self):
-		source = "Run `bench migrate`.\n\n```python\nprint('hello')\n```"
+		source = (
+			"Run `bench migrate`. See [Docs](https://docs.frappe.io/framework).\n\n"
+			"<kbd>Ctrl</kbd>\n\n```python\nprint('hello')\n```"
+		)
 		protected, literals = _protect_markdown_literals(source)
 		self.assertNotIn("bench migrate", protected)
+		self.assertNotIn("https://docs.frappe.io", protected)
+		self.assertNotIn("<kbd>", protected)
 		self.assertEqual(_restore_markdown_literals(protected, literals), source)
 
 	def test_markdown_chunks_respect_target_size_for_normal_blocks(self):
-		chunks = _split_markdown("alpha\n\n" + "beta " * 20 + "\n\ngamma", 40)
+		source = "alpha\n\n" + "beta " * 20 + "\n\ngamma"
+		chunks = _split_markdown(source, 40)
 		self.assertGreater(len(chunks), 1)
-		self.assertEqual("\n\n".join(chunks), "alpha\n\n" + "beta " * 20 + "\n\ngamma")
+		self.assertEqual("".join(chunk.separator_before + chunk.text for chunk in chunks), source)
+
+	def test_markdown_chunks_preserve_long_table_line_boundaries(self):
+		source = "| A | B |\n|---|---|\n" + "\n".join(f"| {index} | value |" for index in range(20))
+		chunks = _split_markdown(source, 80)
+
+		self.assertGreater(len(chunks), 1)
+		self.assertEqual("".join(chunk.separator_before + chunk.text for chunk in chunks), source)
+		self.assertTrue(all(chunk.separator_before in {"", "\n"} for chunk in chunks))
 
 	def test_source_hash_marker_round_trip(self):
 		hash_value = "a" * 64
