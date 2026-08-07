@@ -12,6 +12,7 @@ from ione_core.frappe_docs_sync import (
 	_extract_title_translations,
 	_is_probably_untranslated_title,
 	_protect_markdown_literals,
+	_protected_literal_tokens,
 	_restore_markdown_literals,
 	_rewrite_internal_links,
 	_split_markdown,
@@ -144,6 +145,24 @@ class TestFrappeDocsSync(TestCase):
 		self.assertNotIn("https://docs.frappe.io", protected)
 		self.assertNotIn("<kbd>", protected)
 		self.assertEqual(_restore_markdown_literals(protected, literals), source)
+
+	def test_markdown_translation_retries_when_literal_is_missing(self):
+		from unittest.mock import patch
+
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		responses = iter(["缺少占位符", "保留 [[[IONE_LITERAL_0001]]] 的译文"])
+		translator._chat = lambda _prompt: next(responses)
+
+		with patch("ione_core.frappe_docs_sync.time.sleep"):
+			translated = translator._translate_markdown_chunk(
+				"Keep [[[IONE_LITERAL_0001]]]", 1, 1
+			)
+
+		self.assertEqual(translated, "保留 [[[IONE_LITERAL_0001]]] 的译文")
+		self.assertEqual(
+			_protected_literal_tokens(translated),
+			["[[[IONE_LITERAL_0001]]]"],
+		)
 
 	def test_markdown_chunks_respect_target_size_for_normal_blocks(self):
 		source = "alpha\n\n" + "beta " * 20 + "\n\ngamma"

@@ -332,16 +332,34 @@ class QwenMarkdownTranslator:
 		chunks = _split_markdown(protected, TRANSLATION_CHUNK_CHARACTERS)
 		translated_chunks = []
 		for index, chunk in enumerate(chunks, start=1):
-			prompt = (
-				f"这是同一篇 Frappe 官方技术文档的第 {index}/{len(chunks)} 段。"
-				"请完整翻译为专业、自然的简体中文。保持 Markdown 层级、列表、表格、链接、图片、"
-				"HTML 标签和 [[[IONE_LITERAL_数字]]] 占位符完全不变。保留产品名、命令、字段名、"
-				"API、DocType、路径和参数。不要概括、删减或解释。不要包裹新的代码围栏。\n\n"
-				+ chunk.text
+			translated_chunks.append(
+				chunk.separator_before + self._translate_markdown_chunk(chunk.text, index, len(chunks))
 			)
-			translated_chunks.append(chunk.separator_before + self._chat(prompt).strip())
 		translated = "".join(translated_chunks)
 		return _restore_markdown_literals(translated, literals)
+
+	def _translate_markdown_chunk(self, text: str, index: int, total: int) -> str:
+		required_literals = _protected_literal_tokens(text)
+		last_error = ""
+		for attempt in range(TITLE_TRANSLATION_ATTEMPTS):
+			prompt = (
+				f"这是同一篇 Frappe 官方技术文档的第 {index}/{total} 段。"
+				"请完整翻译为专业、自然的简体中文。保持 Markdown 层级、列表、表格、链接、图片、"
+				"HTML 标签和 [[[IONE_LITERAL_数字]]] 占位符完全不变。保留产品名、命令、字段名、"
+				"API、DocType、路径和参数。不要概括、删减或解释。不要包裹新的代码围栏。"
+			)
+			if required_literals:
+				prompt += "以下占位符必须各原样出现一次: " + ", ".join(required_literals) + "。"
+			if attempt:
+				prompt += f"上一次结果的占位符校验失败: {last_error}。请重新完整翻译。"
+			translated = self._chat(prompt + "\n\n" + text).strip()
+			actual_literals = _protected_literal_tokens(translated)
+			if actual_literals == required_literals:
+				return translated
+			last_error = f"expected {required_literals}, got {actual_literals}"
+			if attempt + 1 < TITLE_TRANSLATION_ATTEMPTS:
+				time.sleep(2**attempt)
+		raise ValueError(f"The translated Markdown did not preserve protected literals: {last_error}")
 
 	def _chat(self, prompt: str) -> str:
 		headers = {"Content-Type": "application/json"}
@@ -894,6 +912,10 @@ def _restore_markdown_literals(markdown: str, literals: list[str]) -> str:
 	if re.search(r"\[\[\[IONE_LITERAL_\d+\]\]\]", markdown):
 		raise ValueError("The translated Markdown contains an unknown protected literal.")
 	return markdown
+
+
+def _protected_literal_tokens(markdown: str) -> list[str]:
+	return sorted(re.findall(r"\[\[\[IONE_LITERAL_\d+\]\]\]", markdown))
 
 
 def _split_markdown(markdown: str, maximum: int) -> list[TranslationChunk]:
