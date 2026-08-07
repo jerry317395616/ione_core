@@ -435,10 +435,10 @@ def frappe_upsert_deal_presentation(
 	slides: list[dict[str, Any]],
 	make_public: bool | None = None,
 ) -> dict[str, Any]:
-	"""Create or update a Frappe Slides presentation linked to one CRM Deal.
+	"""Create or update a Frappe Suite Slides presentation linked to one CRM Deal.
 
 	The slide input is a bounded business-content schema. The server renders it into editable
-	Frappe Slides elements and reuses the Deal's linked presentation on repeated calls.
+	Suite Slides elements and reuses the Deal's linked presentation on repeated calls.
 
 	Args:
 		deal: Exact CRM Deal document name.
@@ -446,11 +446,14 @@ def frappe_upsert_deal_presentation(
 		slides: Four to twenty slide objects using cover, section, content, metrics, timeline or closing layouts.
 		make_public: Set public link access only when explicitly requested; omit to preserve the current setting.
 	"""
-	if "slides" not in frappe.get_installed_apps() or not frappe.db.exists("DocType", "Presentation"):
-		frappe.throw("Frappe Slides is not installed on this site")
-
 	from ione_core.mcp.slides import build_presentation_slides
-	from ione_core.setup.slides_integration import ensure_deal_presentation_field
+	from ione_core.setup.slides_integration import (
+		ensure_deal_presentation_field,
+		suite_slides_available,
+	)
+
+	if not suite_slides_available():
+		frappe.throw("Frappe Suite Slides is not available on this site")
 
 	ensure_deal_presentation_field()
 	ensure_doctype_permission("CRM Deal", "write")
@@ -468,15 +471,13 @@ def frappe_upsert_deal_presentation(
 		presentation = frappe.new_doc("Presentation")
 		presentation.title = presentation_title
 		presentation.theme = "Light"
-		presentation.thumbnail = "/assets/slides/frontend/images/layouts/light/thumbnail-3.webp"
+		presentation.thumbnail = "/assets/suite/slides/frontend/images/layouts/light/thumbnail-3.webp"
 	else:
 		ensure_doctype_permission("Presentation", "write")
 		presentation = frappe.get_doc("Presentation", linked_name)
 		presentation.check_permission("write")
 		presentation.title = presentation_title
 
-	if make_public is not None:
-		presentation.is_public = int(bool(make_public))
 	presentation.set("slides", [])
 	for slide in rendered_slides:
 		presentation.append("slides", slide)
@@ -490,6 +491,18 @@ def frappe_upsert_deal_presentation(
 			presentation.save()
 		if deal_doc.get("custom_customer_presentation") != presentation.name:
 			deal_doc.db_set("custom_customer_presentation", presentation.name)
+
+		from suite.drive.overrides.file import File as DriveFile
+
+		drive_file_name = DriveFile.get_for_doc("Presentation", presentation.name)
+		if not drive_file_name:
+			frappe.throw("Suite Slides did not create a backing Drive file")
+		drive_file = frappe.get_doc("File", drive_file_name)
+		if make_public is True:
+			drive_file.share(user=None, read=True)
+		elif make_public is False:
+			drive_file.unshare("$GENERAL")
+		is_public = bool(drive_file.is_public())
 	except Exception:
 		frappe.db.rollback(save_point=savepoint)
 		raise
@@ -502,7 +515,7 @@ def frappe_upsert_deal_presentation(
 		"title": presentation.title,
 		"slide_count": len(rendered_slides),
 		"created": created,
-		"is_public": bool(presentation.is_public),
+		"is_public": is_public,
 		"editor_url": frappe.utils.get_url(editor_path),
 		"slideshow_url": frappe.utils.get_url(slideshow_path),
 	}
