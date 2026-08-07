@@ -111,6 +111,7 @@ def frappe_list_documents(
 	fields: list[str] | None = None,
 	order_by: str = "modified desc",
 	limit: int = 20,
+	start: int = 0,
 ) -> dict[str, Any]:
 	"""List business documents using the current user's Frappe permissions.
 
@@ -120,18 +121,30 @@ def frappe_list_documents(
 		fields: Fields to return. Password fields are never available.
 		order_by: One field and optional asc or desc direction.
 		limit: Maximum number of records from 1 to 100.
+		start: Zero-based record offset for permission-aware pagination.
 	"""
 	meta = ensure_doctype_permission(doctype, "read")
 	readable = permitted_fields(doctype, "read")
 	limit = max(1, min(int(limit), 100))
+	start = max(0, min(int(start), 100000))
 	rows = frappe.get_list(
 		doctype,
 		filters=safe_filters(meta, filters, readable),
 		fields=safe_fields(meta, fields, readable),
 		order_by=validate_order_by(meta, order_by, readable),
-		limit_page_length=limit,
+		limit_start=start,
+		limit_page_length=limit + 1,
 	)
-	return {"doctype": doctype, "records": serializable(rows), "count": len(rows)}
+	has_more = len(rows) > limit
+	rows = rows[:limit]
+	return {
+		"doctype": doctype,
+		"records": serializable(rows),
+		"count": len(rows),
+		"start": start,
+		"has_more": has_more,
+		"next_start": start + len(rows) if has_more else None,
+	}
 
 
 @mcp.tool(annotations=READ_ONLY)
