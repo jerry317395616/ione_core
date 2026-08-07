@@ -240,6 +240,24 @@ class TestFrappeDocsSync(TestCase):
 
 		self.assertEqual(translated, "# 标题\n\n完整正文")
 
+	def test_markdown_translation_splits_a_chunk_after_retries_fail(self):
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		source = "\n\n".join(f"Paragraph {index}: " + "x" * 180 for index in range(8))
+		calls = []
+
+		def translate(text, _index, _total):
+			calls.append(len(text))
+			if len(text) > 500:
+				raise ValueError("simulated truncation")
+			return text
+
+		translator._translate_markdown_chunk = translate
+		translated = translator._translate_markdown_chunk_resilient(source, 1, 1)
+
+		self.assertEqual(translated, source)
+		self.assertTrue(any(length > 500 for length in calls))
+		self.assertTrue(any(length <= 500 for length in calls[1:]))
+
 	def test_markdown_chunks_respect_target_size_for_normal_blocks(self):
 		source = "alpha\n\n" + "beta " * 20 + "\n\ngamma"
 		chunks = _split_markdown(source, 40)

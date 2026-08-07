@@ -400,10 +400,34 @@ class QwenMarkdownTranslator:
 		translated_chunks = []
 		for index, chunk in enumerate(chunks, start=1):
 			translated_chunks.append(
-				chunk.separator_before + self._translate_markdown_chunk(chunk.text, index, len(chunks))
+				chunk.separator_before
+				+ self._translate_markdown_chunk_resilient(chunk.text, index, len(chunks))
 			)
 		translated = "".join(translated_chunks)
 		return _restore_markdown_literals(translated, literals)
+
+	def _translate_markdown_chunk_resilient(
+		self,
+		text: str,
+		index: int,
+		total: int,
+		depth: int = 0,
+	) -> str:
+		try:
+			return self._translate_markdown_chunk(text, index, total)
+		except ValueError:
+			if depth >= 3 or len(text) < 600:
+				raise
+			subchunks = _split_markdown(text, max(300, len(text) // 2))
+			if len(subchunks) < 2:
+				raise
+			return "".join(
+				chunk.separator_before
+				+ self._translate_markdown_chunk_resilient(
+					chunk.text, subindex, len(subchunks), depth + 1
+				)
+				for subindex, chunk in enumerate(subchunks, start=1)
+			)
 
 	def _translate_markdown_chunk(self, text: str, index: int, total: int) -> str:
 		required_literals = _protected_literal_tokens(text)
