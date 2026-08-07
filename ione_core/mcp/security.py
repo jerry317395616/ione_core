@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import io
 import json
 import re
+import zipfile
+from pathlib import PurePath
 from typing import Any
 
 DENIED_DOCTYPES = {
@@ -51,6 +56,9 @@ PROTECTED_FIELDS = {
 
 ORDER_BY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(?:\s+(?:asc|desc))?$", re.IGNORECASE)
 SAFE_FILE_EXTENSIONS = {".csv", ".json", ".md", ".txt"}
+MAX_DOCX_BYTES = 5 * 1024 * 1024
+MAX_DOCX_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
+REQUIRED_DOCX_PARTS = {"[Content_Types].xml", "word/document.xml"}
 SENSITIVE_KEYS = {"api_key", "api_secret", "authorization", "password", "secret", "token"}
 
 
@@ -236,8 +244,6 @@ def sanitize_for_audit(value: Any, *, max_length: int = 2000) -> str:
 
 
 def validate_text_file(file_name: str, content: str) -> tuple[str, bytes]:
-	from pathlib import PurePath
-
 	name = PurePath(file_name or "").name
 	if not name or PurePath(name).suffix.lower() not in SAFE_FILE_EXTENSIONS:
 		raise ValueError("Only .txt, .md, .csv and .json attachments are allowed")
@@ -246,4 +252,37 @@ def validate_text_file(file_name: str, content: str) -> tuple[str, bytes]:
 		raise ValueError("Attachment content cannot be empty")
 	if len(payload) > 1024 * 1024:
 		raise ValueError("Attachment content exceeds the 1 MB limit")
+	return name, payload
+
+
+def validate_docx_file(file_name: str, content_base64: str) -> tuple[str, bytes]:
+	"""Validate a small, structurally valid Word document supplied as Base64."""
+	name = PurePath(file_name or "").name
+	if not name or PurePath(name).suffix.lower() != ".docx":
+		raise ValueError("Only .docx Word attachments are allowed")
+	if not isinstance(content_base64, str) or not content_base64.strip():
+		raise ValueError("Word attachment content cannot be empty")
+	try:
+		payload = base64.b64decode(content_base64, validate=True)
+	except (binascii.Error, ValueError) as exc:
+		raise ValueError("Word attachment content must be valid Base64") from exc
+	if not payload:
+		raise ValueError("Word attachment content cannot be empty")
+	if len(payload) > MAX_DOCX_BYTES:
+		raise ValueError("Word attachment exceeds the 5 MB limit")
+	if not payload.startswith(b"PK\x03\x04"):
+		raise ValueError("Word attachment is not a valid DOCX package")
+	try:
+		with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+			names = set(archive.namelist())
+			if not REQUIRED_DOCX_PARTS.issubset(names):
+				raise ValueError("Word attachment is missing required DOCX parts")
+			if len(names) > 500:
+				raise ValueError("Word attachment contains too many package parts")
+			if any(item.flag_bits & 0x1 for item in archive.infolist()):
+				raise ValueError("Encrypted Word attachments are not allowed")
+			if sum(item.file_size for item in archive.infolist()) > MAX_DOCX_UNCOMPRESSED_BYTES:
+				raise ValueError("Word attachment expands beyond the 25 MB limit")
+	except zipfile.BadZipFile as exc:
+		raise ValueError("Word attachment is not a valid DOCX package") from exc
 	return name, payload

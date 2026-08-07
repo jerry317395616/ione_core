@@ -16,6 +16,7 @@ from ione_core.mcp.security import (
 	safe_filters,
 	safe_write_data,
 	serializable,
+	validate_docx_file,
 	validate_order_by,
 	validate_text_file,
 )
@@ -149,6 +150,68 @@ def frappe_get_document(doctype: str, name: str) -> dict[str, Any]:
 	return {"doctype": doctype, "document": safe_document(doc, meta)}
 
 
+@mcp.tool(annotations=READ_ONLY)
+@audited_tool("frappe_list_attachments", "读取")
+def frappe_list_attachments(
+	doctype: str,
+	document_name: str,
+	include_text_content: bool = True,
+) -> dict[str, Any]:
+	"""List a document's attachments and optionally read small UTF-8 text attachments.
+
+	Args:
+		doctype: Parent business DocType.
+		document_name: Parent document name.
+		include_text_content: Include content for .txt, .md, .csv and .json files up to 1 MB total.
+	"""
+	ensure_doctype_permission(doctype, "read")
+	doc = frappe.get_doc(doctype, document_name)
+	doc.check_permission("read")
+	rows = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": doctype, "attached_to_name": document_name},
+		fields=[
+			"name",
+			"file_name",
+			"file_url",
+			"is_private",
+			"is_remote_file",
+			"file_size",
+			"creation",
+			"modified",
+		],
+		order_by="creation asc",
+		limit_page_length=50,
+	)
+	attachments = []
+	remaining_text_bytes = 1024 * 1024
+	for row in rows:
+		item = serializable(row)
+		file_name = str(row.get("file_name") or "")
+		if (
+			include_text_content
+			and not row.get("is_remote_file")
+			and file_name.lower().endswith((".txt", ".md", ".csv", ".json"))
+		):
+			file_size = int(row.get("file_size") or 0)
+			if 0 < file_size <= remaining_text_bytes:
+				content = frappe.get_doc("File", row.name).get_content()
+				if isinstance(content, bytes):
+					for encoding in ("utf-8-sig", "utf-8", "gb18030"):
+						try:
+							content = content.decode(encoding)
+							break
+						except UnicodeDecodeError:
+							continue
+				if isinstance(content, str):
+					encoded_size = len(content.encode("utf-8"))
+					if encoded_size <= remaining_text_bytes:
+						item["content"] = content
+						remaining_text_bytes -= encoded_size
+		attachments.append(item)
+	return {"doctype": doctype, "name": document_name, "attachments": attachments, "count": len(attachments)}
+
+
 @mcp.tool(annotations=DRAFT_WRITE)
 @audited_tool("frappe_create_document", "写入")
 def frappe_create_document(doctype: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -223,3 +286,76 @@ def frappe_attach_text_file(
 
 	file_doc = save_file(name, payload, doctype, document_name, is_private=1)
 	return {"doctype": doctype, "name": document_name, "file": file_doc.file_url}
+
+
+@mcp.tool(annotations=DRAFT_WRITE)
+@audited_tool("frappe_attach_word_file", "写入")
+def frappe_attach_word_file(
+	doctype: str,
+	document_name: str,
+	file_name: str,
+	content_base64: str,
+) -> dict[str, Any]:
+	"""Attach a private, validated Word .docx file to a writable business document.
+
+	Args:
+		doctype: Parent business DocType.
+		document_name: Parent document name.
+		file_name: Safe file name ending in .docx.
+		content_base64: Base64-encoded DOCX package, limited to 5 MB.
+	"""
+	ensure_doctype_permission(doctype, "write")
+	doc = frappe.get_doc(doctype, document_name)
+	doc.check_permission("write")
+	name, payload = validate_docx_file(file_name, content_base64)
+	from frappe.utils.file_manager import save_file
+
+	file_doc = save_file(name, payload, doctype, document_name, is_private=1)
+	return {"doctype": doctype, "name": document_name, "file": file_doc.file_url}
+
+
+@mcp.tool(annotations=DRAFT_WRITE)
+@audited_tool("frappe_convert_lead_to_deal", "转换")
+def frappe_convert_lead_to_deal(
+	lead: str,
+	deal_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+	"""Convert one CRM Lead to a CRM Deal through CRM's official conversion service.
+
+	The operation is idempotent: when a Deal already references the Lead, that Deal is returned.
+
+	Args:
+		lead: Exact CRM Lead document name.
+		deal_data: Optional writable CRM Deal values such as next_step or expected_closure_date.
+	"""
+	ensure_doctype_permission("CRM Lead", "write")
+	ensure_doctype_permission("CRM Deal", "create")
+	lead_doc = frappe.get_doc("CRM Lead", lead)
+	lead_doc.check_permission("write")
+	existing_deal = frappe.db.get_value("CRM Deal", {"lead": lead}, "name")
+	if existing_deal:
+		frappe.get_doc("CRM Deal", existing_deal).check_permission("read")
+		return {"lead": lead, "deal": existing_deal, "created": False}
+	if lead_doc.get("converted"):
+		frappe.throw("Lead is marked as converted but no linked CRM Deal was found")
+
+	payload = None
+	if deal_data:
+		deal_meta = frappe.get_meta("CRM Deal")
+		payload = safe_write_data(deal_meta, deal_data, permitted_fields("CRM Deal", "write"))
+		for protected_field in ("name", "lead", "contacts", "contact", "organization", "naming_series"):
+			payload.pop(protected_field, None)
+		if not payload:
+			payload = None
+
+	savepoint = "ione_mcp_convert_lead"
+	frappe.db.savepoint(savepoint)
+	try:
+		from crm.fcrm.doctype.crm_lead.crm_lead import convert_to_deal
+
+		deal = convert_to_deal(lead=lead, deal=payload)
+	except Exception:
+		frappe.db.rollback(save_point=savepoint)
+		raise
+	frappe.get_doc("CRM Deal", deal).check_permission("read")
+	return {"lead": lead, "deal": deal, "created": True}

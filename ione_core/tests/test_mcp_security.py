@@ -1,11 +1,19 @@
+import base64
+import io
 import sys
+import zipfile
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
 from ione_core.mcp.audit import request_summary
-from ione_core.mcp.security import permitted_fields, sanitize_for_audit, validate_text_file
+from ione_core.mcp.security import (
+	permitted_fields,
+	sanitize_for_audit,
+	validate_docx_file,
+	validate_text_file,
+)
 
 
 class TestMCPSecurity(TestCase):
@@ -58,3 +66,33 @@ class TestMCPSecurity(TestCase):
 		self.assertIn("first_name", result)
 		self.assertNotIn("Sensitive Name", result)
 		self.assertNotIn("private report body", result)
+
+	def test_accepts_structurally_valid_word_attachment(self):
+		buffer = io.BytesIO()
+		with zipfile.ZipFile(buffer, "w") as archive:
+			archive.writestr("[Content_Types].xml", "<Types />")
+			archive.writestr("word/document.xml", "<document />")
+		content = base64.b64encode(buffer.getvalue()).decode("ascii")
+
+		name, payload = validate_docx_file("folder/proposal.docx", content)
+
+		self.assertEqual(name, "proposal.docx")
+		self.assertEqual(payload, buffer.getvalue())
+
+	def test_rejects_invalid_word_attachment(self):
+		with self.assertRaisesRegex(ValueError, "valid Base64"):
+			validate_docx_file("proposal.docx", "not-base64")
+		with self.assertRaisesRegex(ValueError, "Only .docx"):
+			validate_docx_file("proposal.pdf", base64.b64encode(b"pdf").decode("ascii"))
+
+	def test_audit_summary_does_not_store_word_content(self):
+		secret_content = base64.b64encode(b"sensitive proposal").decode("ascii")
+		result = request_summary(
+			{
+				"doctype": "CRM Deal",
+				"document_name": "CRM-DEAL-1",
+				"content_base64": secret_content,
+			}
+		)
+		self.assertIn("characters", result)
+		self.assertNotIn(secret_content, result)

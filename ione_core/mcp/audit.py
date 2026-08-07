@@ -9,9 +9,11 @@ from ione_core.mcp.security import sanitize_for_audit
 def request_summary(arguments) -> str:
 	summary = {}
 	for key, value in arguments.items():
-		if key == "data" and isinstance(value, dict):
+		if key in {"data", "deal_data"} and isinstance(value, dict):
 			summary[key] = {"fields": sorted(value)}
 		elif key == "content":
+			summary[key] = {"characters": len(value or "")}
+		elif key == "content_base64":
 			summary[key] = {"characters": len(value or "")}
 		elif key == "filters" and isinstance(value, dict):
 			summary[key] = {"fields": sorted(value)}
@@ -25,7 +27,7 @@ def result_summary(result) -> str:
 		return sanitize_for_audit({"result_type": type(result).__name__})
 	summary = {
 		key: result[key]
-		for key in ("doctype", "name", "docstatus", "modified", "file", "count")
+		for key in ("doctype", "name", "docstatus", "modified", "file", "count", "lead", "deal", "created")
 		if key in result
 	}
 	if isinstance(result.get("records"), list):
@@ -83,8 +85,10 @@ def write_audit_log(
 	try:
 		import frappe
 
-		doctype = str(arguments.get("doctype") or "")
-		target_name = str(arguments.get("name") or arguments.get("document_name") or "")
+		doctype = str(arguments.get("doctype") or ("CRM Lead" if arguments.get("lead") else ""))
+		target_name = str(
+			arguments.get("name") or arguments.get("document_name") or arguments.get("lead") or ""
+		)
 		frappe.get_doc(
 			{
 				"doctype": "I-ONE MCP Audit Log",
