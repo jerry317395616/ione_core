@@ -71,17 +71,46 @@ def verify_actor_token(token: str, *, now: int | None = None) -> dict[str, Any]:
 
 
 def resolve_actor_user(token: str) -> str:
-	"""Resolve a signed login email to one enabled Manager System User."""
+	"""Resolve a signed Manager user hint and email to one enabled System User."""
 	import frappe
 
 	payload = verify_actor_token(token)
 	email = str(payload["email"]).strip()
-	user = email if frappe.db.exists("User", email) else frappe.db.get_value("User", {"email": email}, "name")
+	hint = str(payload.get("user") or "").strip()
+
+	def valid_user(name: str | None) -> str | None:
+		if not name:
+			return None
+		user_doc = frappe.get_doc("User", name)
+		if str(user_doc.email or "").strip().casefold() != email.casefold():
+			return None
+		if not user_doc.enabled or user_doc.user_type != "System User":
+			return None
+		return str(user_doc.name)
+
+	user = None
+	if hint:
+		user = valid_user(frappe.db.get_value("User", {"name": hint}, "name"))
+		if not user:
+			user = valid_user(frappe.db.get_value("User", {"username": hint}, "name"))
+
+	if not user:
+		matches = frappe.get_all(
+			"User",
+			filters={"email": email, "enabled": 1, "user_type": "System User"},
+			pluck="name",
+			limit_page_length=3,
+		)
+		if len(matches) == 1:
+			user = valid_user(matches[0])
+		elif len(matches) > 1:
+			frappe.throw(
+				"The logged-in Manager email is linked to multiple accounts; sign in again to identify the account",
+				frappe.AuthenticationError,
+			)
+
 	if not user:
 		frappe.throw("The logged-in Manager account no longer exists", frappe.AuthenticationError)
-	user_doc = frappe.get_doc("User", user)
-	if not user_doc.enabled or user_doc.user_type != "System User":
-		frappe.throw("The logged-in Manager account is disabled or is not a system user", frappe.PermissionError)
 	for doctype in ("CRM Lead", "CRM Task"):
 		if not frappe.has_permission(doctype, ptype="read", user=user):
 			frappe.throw(

@@ -12,7 +12,7 @@ from types import ModuleType, SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
-from ione_core.mcp.identity import verify_actor_token
+from ione_core.mcp.identity import resolve_actor_user, verify_actor_token
 from ione_core.mcp.lead_analysis import create_lead_analysis_docx, validate_analysis
 from ione_core.mcp.security import extract_docx_text
 
@@ -65,12 +65,13 @@ def sample_analysis() -> dict:
 	}
 
 
-def issue_token(*, email: str, site: str, now: int) -> str:
+def issue_token(*, email: str, site: str, now: int, user: str = "") -> str:
 	payload = {
 		"v": 1,
 		"iss": "ione-agent",
 		"aud": site,
 		"email": email,
+		"user": user,
 		"iat": now,
 		"exp": now + 600,
 	}
@@ -125,6 +126,45 @@ class TestActorIdentity(TestCase):
 		with patch.dict(sys.modules, {"frappe": self.fake_frappe()}):
 			payload = verify_actor_token(token, now=now)
 		self.assertEqual(payload["email"], "owner@example.com")
+
+	def test_resolves_login_user_hint_when_email_is_shared(self):
+		now = int(time.time())
+		token = issue_token(
+			email="owner@example.com",
+			user="Administrator",
+			site="manager.myyr.top",
+			now=now,
+		)
+		frappe = self.fake_frappe()
+		users = {
+			"Administrator": SimpleNamespace(
+				name="Administrator",
+				email="owner@example.com",
+				username="administrator",
+				enabled=1,
+				user_type="System User",
+			),
+			"owner@example.com": SimpleNamespace(
+				name="owner@example.com",
+				email="owner@example.com",
+				username="owner",
+				enabled=1,
+				user_type="System User",
+			),
+		}
+
+		def get_value(_doctype, filters, fieldname):
+			for user in users.values():
+				if all(str(getattr(user, key, "")).casefold() == str(value).casefold() for key, value in filters.items()):
+					return getattr(user, fieldname)
+			return None
+
+		frappe.db = SimpleNamespace(get_value=get_value)
+		frappe.get_doc = lambda _doctype, name: users[name]
+		frappe.get_all = lambda *_args, **_kwargs: ["Administrator", "owner@example.com"]
+		frappe.has_permission = lambda *_args, **_kwargs: True
+		with patch.dict(sys.modules, {"frappe": frappe}):
+			self.assertEqual(resolve_actor_user(token), "Administrator")
 
 	def test_rejects_identity_for_another_site(self):
 		now = int(time.time())
