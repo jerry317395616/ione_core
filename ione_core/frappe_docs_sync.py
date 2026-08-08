@@ -37,6 +37,7 @@ PRESERVED_TITLE_WORDS = {
 	"jinja",
 	"json",
 	"lms",
+	"meta",
 	"oauth",
 	"pos",
 	"python",
@@ -49,6 +50,7 @@ PRESERVED_TITLE_WORDS = {
 	"ux",
 	"webhook",
 	"webhooks",
+	"whatsapp",
 }
 
 

@@ -309,6 +309,10 @@ class TestFrappeDocsSync(TestCase):
 		self.assertEqual(_content_source_hash(content), hash_value)
 		self.assertEqual(_translated_markdown_body(content), "# 标题")
 
+	def test_brand_titles_are_not_reported_as_untranslated(self):
+		self.assertFalse(_is_probably_untranslated_title("Meta", "Meta"))
+		self.assertFalse(_is_probably_untranslated_title("WhatsApp", "WhatsApp"))
+
 	def test_source_hash_ignores_cloudflare_email_protection_key(self):
 		first = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#1234abcd)"
 		second = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#deadbeef)"
