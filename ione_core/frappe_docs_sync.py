@@ -21,6 +21,8 @@ TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
 TRANSLATION_WORKERS = 4
+SOURCE_FETCH_WORKERS = 4
+SYNC_BATCH_SIZE = 24
 MIN_TRANSLATED_BODY_CJK = 8
 EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
 OFFICIAL_FALLBACK_PAGES = {
@@ -891,25 +893,6 @@ def _sync_product(
 
 			destination_route = route_map[node.source_route]
 			existing = _find_managed_document(space.name, node.source_route, destination_route, False)
-			try:
-				source_title, source_markdown, source_url = fetch_source_page(
-					node.source_route, session=session
-				)
-			except Exception as exc:
-				failures.append({"source_route": node.source_route, "error": str(exc)})
-				stats["failed"] += 1
-				continue
-			source_hash = _source_hash(source_title, source_markdown)
-			source_current = bool(
-				existing
-				and not force
-				and _content_source_hash(existing.content or "") == source_hash
-			)
-			content = ""
-			current = False
-			if source_current:
-				content = _rewrite_legacy_wiki_links(existing.content or "", route_map)
-				current = content == (existing.content or "")
 			page_jobs.append(
 				{
 					"node": node,
@@ -918,39 +901,31 @@ def _sync_product(
 					"sort_order": sort_order,
 					"destination_route": destination_route,
 					"existing": existing,
-					"source_markdown": source_markdown,
-					"source_url": source_url,
-					"source_hash": source_hash,
-					"content": content,
-					"current": current,
-					"needs_translation": not source_current,
 				}
 			)
 
 	prepare_nodes(tree, root.name)
 	frappe.db.commit()
 
-	translation_jobs = [job for job in page_jobs if job["needs_translation"]]
-	futures: dict[str, Future[str]] = {}
-	with ThreadPoolExecutor(
-		max_workers=min(TRANSLATION_WORKERS, len(translation_jobs)) or 1
-	) as executor:
-		for job in translation_jobs:
-			node = job["node"]
-			futures[node.source_route] = executor.submit(
-				_translate_page_content,
-				translator,
-				job["source_markdown"],
-				job["source_url"],
-				job["source_hash"],
-				route_map,
-			)
-
-		for job in page_jobs:
-			node = job["node"]
-			if job["needs_translation"]:
+	with (
+		ThreadPoolExecutor(max_workers=SOURCE_FETCH_WORKERS) as fetch_executor,
+		ThreadPoolExecutor(max_workers=TRANSLATION_WORKERS) as translation_executor,
+	):
+		for offset in range(0, len(page_jobs), SYNC_BATCH_SIZE):
+			batch = page_jobs[offset : offset + SYNC_BATCH_SIZE]
+			fetch_futures = {
+				job["node"].source_route: fetch_executor.submit(
+					fetch_source_page, job["node"].source_route
+				)
+				for job in batch
+			}
+			prepared_batch: list[dict[str, Any]] = []
+			for job in batch:
+				node = job["node"]
 				try:
-					job["content"] = futures[node.source_route].result()
+					source_title, source_markdown, source_url = fetch_futures[
+						node.source_route
+					].result()
 				except Exception as exc:
 					failures.append({"source_route": node.source_route, "error": str(exc)})
 					stats["failed"] += 1
@@ -965,24 +940,81 @@ def _sync_product(
 					)
 					continue
 
-			created = job["existing"] is None
-			_upsert_page(
-				spec,
-				node,
-				job["translated_title"],
-				job["parent_name"],
-				space.name,
-				job["sort_order"],
-				job["destination_route"],
-				job["content"],
-				job["existing"],
-			)
-			if job["current"]:
-				stats["skipped"] += 1
-			else:
-				stats["created" if created else "updated"] += 1
-			frappe.db.commit()
-			_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
+				source_hash = _source_hash(source_title, source_markdown)
+				existing = job["existing"]
+				source_current = bool(
+					existing
+					and not force
+					and _content_source_hash(existing.content or "") == source_hash
+				)
+				content = ""
+				current = False
+				if source_current:
+					content = _rewrite_legacy_wiki_links(existing.content or "", route_map)
+					current = content == (existing.content or "")
+				job.update(
+					{
+						"source_markdown": source_markdown,
+						"source_url": source_url,
+						"source_hash": source_hash,
+						"content": content,
+						"current": current,
+						"needs_translation": not source_current,
+					}
+				)
+				prepared_batch.append(job)
+
+			translation_futures: dict[str, Future[str]] = {}
+			for job in prepared_batch:
+				if not job["needs_translation"]:
+					continue
+				node = job["node"]
+				translation_futures[node.source_route] = translation_executor.submit(
+					_translate_page_content,
+					translator,
+					job["source_markdown"],
+					job["source_url"],
+					job["source_hash"],
+					route_map,
+				)
+
+			for job in prepared_batch:
+				node = job["node"]
+				if job["needs_translation"]:
+					try:
+						job["content"] = translation_futures[node.source_route].result()
+					except Exception as exc:
+						failures.append({"source_route": node.source_route, "error": str(exc)})
+						stats["failed"] += 1
+						_write_progress(
+							{
+								spec.slug: {
+									**stats,
+									"last_source_route": node.source_route,
+									"last_error": str(exc),
+								}
+							}
+						)
+						continue
+
+				created = job["existing"] is None
+				_upsert_page(
+					spec,
+					node,
+					job["translated_title"],
+					job["parent_name"],
+					space.name,
+					job["sort_order"],
+					job["destination_route"],
+					job["content"],
+					job["existing"],
+				)
+				if job["current"]:
+					stats["skipped"] += 1
+				else:
+					stats["created" if created else "updated"] += 1
+				frappe.db.commit()
+				_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
 
 	stats["status"] = "partial" if failures else "completed"
 	if failures:
