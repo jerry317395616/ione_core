@@ -21,6 +21,7 @@ from ione_core.frappe_docs_sync import (
 	_split_markdown,
 	_translated_markdown_body,
 	_translation_fidelity_issues,
+	discover_product,
 	fetch_source_page,
 	parse_sidebar,
 )
@@ -183,6 +184,32 @@ class TestFrappeDocsSync(TestCase):
 			source_url,
 			"https://docs.frappe.io/education/final-assessment-grades",
 		)
+
+	def test_discovers_print_designer_from_the_official_repository_fallback(self):
+		from unittest.mock import patch
+
+		spec = ProductSpec(
+			"print-designer",
+			"Frappe Print Designer 中文文档",
+			"print-designer",
+			"https://docs.frappe.io/print-designer/introduction",
+			"print-designer-zh-docs",
+		)
+		with patch("ione_core.frappe_docs_sync._docs_get", side_effect=ValueError("missing")):
+			nodes = discover_product(spec)
+
+		self.assertEqual(len(nodes), 1)
+		self.assertEqual(nodes[0].source_route, "print-designer/introduction")
+
+	def test_published_fallback_content_has_clear_provenance(self):
+		content = _build_published_content(
+			"# Print Designer",
+			"https://github.com/frappe/print_designer/blob/develop/README.md",
+			"a" * 64,
+		)
+
+		self.assertIn("Frappe 官方项目说明", content)
+		self.assertEqual(_translated_markdown_body(content), "# Print Designer")
 
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (

@@ -21,6 +21,13 @@ TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
 MIN_TRANSLATED_BODY_CJK = 8
 EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
+OFFICIAL_FALLBACK_PAGES = {
+	"print-designer/introduction": {
+		"title": "Print Designer",
+		"markdown_url": "https://raw.githubusercontent.com/frappe/print_designer/develop/README.md",
+		"source_url": "https://github.com/frappe/print_designer/blob/develop/README.md",
+	}
+}
 PRESERVED_TITLE_WORDS = {
 	"api",
 	"cli",
@@ -189,8 +196,26 @@ PRODUCTS: dict[str, ProductSpec] = {
 
 
 def discover_product(spec: ProductSpec, session: Any | None = None) -> list[SourceNode]:
-	response = _docs_get(spec.entry_url, session=session)
-	return parse_sidebar(response.text, spec.source_prefix)
+	import requests
+
+	try:
+		response = _docs_get(spec.entry_url, session=session)
+		return parse_sidebar(response.text, spec.source_prefix)
+	except (requests.RequestException, ValueError):
+		fallback_routes = [
+			route for route in OFFICIAL_FALLBACK_PAGES if route.startswith(f"{spec.source_prefix}/")
+		]
+		if not fallback_routes:
+			raise
+		return [
+			SourceNode(
+				title=str(OFFICIAL_FALLBACK_PAGES[route]["title"]),
+				kind="page",
+				source_route=route,
+				identity=route,
+			)
+			for route in fallback_routes
+		]
 
 
 def parse_sidebar(html: str, source_prefix: str) -> list[SourceNode]:
@@ -258,6 +283,15 @@ def fetch_source_page(source_route: str, session: Any | None = None) -> tuple[st
 			title, markdown, source_url = _extract_markdown_document(response.text, url)
 			return title, markdown, source_url
 		except (requests.RequestException, ValueError) as markdown_error:
+			fallback = OFFICIAL_FALLBACK_PAGES.get(source_route.strip("/"))
+			if fallback:
+				response = _official_fallback_get(str(fallback["markdown_url"]), session=session)
+				body = response.text.lstrip("\ufeff").strip()
+				if len(body) < 40:
+					raise RuntimeError(
+						f"The official fallback source for {source_route} did not contain enough content."
+					) from markdown_error
+				return str(fallback["title"]), body, str(fallback["source_url"])
 			raise RuntimeError(
 				f"Unable to read official documentation route {source_route}: "
 				f"HTML failed with {html_error}; Markdown failed with {markdown_error}"
@@ -1040,6 +1074,25 @@ def _docs_get(url: str, session: Any | None = None):
 	return response
 
 
+def _official_fallback_get(url: str, session: Any | None = None):
+	import requests
+
+	allowed_url = str(OFFICIAL_FALLBACK_PAGES["print-designer/introduction"]["markdown_url"])
+	if url != allowed_url:
+		raise ValueError("The requested documentation fallback is not trusted.")
+	session = session or requests.Session()
+	session.trust_env = False
+	session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/plain"})
+	response = session.get(url, timeout=REQUEST_TIMEOUT)
+	response.raise_for_status()
+	if len(response.content) > MAX_SOURCE_BYTES:
+		raise ValueError("The documentation fallback is larger than the allowed source size.")
+	resolved = urlsplit(response.url)
+	if resolved.scheme != "https" or resolved.hostname != "raw.githubusercontent.com":
+		raise ValueError("The documentation fallback redirected to an untrusted host.")
+	return response
+
+
 def _destination_route(spec: ProductSpec, source_route: str) -> str:
 	prefix = f"{spec.source_prefix}/"
 	relative = source_route[len(prefix) :] if source_route.startswith(prefix) else source_route
@@ -1095,9 +1148,11 @@ def _rewrite_legacy_wiki_links(markdown: str, route_map: dict[str, str]) -> str:
 
 
 def _build_published_content(markdown: str, source_url: str, source_hash: str) -> str:
+	resolved = urlsplit(source_url)
+	source_label = "Frappe 官方文档" if resolved.hostname == DOCS_HOST else "Frappe 官方项目说明"
 	return (
 		f"<!-- {SOURCE_MARKER}\nsource_url: {source_url}\nsource_hash: {source_hash}\n-->\n\n"
-		f"> 本页译自 [Frappe 官方文档]({source_url})。内容与官方章节保持同步。\n\n"
+		f"> 本页译自 [{source_label}]({source_url})。内容与官方章节保持同步。\n\n"
 		f"{markdown.strip()}\n"
 	)
 
@@ -1105,7 +1160,7 @@ def _build_published_content(markdown: str, source_url: str, source_hash: str) -
 def _translated_markdown_body(content: str) -> str:
 	content = re.sub(rf"<!-- {SOURCE_MARKER}\b.*?-->\s*", "", content, count=1, flags=re.DOTALL)
 	return re.sub(
-		r"^> 本页译自 \[Frappe 官方文档\]\([^\n]+\)。内容与官方章节保持同步。\s*",
+		r"^> 本页译自 \[Frappe 官方(?:文档|项目说明)\]\([^\n]+\)。内容与官方章节保持同步。\s*",
 		"",
 		content,
 		count=1,
