@@ -5,6 +5,7 @@ import json
 import re
 import time
 from collections.abc import Iterable
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ MAX_SOURCE_BYTES = 5 * 1024 * 1024
 TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
+TRANSLATION_WORKERS = 4
 MIN_TRANSLATED_BODY_CJK = 8
 EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
 OFFICIAL_FALLBACK_PAGES = {
@@ -392,6 +394,10 @@ class QwenMarkdownTranslator:
 		self.session = session or requests.Session()
 		self.session.trust_env = False
 
+	def new_worker(self) -> QwenMarkdownTranslator:
+		"""Create a translator with an isolated HTTP session for worker threads."""
+		return QwenMarkdownTranslator(self.base_url, self.api_key, self.model_id)
+
 	@classmethod
 	def from_flow_model(
 		cls,
@@ -408,9 +414,24 @@ class QwenMarkdownTranslator:
 
 	def translate_titles(self, titles: Iterable[str]) -> dict[str, str]:
 		unique_titles = list(dict.fromkeys(title for title in titles if title))
+		batches = [
+			unique_titles[offset : offset + TITLE_BATCH_SIZE]
+			for offset in range(0, len(unique_titles), TITLE_BATCH_SIZE)
+		]
+		if len(batches) <= 1:
+			return self._translate_title_batch(batches[0]) if batches else {}
+
 		translations: dict[str, str] = {}
-		for offset in range(0, len(unique_titles), TITLE_BATCH_SIZE):
-			batch = unique_titles[offset : offset + TITLE_BATCH_SIZE]
+		with ThreadPoolExecutor(max_workers=min(TRANSLATION_WORKERS, len(batches))) as executor:
+			for translated_batch in executor.map(
+				lambda batch: self.new_worker()._translate_title_batch(batch), batches
+			):
+				translations.update(translated_batch)
+		return translations
+
+	def _translate_title_batch(self, batch: list[str]) -> dict[str, str]:
+		translations: dict[str, str] = {}
+		if batch:
 			pending = dict(enumerate(batch))
 			by_id: dict[int, str] = {}
 			for attempt in range(TITLE_TRANSLATION_ATTEMPTS):
@@ -847,60 +868,144 @@ def _sync_product(
 		node.source_route: _destination_route(spec, node.source_route)
 		for node in pages
 	}
-	stats = {"status": "running", "discovered": len(pages), "created": 0, "updated": 0, "skipped": 0}
+	stats = {
+		"status": "running",
+		"discovered": len(pages),
+		"created": 0,
+		"updated": 0,
+		"skipped": 0,
+		"failed": 0,
+	}
+	page_jobs: list[dict[str, Any]] = []
+	failures: list[dict[str, str]] = []
 
-	def publish_nodes(nodes: list[SourceNode], parent_name: str) -> None:
+	def prepare_nodes(nodes: list[SourceNode], parent_name: str) -> None:
 		for sort_order, node in enumerate(nodes):
 			translated_title = titles.get(node.title, node.title)
 			if node.kind == "group":
 				group = _upsert_group(
 					spec, node, translated_title, parent_name, space.name, sort_order
 				)
-				publish_nodes(node.children, group.name)
+				prepare_nodes(node.children, group.name)
 				continue
 
 			destination_route = route_map[node.source_route]
 			existing = _find_managed_document(space.name, node.source_route, destination_route, False)
-			source_title, source_markdown, source_url = fetch_source_page(node.source_route, session=session)
+			try:
+				source_title, source_markdown, source_url = fetch_source_page(
+					node.source_route, session=session
+				)
+			except Exception as exc:
+				failures.append({"source_route": node.source_route, "error": str(exc)})
+				stats["failed"] += 1
+				continue
 			source_hash = _source_hash(source_title, source_markdown)
-			current = existing and not force and _content_source_hash(existing.content or "") == source_hash
-			if current:
+			source_current = bool(
+				existing
+				and not force
+				and _content_source_hash(existing.content or "") == source_hash
+			)
+			content = ""
+			current = False
+			if source_current:
 				content = _rewrite_legacy_wiki_links(existing.content or "", route_map)
-				if content == (existing.content or ""):
-					stats["skipped"] += 1
-				else:
-					current = False
-			else:
-				translated_markdown = translator.translate_markdown(source_markdown)
-				if _is_heading_only_markdown(source_markdown):
-					translated_markdown = f"{translated_markdown.rstrip()}\n\n{EMPTY_OFFICIAL_PAGE_NOTICE}"
-				translated_markdown = _rewrite_internal_links(translated_markdown, route_map)
-				content = _build_published_content(translated_markdown, source_url, source_hash)
+				current = content == (existing.content or "")
+			page_jobs.append(
+				{
+					"node": node,
+					"translated_title": translated_title,
+					"parent_name": parent_name,
+					"sort_order": sort_order,
+					"destination_route": destination_route,
+					"existing": existing,
+					"source_markdown": source_markdown,
+					"source_url": source_url,
+					"source_hash": source_hash,
+					"content": content,
+					"current": current,
+					"needs_translation": not source_current,
+				}
+			)
 
-			created = existing is None
+	prepare_nodes(tree, root.name)
+	frappe.db.commit()
+
+	translation_jobs = [job for job in page_jobs if job["needs_translation"]]
+	futures: dict[str, Future[str]] = {}
+	with ThreadPoolExecutor(
+		max_workers=min(TRANSLATION_WORKERS, len(translation_jobs)) or 1
+	) as executor:
+		for job in translation_jobs:
+			node = job["node"]
+			futures[node.source_route] = executor.submit(
+				_translate_page_content,
+				translator,
+				job["source_markdown"],
+				job["source_url"],
+				job["source_hash"],
+				route_map,
+			)
+
+		for job in page_jobs:
+			node = job["node"]
+			if job["needs_translation"]:
+				try:
+					job["content"] = futures[node.source_route].result()
+				except Exception as exc:
+					failures.append({"source_route": node.source_route, "error": str(exc)})
+					stats["failed"] += 1
+					_write_progress(
+						{
+							spec.slug: {
+								**stats,
+								"last_source_route": node.source_route,
+								"last_error": str(exc),
+							}
+						}
+					)
+					continue
+
+			created = job["existing"] is None
 			_upsert_page(
 				spec,
 				node,
-				translated_title,
-				parent_name,
+				job["translated_title"],
+				job["parent_name"],
 				space.name,
-				sort_order,
-				destination_route,
-				content,
-				existing,
+				job["sort_order"],
+				job["destination_route"],
+				job["content"],
+				job["existing"],
 			)
-			if not current:
+			if job["current"]:
+				stats["skipped"] += 1
+			else:
 				stats["created" if created else "updated"] += 1
 			frappe.db.commit()
 			_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
 
-	publish_nodes(tree, root.name)
-	stats["status"] = "completed"
+	stats["status"] = "partial" if failures else "completed"
+	if failures:
+		stats["failures"] = failures
 	stats["wiki_space"] = space.name
 	stats["route"] = spec.destination_route
 	frappe.clear_cache()
 	frappe.db.commit()
 	return stats
+
+
+def _translate_page_content(
+	translator: QwenMarkdownTranslator,
+	source_markdown: str,
+	source_url: str,
+	source_hash: str,
+	route_map: dict[str, str],
+) -> str:
+	translated_markdown = translator.new_worker().translate_markdown(source_markdown)
+	if _is_heading_only_markdown(source_markdown):
+		translated_markdown = f"{translated_markdown.rstrip()}\n\n{EMPTY_OFFICIAL_PAGE_NOTICE}"
+	translated_markdown = _rewrite_internal_links(translated_markdown, route_map)
+	return _build_published_content(translated_markdown, source_url, source_hash)
 
 
 def _ensure_space(spec: ProductSpec):

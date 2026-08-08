@@ -19,6 +19,7 @@ from ione_core.frappe_docs_sync import (
 	_rewrite_internal_links,
 	_source_hash,
 	_split_markdown,
+	_translate_page_content,
 	_translated_markdown_body,
 	_translation_fidelity_issues,
 	discover_product,
@@ -369,6 +370,44 @@ class TestFrappeDocsSync(TestCase):
 			translated = translator.translate_titles(["Introduction"])
 
 		self.assertEqual(translated, {"Introduction": "简介"})
+
+	def test_title_translation_processes_large_catalog_in_batches(self):
+		from unittest.mock import patch
+
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		titles = [f"Title {index}" for index in range(81)]
+		batch_sizes = []
+
+		def translate_batch(_worker, batch):
+			batch_sizes.append(len(batch))
+			return {title: f"译文 {title}" for title in batch}
+
+		with patch.object(QwenMarkdownTranslator, "_translate_title_batch", translate_batch):
+			translated = translator.translate_titles(titles)
+
+		self.assertEqual(len(translated), 81)
+		self.assertCountEqual(batch_sizes, [40, 40, 1])
+
+	def test_page_translation_worker_builds_published_content(self):
+		class Worker:
+			def translate_markdown(self, _markdown):
+				return "# 中文标题"
+
+		class Translator:
+			def new_worker(self):
+				return Worker()
+
+		content = _translate_page_content(
+			Translator(),
+			"# English title",
+			"https://docs.frappe.io/example",
+			"a" * 64,
+			{},
+		)
+
+		self.assertIn("# 中文标题", content)
+		self.assertIn("Frappe 官方文档当前仅提供本章节标题", content)
+		self.assertEqual(_content_source_hash(content), "a" * 64)
 
 	def test_source_hash_ignores_cloudflare_email_protection_key(self):
 		first = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#1234abcd)"
