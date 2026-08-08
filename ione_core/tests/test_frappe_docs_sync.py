@@ -171,6 +171,19 @@ class TestFrappeDocsSync(TestCase):
 		self.assertIn("https://docs.frappe.io/files/enrollment.png", markdown)
 		self.assertIn('src="https://docs.frappe.io/files/example.html"', markdown)
 
+	def test_accepts_an_official_heading_only_document(self):
+		title, markdown, source_url = _extract_markdown_document(
+			"# Final Assessment Grades",
+			"https://docs.frappe.io/education/final-assessment-grades",
+		)
+
+		self.assertEqual(title, "Final Assessment Grades")
+		self.assertEqual(markdown, "# Final Assessment Grades")
+		self.assertEqual(
+			source_url,
+			"https://docs.frappe.io/education/final-assessment-grades",
+		)
+
 	def test_parses_nested_sidebar_without_flattening(self):
 		html = (
 			'<aside class="wiki-sidebar"><ul class="wiki-tree">'

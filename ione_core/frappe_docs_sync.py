@@ -20,6 +20,7 @@ TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
 MIN_TRANSLATED_BODY_CJK = 8
+EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
 PRESERVED_TITLE_WORDS = {
 	"api",
 	"cli",
@@ -285,7 +286,7 @@ def _extract_article(html: str, source_url: str) -> tuple[str, str]:
 	markdown = markdownify(str(content), heading_style="ATX", bullets="-")
 	markdown = re.sub(r"[ \t]+\n", "\n", markdown)
 	markdown = re.sub(r"\n{3,}", "\n\n", markdown).strip()
-	if len(markdown) < 40:
+	if len(markdown) < 40 and not _is_heading_only_markdown(markdown):
 		raise ValueError("The documentation page did not contain enough readable content.")
 	return title or "Frappe Documentation", markdown
 
@@ -310,7 +311,7 @@ def _extract_markdown_document(markdown: str, fallback_url: str) -> tuple[str, s
 
 	body = re.sub(r"[ \t]+\n", "\n", body)
 	body = re.sub(r"\n{3,}", "\n\n", body).strip()
-	if len(body) < 40:
+	if len(body) < 40 and not _is_heading_only_markdown(body):
 		raise ValueError("The official Markdown page did not contain enough readable content.")
 
 	source_url = metadata.get("url") or fallback_url
@@ -325,6 +326,13 @@ def _extract_markdown_document(markdown: str, fallback_url: str) -> tuple[str, s
 def _markdown_heading(markdown: str) -> str:
 	match = re.search(r"^#\s+(.+?)\s*$", markdown, flags=re.MULTILINE)
 	return match.group(1).strip() if match else ""
+
+
+def _is_heading_only_markdown(markdown: str) -> bool:
+	if not _markdown_heading(markdown):
+		return False
+	remaining = re.sub(r"(?m)^#{1,6}[ \t]+.*$", "", markdown).strip()
+	return not remaining
 
 
 def _absolutize_docs_links(markdown: str) -> str:
@@ -817,6 +825,8 @@ def _sync_product(
 					current = False
 			else:
 				translated_markdown = translator.translate_markdown(source_markdown)
+				if _is_heading_only_markdown(source_markdown):
+					translated_markdown = f"{translated_markdown.rstrip()}\n\n{EMPTY_OFFICIAL_PAGE_NOTICE}"
 				translated_markdown = _rewrite_internal_links(translated_markdown, route_map)
 				content = _build_published_content(translated_markdown, source_url, source_hash)
 
