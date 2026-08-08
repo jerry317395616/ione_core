@@ -61,7 +61,15 @@ MAX_DOCX_BYTES = 5 * 1024 * 1024
 MAX_DOCX_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
 MAX_DOCX_TEXT_CHARACTERS = 300000
 REQUIRED_DOCX_PARTS = {"[Content_Types].xml", "word/document.xml"}
-SENSITIVE_KEYS = {"api_key", "api_secret", "authorization", "password", "secret", "token"}
+SENSITIVE_KEYS = {
+	"actor_token",
+	"api_key",
+	"api_secret",
+	"authorization",
+	"password",
+	"secret",
+	"token",
+}
 
 
 def require_login() -> str:

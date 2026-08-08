@@ -383,6 +383,119 @@ def frappe_attach_word_file(
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
+@audited_tool("frappe_create_crm_lead_package", "创建线索")
+def frappe_create_crm_lead_package(
+	lead_data: dict[str, Any],
+	analysis: dict[str, Any],
+	task_title: str,
+	task_description: str,
+	actor_token: str,
+	task_due_date: str | None = None,
+	task_priority: str = "Medium",
+) -> dict[str, Any]:
+	"""Atomically create a CRM Lead, detailed Word analysis and assigned CRM follow-up task.
+
+	The assignee is derived exclusively from the signed current Manager login identity. The caller
+	cannot choose another user. Any failure rolls back the Lead, CRM Task and assignment together.
+
+	Args:
+		lead_data: Writable CRM Lead field values supported by current metadata.
+		analysis: Detailed analysis with executive_summary, at least ten sections and optional sources.
+		task_title: Specific follow-up action title, limited to 140 characters.
+		task_description: Plain-text follow-up context and expected result.
+		actor_token: Short-lived trusted identity token supplied in the Agent session context.
+		task_due_date: Optional ISO date or datetime; defaults to three days from creation.
+		task_priority: Low, Medium or High.
+	"""
+	from ione_core.mcp.identity import resolve_actor_user
+	from ione_core.mcp.lead_analysis import create_lead_analysis_docx, validate_analysis
+
+	lead_meta = ensure_doctype_permission("CRM Lead", "create")
+	ensure_doctype_permission("CRM Task", "create")
+	assignee = resolve_actor_user(actor_token)
+	validate_analysis(analysis)
+	lead_payload = safe_write_data(
+		lead_meta,
+		lead_data,
+		permitted_fields("CRM Lead", "write"),
+	)
+	lead_payload["doctype"] = "CRM Lead"
+
+	title = str(task_title or "").strip()
+	if not title:
+		raise ValueError("task_title is required")
+	if len(title) > 140:
+		raise ValueError("task_title cannot exceed 140 characters")
+	description = BeautifulSoup(str(task_description or ""), "html.parser").get_text("\n", strip=True)
+	if not description:
+		description = "核实客户需求、关键联系人、预算、决策流程和下一步行动。"
+	if len(description) > 6000:
+		raise ValueError("task_description cannot exceed 6,000 characters")
+	if task_priority not in {"Low", "Medium", "High"}:
+		raise ValueError("task_priority must be Low, Medium or High")
+
+	from frappe.utils import add_days, get_datetime, now_datetime, today
+
+	due_date = get_datetime(task_due_date) if task_due_date else add_days(now_datetime(), 3)
+	savepoint = "ione_mcp_create_lead_package"
+	frappe.db.savepoint(savepoint)
+	try:
+		lead = frappe.get_doc(lead_payload).insert()
+		customer_name = str(
+			lead.get("organization")
+			or lead.get("organization_name")
+			or " ".join(
+				part
+				for part in (lead.get("first_name"), lead.get("middle_name"), lead.get("last_name"))
+				if part
+			).strip()
+			or lead.get("lead_name")
+			or lead.get("name")
+		)
+		docx = create_lead_analysis_docx(
+			analysis,
+			lead_name=lead.name,
+			customer_name=customer_name,
+			prepared_for=assignee,
+		)
+		task = frappe.get_doc(
+			{
+				"doctype": "CRM Task",
+				"title": title,
+				"description": description,
+				"assigned_to": assignee,
+				"priority": task_priority,
+				"status": "Todo",
+				"start_date": today(),
+				"due_date": due_date,
+				"reference_doctype": "CRM Lead",
+				"reference_docname": lead.name,
+			}
+		).insert()
+		from frappe.utils.file_manager import save_file
+
+		file_doc = save_file(
+			f"客户需求分析_{lead.name}.docx",
+			docx,
+			"CRM Lead",
+			lead.name,
+			is_private=1,
+		)
+	except Exception:
+		frappe.db.rollback(save_point=savepoint)
+		raise
+	return {
+		"doctype": "CRM Lead",
+		"name": lead.name,
+		"lead": lead.name,
+		"analysis_file": file_doc.file_url,
+		"task": task.name,
+		"assignee": assignee,
+		"due_date": serializable(task.due_date),
+	}
+
+
+@mcp.tool(annotations=DRAFT_WRITE)
 @audited_tool("frappe_convert_lead_to_deal", "转换")
 def frappe_convert_lead_to_deal(
 	lead: str,

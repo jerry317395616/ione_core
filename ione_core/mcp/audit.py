@@ -9,8 +9,13 @@ from ione_core.mcp.security import sanitize_for_audit
 def request_summary(arguments) -> str:
 	summary = {}
 	for key, value in arguments.items():
-		if key in {"data", "deal_data"} and isinstance(value, dict):
+		if key in {"data", "deal_data", "lead_data"} and isinstance(value, dict):
 			summary[key] = {"fields": sorted(value)}
+		elif key == "analysis" and isinstance(value, dict):
+			summary[key] = {
+				"sections": len(value.get("sections") or []),
+				"sources": len(value.get("sources") or []),
+			}
 		elif key == "content":
 			summary[key] = {"characters": len(value or "")}
 		elif key == "content_base64":
@@ -44,6 +49,8 @@ def result_summary(result) -> str:
 			"presentation",
 			"slide_count",
 			"created",
+			"task",
+			"assignee",
 		)
 		if key in result
 	}
@@ -102,7 +109,10 @@ def write_audit_log(
 	try:
 		import frappe
 
-		doctype = str(arguments.get("doctype") or ("CRM Lead" if arguments.get("lead") else ""))
+		doctype = str(
+			arguments.get("doctype")
+			or ("CRM Lead" if arguments.get("lead") or arguments.get("lead_data") else "")
+		)
 		target_name = str(
 			arguments.get("name") or arguments.get("document_name") or arguments.get("lead") or ""
 		)
