@@ -14,8 +14,8 @@ from urllib.parse import urljoin, urlsplit
 DOCS_HOST = "docs.frappe.io"
 SOURCE_MARKER = "IONE_FRAPPE_DOCS_SOURCE"
 USER_AGENT = "I-ONE-Frappe-Docs-Sync/1.0 (+https://myyr.top)"
-REQUEST_TIMEOUT = (10, 60)
-DOCS_REQUEST_ATTEMPTS = 4
+REQUEST_TIMEOUT = (8, 25)
+DOCS_REQUEST_ATTEMPTS = 3
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
 TRANSLATION_CHUNK_CHARACTERS = 6_000
 TITLE_BATCH_SIZE = 40
@@ -774,6 +774,7 @@ def audit_frappe_docs(
 		stale_source = []
 		source_fetch_errors = []
 		fidelity_issues = []
+		source_checks: list[tuple[str, str]] = []
 		for source_path, expectation in expected.items():
 			matches = by_source.get(source_path, [])
 			if len(matches) != 1:
@@ -800,22 +801,33 @@ def audit_frappe_docs(
 			if f"/wiki/{spec.destination_route}" in content:
 				bad_internal_links.append(source_path)
 			if verify_source_content:
-				try:
-					source_title, source_markdown, _source_url = fetch_source_page(
-						source_path, session=session
+				source_checks.append((source_path, content))
+
+		if source_checks:
+			with ThreadPoolExecutor(max_workers=SOURCE_FETCH_WORKERS) as executor:
+				fetch_futures = {
+					source_path: executor.submit(fetch_source_page, source_path)
+					for source_path, _content in source_checks
+				}
+				for source_path, content in source_checks:
+					try:
+						source_title, source_markdown, _source_url = fetch_futures[
+							source_path
+						].result()
+					except Exception as exc:
+						source_fetch_errors.append(
+							{"source_path": source_path, "error": str(exc)}
+						)
+						continue
+					if _content_source_hash(content) != _source_hash(source_title, source_markdown):
+						stale_source.append(source_path)
+					page_fidelity_issues = _translation_fidelity_issues(
+						source_markdown, _translated_markdown_body(content)
 					)
-				except Exception as exc:
-					source_fetch_errors.append({"source_path": source_path, "error": str(exc)})
-					continue
-				if _content_source_hash(content) != _source_hash(source_title, source_markdown):
-					stale_source.append(source_path)
-				page_fidelity_issues = _translation_fidelity_issues(
-					source_markdown, _translated_markdown_body(content)
-				)
-				if page_fidelity_issues:
-					fidelity_issues.append(
-						{"source_path": source_path, "issues": page_fidelity_issues}
-					)
+					if page_fidelity_issues:
+						fidelity_issues.append(
+							{"source_path": source_path, "issues": page_fidelity_issues}
+						)
 
 		issues = {
 			"missing_read_roles": sorted({"All", "Guest"} - public_read_roles),
