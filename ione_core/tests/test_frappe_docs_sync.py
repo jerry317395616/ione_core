@@ -353,6 +353,23 @@ class TestFrappeDocsSync(TestCase):
 		self.assertFalse(_is_probably_untranslated_title("Meta", "Meta"))
 		self.assertFalse(_is_probably_untranslated_title("WhatsApp", "WhatsApp"))
 
+	def test_title_translation_retries_an_unchanged_english_title(self):
+		from unittest.mock import patch
+
+		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
+		responses = iter(
+			[
+				'[{"id": 0, "translation": "Introduction"}]',
+				'[{"id": 0, "translation": "简介"}]',
+			]
+		)
+		translator._chat = lambda _prompt: next(responses)
+
+		with patch("ione_core.frappe_docs_sync.time.sleep"):
+			translated = translator.translate_titles(["Introduction"])
+
+		self.assertEqual(translated, {"Introduction": "简介"})
+
 	def test_source_hash_ignores_cloudflare_email_protection_key(self):
 		first = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#1234abcd)"
 		second = "[Email](https://docs.frappe.io/cdn-cgi/l/email-protection#deadbeef)"

@@ -423,6 +423,11 @@ class QwenMarkdownTranslator:
 				)
 				try:
 					resolved = _extract_title_translations(self._chat(prompt), set(pending))
+					resolved = {
+						index: translation
+						for index, translation in resolved.items()
+						if not _is_probably_untranslated_title(pending[index], translation)
+					}
 				except (TypeError, ValueError, json.JSONDecodeError):
 					resolved = {}
 				by_id.update(resolved)
@@ -433,11 +438,19 @@ class QwenMarkdownTranslator:
 					time.sleep(2**attempt)
 
 			for index, title in pending.items():
-				prompt = (
-					"把下面这个 Frappe 官方文档标题翻译成简洁、自然的简体中文。"
-					"保留产品名和技术名, 只返回译文本身, 不要解释:\n" + title
-				)
-				translated = _clean_single_title_translation(self._chat(prompt))
+				translated = ""
+				for attempt in range(TITLE_TRANSLATION_ATTEMPTS):
+					prompt = (
+						"把下面这个 Frappe 官方文档标题翻译成简洁、自然的简体中文。"
+						"保留产品名和技术名, 只返回译文本身, 不要解释:\n" + title
+					)
+					if attempt:
+						prompt += "\n上一次仍是英文。请给出中文标题。"
+					translated = _clean_single_title_translation(self._chat(prompt))
+					if translated and not _is_probably_untranslated_title(title, translated):
+						break
+					if attempt + 1 < TITLE_TRANSLATION_ATTEMPTS:
+						time.sleep(2**attempt)
 				by_id[index] = translated or title
 			translations.update({source: by_id[index] for index, source in enumerate(batch)})
 		return translations
