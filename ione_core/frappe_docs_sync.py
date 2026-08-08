@@ -1051,7 +1051,16 @@ def _ensure_space(spec: ProductSpec):
 		)
 		_ensure_public_read_roles(space)
 		space.save(ignore_permissions=True)
-	root.update({"wiki_space": space.name, "is_published": 1})
+	root.update(
+		{
+			"title": spec.name.removesuffix(" 中文文档"),
+			"slug": spec.destination_route,
+			"route": spec.destination_route,
+			"source_path": f"root:{spec.slug}",
+			"wiki_space": space.name,
+			"is_published": 1,
+		}
+	)
 	root.save(ignore_permissions=True)
 	frappe.db.commit()
 	return root, space
@@ -1082,7 +1091,7 @@ def _upsert_group(
 ):
 	import frappe
 
-	route = _destination_route(spec, node.source_route) if node.source_route else f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
+	route = _group_route(spec, node)
 	doc = _find_managed_document(space, node.identity, route, True)
 	values = {
 		"title": title,
@@ -1217,6 +1226,11 @@ def _destination_route(spec: ProductSpec, source_route: str) -> str:
 	return f"{spec.destination_route}/{relative.strip('/')}"
 
 
+def _group_route(spec: ProductSpec, node: SourceNode) -> str:
+	"""Give sidebar groups routes that cannot collide with their landing pages."""
+	return f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
+
+
 def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dict[str, dict[str, Any]]:
 	expected: dict[str, dict[str, Any]] = {
 		f"root:{spec.slug}": {
@@ -1231,9 +1245,9 @@ def _expected_source_hierarchy(spec: ProductSpec, tree: list[SourceNode]) -> dic
 		for node in nodes:
 			source_path = node.identity if node.kind == "group" else node.source_route
 			route = (
-				_destination_route(spec, node.source_route)
-				if node.source_route
-				else f"{spec.destination_route}/_section/{node.identity.split(':')[2]}"
+				_group_route(spec, node)
+				if node.kind == "group"
+				else _destination_route(spec, node.source_route)
 			)
 			expected[source_path] = {
 				"kind": node.kind,

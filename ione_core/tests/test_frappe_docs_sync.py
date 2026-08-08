@@ -12,6 +12,7 @@ from ione_core.frappe_docs_sync import (
 	_expected_source_hierarchy,
 	_extract_markdown_document,
 	_extract_title_translations,
+	_group_route,
 	_is_probably_untranslated_title,
 	_protect_markdown_literals,
 	_protected_literal_tokens,
@@ -492,3 +493,26 @@ class TestFrappeDocsSync(TestCase):
 
 		self.assertEqual(hierarchy["group:builder:0001:scripting"]["parent"], "root:builder")
 		self.assertEqual(hierarchy["builder/data-script"]["parent"], "group:builder:0001:scripting")
+		self.assertEqual(
+			hierarchy["group:builder:0001:scripting"]["route"],
+			"builder-zh-docs/_section/0001",
+		)
+		self.assertEqual(hierarchy["builder/data-script"]["route"], "builder-zh-docs/data-script")
+
+	def test_group_routes_do_not_collide_when_groups_share_a_landing_page(self):
+		spec = ProductSpec("erpnext", "ERPNext", "erpnext", "", "erpnext-zh-docs")
+		parent = SourceNode(
+			"Accounting",
+			"group",
+			"erpnext/accounting",
+			identity="group:erpnext:0001:accounting",
+		)
+		child = SourceNode(
+			"Accounting Setup",
+			"group",
+			"erpnext/accounting",
+			identity="group:erpnext:0002:accounting-setup",
+		)
+
+		self.assertNotEqual(_group_route(spec, parent), _group_route(spec, child))
+		self.assertNotEqual(_group_route(spec, parent), _destination_route(spec, parent.source_route))
