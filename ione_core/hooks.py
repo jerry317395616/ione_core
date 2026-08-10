@@ -28,6 +28,7 @@ add_to_apps_screen = [
 before_install = "ione_core.setup.install.before_install"
 after_install = "ione_core.setup.install.after_install"
 after_migrate = "ione_core.setup.install.after_migrate"
+after_app_install = "ione_core.setup.install.after_app_install"
 
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "like", "I-ONE %"]]},

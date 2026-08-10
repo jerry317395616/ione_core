@@ -5,7 +5,7 @@ import json
 import re
 import time
 from collections.abc import Iterable
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -17,12 +17,13 @@ USER_AGENT = "I-ONE-Frappe-Docs-Sync/1.0 (+https://myyr.top)"
 REQUEST_TIMEOUT = (8, 25)
 DOCS_REQUEST_ATTEMPTS = 3
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
-TRANSLATION_CHUNK_CHARACTERS = 6_000
+TRANSLATION_CHUNK_CHARACTERS = 3_000
 TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
-TRANSLATION_WORKERS = 4
+TRANSLATION_WORKERS = 8
 SOURCE_FETCH_WORKERS = 4
-SYNC_BATCH_SIZE = 24
+SYNC_BATCH_SIZE = 96
+DOCUMENT_MAX_OUTPUT_TOKENS = 4_096
 MIN_TRANSLATED_BODY_CJK = 8
 EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
 OFFICIAL_FALLBACK_PAGES = {
@@ -296,6 +297,11 @@ def fetch_source_page(source_route: str, session: Any | None = None) -> tuple[st
 						f"The official fallback source for {source_route} did not contain enough content."
 					) from markdown_error
 				return str(fallback["title"]), body, str(fallback["source_url"])
+			if _is_empty_official_page_error(html_error) and _is_empty_official_page_error(
+				markdown_error
+			):
+				title = _route_title(source_route)
+				return title, f"# {title}", url
 			raise RuntimeError(
 				f"Unable to read official documentation route {source_route}: "
 				f"HTML failed with {html_error}; Markdown failed with {markdown_error}"
@@ -373,6 +379,16 @@ def _is_heading_only_markdown(markdown: str) -> bool:
 	return not remaining
 
 
+def _is_empty_official_page_error(error: Exception) -> bool:
+	message = str(error).casefold()
+	return "did not contain enough" in message or "did not contain readable article" in message
+
+
+def _route_title(source_route: str) -> str:
+	slug = source_route.strip("/").rsplit("/", 1)[-1]
+	return re.sub(r"[-_]+", " ", slug).strip().title() or "Frappe Documentation"
+
+
 def _absolutize_docs_links(markdown: str) -> str:
 	markdown = re.sub(
 		r"(\]\()/(?!/)([^)\s]+)",
@@ -445,7 +461,10 @@ class QwenMarkdownTranslator:
 					'{"id":整数,"translation":"译文"}。\n' + json.dumps(rows, ensure_ascii=False)
 				)
 				try:
-					resolved = _extract_title_translations(self._chat(prompt), set(pending))
+					resolved = _extract_title_translations(
+						self._chat(prompt, max_tokens=max(256, len(rows) * 32)),
+						set(pending),
+					)
 					resolved = {
 						index: translation
 						for index, translation in resolved.items()
@@ -469,7 +488,7 @@ class QwenMarkdownTranslator:
 					)
 					if attempt:
 						prompt += "\n上一次仍是英文。请给出中文标题。"
-					translated = _clean_single_title_translation(self._chat(prompt))
+					translated = _clean_single_title_translation(self._chat(prompt, max_tokens=96))
 					if translated and not _is_probably_untranslated_title(title, translated):
 						break
 					if attempt + 1 < TITLE_TRANSLATION_ATTEMPTS:
@@ -527,7 +546,8 @@ class QwenMarkdownTranslator:
 				prompt += "以下占位符必须各原样出现一次: " + ", ".join(required_literals) + "。"
 			if attempt:
 				prompt += f"上一次结果的占位符校验失败: {last_error}。请重新完整翻译。"
-			translated = self._chat(prompt + "\n\n" + text).strip()
+			max_tokens = min(DOCUMENT_MAX_OUTPUT_TOKENS, max(1_024, len(text) + 512))
+			translated = self._chat(prompt + "\n\n" + text, max_tokens=max_tokens).strip()
 			actual_literals = _protected_literal_tokens(translated)
 			fidelity_issues = _translation_fidelity_issues(text, translated)
 			if actual_literals == required_literals and not fidelity_issues:
@@ -542,14 +562,14 @@ class QwenMarkdownTranslator:
 				time.sleep(2**attempt)
 		raise ValueError(f"The translated Markdown did not preserve source fidelity: {last_error}")
 
-	def _chat(self, prompt: str) -> str:
+	def _chat(self, prompt: str, max_tokens: int = 8192) -> str:
 		headers = {"Content-Type": "application/json"}
 		if self.api_key:
 			headers["Authorization"] = f"Bearer {self.api_key}"
 		payload: dict[str, Any] = {
 			"model": self.model_id,
 			"temperature": 0,
-			"max_tokens": 8192,
+			"max_tokens": max_tokens,
 			"chat_template_kwargs": {"enable_thinking": False},
 			"messages": [
 				{
@@ -919,6 +939,27 @@ def _sync_product(
 	prepare_nodes(tree, root.name)
 	frappe.db.commit()
 
+	def persist_page(job: dict[str, Any]) -> None:
+		node = job["node"]
+		created = job["existing"] is None
+		_upsert_page(
+			spec,
+			node,
+			job["translated_title"],
+			job["parent_name"],
+			space.name,
+			job["sort_order"],
+			job["destination_route"],
+			job["content"],
+			job["existing"],
+		)
+		if job["current"]:
+			stats["skipped"] += 1
+		else:
+			stats["created" if created else "updated"] += 1
+		frappe.db.commit()
+		_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
+
 	with (
 		ThreadPoolExecutor(max_workers=SOURCE_FETCH_WORKERS) as fetch_executor,
 		ThreadPoolExecutor(max_workers=TRANSLATION_WORKERS) as translation_executor,
@@ -976,12 +1017,12 @@ def _sync_product(
 				)
 				prepared_batch.append(job)
 
-			translation_futures: dict[str, Future[str]] = {}
+			translation_futures: dict[Future[str], dict[str, Any]] = {}
 			for job in prepared_batch:
 				if not job["needs_translation"]:
+					persist_page(job)
 					continue
-				node = job["node"]
-				translation_futures[node.source_route] = translation_executor.submit(
+				future = translation_executor.submit(
 					_translate_page_content,
 					translator,
 					job["source_markdown"],
@@ -989,44 +1030,27 @@ def _sync_product(
 					job["source_hash"],
 					route_map,
 				)
+				translation_futures[future] = job
 
-			for job in prepared_batch:
+			for future in as_completed(translation_futures):
+				job = translation_futures[future]
 				node = job["node"]
-				if job["needs_translation"]:
-					try:
-						job["content"] = translation_futures[node.source_route].result()
-					except Exception as exc:
-						failures.append({"source_route": node.source_route, "error": str(exc)})
-						stats["failed"] += 1
-						_write_progress(
-							{
-								spec.slug: {
-									**stats,
-									"last_source_route": node.source_route,
-									"last_error": str(exc),
-								}
+				try:
+					job["content"] = future.result()
+				except Exception as exc:
+					failures.append({"source_route": node.source_route, "error": str(exc)})
+					stats["failed"] += 1
+					_write_progress(
+						{
+							spec.slug: {
+								**stats,
+								"last_source_route": node.source_route,
+								"last_error": str(exc),
 							}
-						)
-						continue
-
-				created = job["existing"] is None
-				_upsert_page(
-					spec,
-					node,
-					job["translated_title"],
-					job["parent_name"],
-					space.name,
-					job["sort_order"],
-					job["destination_route"],
-					job["content"],
-					job["existing"],
-				)
-				if job["current"]:
-					stats["skipped"] += 1
-				else:
-					stats["created" if created else "updated"] += 1
-				frappe.db.commit()
-				_write_progress({spec.slug: {**stats, "last_source_route": node.source_route}})
+						}
+					)
+					continue
+				persist_page(job)
 
 	stats["status"] = "partial" if failures else "completed"
 	if failures:

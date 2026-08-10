@@ -23,9 +23,90 @@ def read_translation_catalog(path: str | Path | None = None) -> dict[Translation
 			translated = row[1].replace("\\n", "\n")
 			context = row[2].strip() if len(row) == 3 else ""
 			if not source or not translated:
-				raise ValueError(f"invalid translation row {line_number}: source and translation are required")
+				raise ValueError(
+					f"invalid translation row {line_number}: source and translation are required"
+				)
 			catalog[(source, context)] = translated
 	return catalog
+
+
+def write_translation_catalog(
+	catalog: Mapping[TranslationKey, str],
+	path: str | Path | None = None,
+) -> Path:
+	"""Write a portable Frappe translation catalog while preserving mapping order."""
+	catalog_path = Path(path) if path else Path(__file__).with_name("translations") / "zh.csv"
+	catalog_path.parent.mkdir(parents=True, exist_ok=True)
+	with catalog_path.open("w", encoding="utf-8", newline="") as handle:
+		writer = csv.writer(handle, lineterminator="\n")
+		for (source, context), translated in catalog.items():
+			row = [source.replace("\n", "\\n"), translated.replace("\n", "\\n")]
+			if context:
+				row.append(context)
+			writer.writerow(row)
+	return catalog_path
+
+
+def merge_site_translations(
+	catalog: Mapping[TranslationKey, str],
+	rows: Iterable[Any],
+	*,
+	overwrite: bool = False,
+) -> tuple[dict[TranslationKey, str], dict[str, int]]:
+	"""Append site translations without replacing curated packaged values by default."""
+	merged = dict(catalog)
+	site_catalog: dict[TranslationKey, str] = {}
+	for row in rows:
+		source = _normalize_catalog_text(_row_value(row, "source_text"))
+		translated = _normalize_catalog_text(_row_value(row, "translated_text"))
+		context = str(_row_value(row, "context") or "").strip()
+		if source and translated:
+			site_catalog[(source, context)] = translated
+
+	added = 0
+	overwritten = 0
+	for key in sorted(site_catalog):
+		if key not in merged:
+			merged[key] = site_catalog[key]
+			added += 1
+		elif overwrite and merged[key] != site_catalog[key]:
+			merged[key] = site_catalog[key]
+			overwritten += 1
+
+	return merged, {
+		"site_unique": len(site_catalog),
+		"added": added,
+		"overwritten": overwritten,
+	}
+
+
+def export_site_translation_catalog(
+	language: str = "zh",
+	path: str | Path | None = None,
+	overwrite: bool = False,
+) -> dict[str, int | str]:
+	"""Append site-level translations to the packaged application catalog."""
+	import frappe
+
+	catalog = read_translation_catalog(path)
+	packaged = len(catalog)
+	rows = frappe.get_all(
+		"Translation",
+		filters={"language": language},
+		fields=["source_text", "translated_text", "context", "creation", "name"],
+		order_by="creation asc, name asc",
+		limit_page_length=0,
+	)
+	catalog, stats = merge_site_translations(catalog, rows, overwrite=overwrite)
+
+	output = write_translation_catalog(catalog, path)
+	return {
+		"packaged": packaged,
+		"site_rows": len(rows),
+		**stats,
+		"exported": len(catalog),
+		"path": str(output),
+	}
 
 
 def build_translation_sync_plan(
@@ -35,7 +116,10 @@ def build_translation_sync_plan(
 	"""Build an idempotent plan and collapse duplicate site overrides."""
 	grouped: dict[TranslationKey, list[Any]] = defaultdict(list)
 	for row in existing_rows:
-		key = (str(_row_value(row, "source_text") or ""), str(_row_value(row, "context") or ""))
+		key = (
+			_normalize_catalog_text(_row_value(row, "source_text")),
+			str(_row_value(row, "context") or "").strip(),
+		)
 		if key in catalog:
 			grouped[key].append(row)
 
@@ -46,6 +130,7 @@ def build_translation_sync_plan(
 		rows = sorted(
 			grouped.get(key, ()),
 			key=lambda row: (
+				str(_row_value(row, "source_text") or "") != key[0],
 				str(_row_value(row, "creation") or ""),
 				str(_row_value(row, "name") or ""),
 			),
@@ -65,12 +150,14 @@ def sync_translation_overrides(language: str = "zh") -> dict[str, int]:
 	"""Synchronize packaged translations as deterministic site-level overrides."""
 	import frappe
 	from frappe.core.doctype.translation.translation import clear_user_translation_cache
-	from frappe.utils import now_datetime, sanitize_html
+	from frappe.utils import now_datetime
 
 	if not frappe.db.exists("DocType", "Translation"):
 		return {"catalog": 0, "inserted": 0, "updated": 0, "duplicates_removed": 0}
 
-	catalog = {key: sanitize_html(value) for key, value in read_translation_catalog().items()}
+	# This catalog is trusted application data. Preserve literal technical tags such as
+	# <head> and <agent_memory>, which Frappe's HTML sanitizer would otherwise remove.
+	catalog = read_translation_catalog()
 	existing = frappe.get_all(
 		"Translation",
 		filters={"language": language},
@@ -148,3 +235,7 @@ def _row_value(row: Any, fieldname: str) -> Any:
 	if isinstance(row, Mapping):
 		return row.get(fieldname)
 	return getattr(row, fieldname, None)
+
+
+def _normalize_catalog_text(value: Any) -> str:
+	return str(value or "").replace("\\n", "\n")

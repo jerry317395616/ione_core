@@ -79,8 +79,9 @@ class TestFrappeDocsSync(TestCase):
 		session = Session()
 		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen", session)
 
-		self.assertEqual(translator._chat("translate"), "译文")
+		self.assertEqual(translator._chat("translate", max_tokens=321), "译文")
 		self.assertEqual(session.payload["chat_template_kwargs"], {"enable_thinking": False})
+		self.assertEqual(session.payload["max_tokens"], 321)
 
 	def test_docs_request_retries_transient_network_failure(self):
 		from unittest.mock import patch
@@ -187,6 +188,21 @@ class TestFrappeDocsSync(TestCase):
 			"https://docs.frappe.io/education/final-assessment-grades",
 		)
 
+	def test_empty_official_page_is_preserved_as_a_heading_only_page(self):
+		from unittest.mock import patch
+
+		with patch(
+			"ione_core.frappe_docs_sync._docs_get",
+			side_effect=ValueError("The documentation page did not contain enough readable content."),
+		):
+			title, markdown, source_url = fetch_source_page(
+				"education/final-assessment-grades"
+			)
+
+		self.assertEqual(title, "Final Assessment Grades")
+		self.assertEqual(markdown, "# Final Assessment Grades")
+		self.assertEqual(source_url, "https://docs.frappe.io/education/final-assessment-grades")
+
 	def test_discovers_print_designer_from_the_official_repository_fallback(self):
 		from unittest.mock import patch
 
@@ -258,7 +274,7 @@ class TestFrappeDocsSync(TestCase):
 
 		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
 		responses = iter(["缺少占位符", "保留 [[[IONE_LITERAL_0001]]] 的译文"])
-		translator._chat = lambda _prompt: next(responses)
+		translator._chat = lambda _prompt, max_tokens=8192: next(responses)
 
 		with patch("ione_core.frappe_docs_sync.time.sleep"):
 			translated = translator._translate_markdown_chunk(
@@ -276,7 +292,7 @@ class TestFrappeDocsSync(TestCase):
 
 		translator = QwenMarkdownTranslator("http://qwen.test/v1", "secret", "qwen")
 		responses = iter(["只有正文", "# 标题\n\n完整正文"])
-		translator._chat = lambda _prompt: next(responses)
+		translator._chat = lambda _prompt, max_tokens=8192: next(responses)
 
 		with patch("ione_core.frappe_docs_sync.time.sleep"):
 			translated = translator._translate_markdown_chunk("# Title\n\nFull text", 1, 1)
@@ -365,7 +381,7 @@ class TestFrappeDocsSync(TestCase):
 				'[{"id": 0, "translation": "简介"}]',
 			]
 		)
-		translator._chat = lambda _prompt: next(responses)
+		translator._chat = lambda _prompt, max_tokens=8192: next(responses)
 
 		with patch("ione_core.frappe_docs_sync.time.sleep"):
 			translated = translator.translate_titles(["Introduction"])
