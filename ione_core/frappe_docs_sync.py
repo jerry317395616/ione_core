@@ -22,7 +22,9 @@ TITLE_BATCH_SIZE = 40
 TITLE_TRANSLATION_ATTEMPTS = 3
 TRANSLATION_WORKERS = 8
 SOURCE_FETCH_WORKERS = 4
-SYNC_BATCH_SIZE = 96
+# Keep every current product in one batch so long pages do not leave translation
+# workers idle at artificial batch boundaries.
+SYNC_BATCH_SIZE = 1024
 DOCUMENT_MAX_OUTPUT_TOKENS = 4_096
 MIN_TRANSLATED_BODY_CJK = 8
 EMPTY_OFFICIAL_PAGE_NOTICE = "> Frappe 官方文档当前仅提供本章节标题。尚未发布正文内容。"
