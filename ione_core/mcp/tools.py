@@ -57,14 +57,14 @@ def frappe_get_context(actor_token: str = "") -> dict[str, Any]:
 def frappe_get_site_catalog(
 	app: str = "",
 	query: str = "",
-	limit: int = 200,
+	limit: int = 100,
 	actor_token: str = "",
 ) -> dict[str, Any]:
-	"""Return a permission-aware catalog of installed apps and business DocTypes.
+	"""Return a compact app summary or permission-aware business DocType catalog.
 
 	Args:
-		app: Optional installed app name, such as erpnext or education.
-		query: Optional DocType name or module fragment.
+		app: Optional installed app name. Omit app and query for compact app summaries.
+		query: Optional DocType name or module fragment for a detailed cross-app search.
 		limit: Maximum visible DocTypes from 1 to 500.
 		actor_token: Signed identity for the current Frappe login.
 	"""
@@ -82,6 +82,11 @@ def frappe_get_site_catalog(
 	module_apps = {str(row.name): str(row.app_name) for row in module_rows}
 	needle = str(query or "").strip().casefold()
 	limit = max(1, min(int(limit), 500))
+	summary_mode = not selected_app and not needle
+	app_summaries = {
+		app_name: {"app": app_name, "readable_doctype_count": 0, "samples": []}
+		for app_name in installed_apps
+	}
 	doctypes = []
 	for row in frappe.get_all(
 		"DocType",
@@ -99,10 +104,20 @@ def frappe_get_site_catalog(
 			continue
 		if not doctype_allowed_by_scope(name) or not frappe.has_permission(name, ptype="read"):
 			continue
+		label = frappe._(name)
+		if summary_mode:
+			summary = app_summaries.setdefault(
+				app_name,
+				{"app": app_name, "readable_doctype_count": 0, "samples": []},
+			)
+			summary["readable_doctype_count"] += 1
+			if len(summary["samples"]) < 5:
+				summary["samples"].append({"name": name, "label": label, "module": module})
+			continue
 		doctypes.append(
 			{
 				"name": name,
-				"label": frappe._(name),
+				"label": label,
 				"module": module,
 				"app": app_name,
 				"can_read": True,
@@ -113,14 +128,24 @@ def frappe_get_site_catalog(
 		)
 		if len(doctypes) >= limit:
 			break
+	summaries = [
+		app_summaries[app_name]
+		for app_name in (*installed_apps, *sorted(set(app_summaries) - set(installed_apps)))
+	]
 	return {
 		"site": getattr(frappe.local, "site", ""),
 		"user": frappe.session.user,
 		"installed_apps": list(installed_apps),
+		"mode": "summary" if summary_mode else "doctypes",
+		"apps": summaries if summary_mode else [],
 		"selected_app": selected_app or None,
 		"query": query,
 		"doctypes": doctypes,
-		"count": len(doctypes),
+		"count": (
+			sum(summary["readable_doctype_count"] for summary in summaries)
+			if summary_mode
+			else len(doctypes)
+		),
 		"limit": limit,
 	}
 
