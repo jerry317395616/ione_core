@@ -7,9 +7,9 @@ import frappe
 from bs4 import BeautifulSoup
 
 from ione_core.mcp.audit import audited_tool
+from ione_core.mcp.identity import as_verified_actor
 from ione_core.mcp.runtime import ToolAnnotations
 from ione_core.mcp.security import (
-	DENIED_DOCTYPES,
 	doctype_allowed_by_scope,
 	ensure_doctype_permission,
 	extract_docx_text,
@@ -38,8 +38,9 @@ UPSERT_WRITE = ToolAnnotations(
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_get_context", "读取")
-def frappe_get_context() -> dict[str, Any]:
+def frappe_get_context(actor_token: str = "") -> dict[str, Any]:
 	"""Return the authenticated user, roles, site and installed Frappe applications."""
 	user = require_login()
 	return {
@@ -51,8 +52,83 @@ def frappe_get_context() -> dict[str, Any]:
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
+@audited_tool("frappe_get_site_catalog", "读取")
+def frappe_get_site_catalog(
+	app: str = "",
+	query: str = "",
+	limit: int = 200,
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Return a permission-aware catalog of installed apps and business DocTypes.
+
+	Args:
+		app: Optional installed app name, such as erpnext or education.
+		query: Optional DocType name or module fragment.
+		limit: Maximum visible DocTypes from 1 to 500.
+		actor_token: Signed identity for the current Frappe login.
+	"""
+	require_login()
+	installed_apps = tuple(frappe.get_installed_apps())
+	selected_app = str(app or "").strip()
+	if selected_app and selected_app not in installed_apps:
+		raise ValueError(f"App is not installed on this site: {selected_app}")
+	module_rows = frappe.get_all(
+		"Module Def",
+		fields=["name", "app_name"],
+		filters={"app_name": ["in", list(installed_apps)]},
+		limit_page_length=5000,
+	)
+	module_apps = {str(row.name): str(row.app_name) for row in module_rows}
+	needle = str(query or "").strip().casefold()
+	limit = max(1, min(int(limit), 500))
+	doctypes = []
+	for row in frappe.get_all(
+		"DocType",
+		filters={"istable": 0},
+		fields=["name", "module", "is_submittable"],
+		order_by="module asc, name asc",
+		limit_page_length=5000,
+	):
+		name = str(row.name)
+		module = str(row.module or "")
+		app_name = module_apps.get(module, "custom")
+		if selected_app and app_name != selected_app:
+			continue
+		if needle and needle not in name.casefold() and needle not in module.casefold():
+			continue
+		if not doctype_allowed_by_scope(name) or not frappe.has_permission(name, ptype="read"):
+			continue
+		doctypes.append(
+			{
+				"name": name,
+				"label": frappe._(name),
+				"module": module,
+				"app": app_name,
+				"can_read": True,
+				"can_create": bool(frappe.has_permission(name, ptype="create")),
+				"can_write": bool(frappe.has_permission(name, ptype="write")),
+				"is_submittable": bool(row.is_submittable),
+			}
+		)
+		if len(doctypes) >= limit:
+			break
+	return {
+		"site": getattr(frappe.local, "site", ""),
+		"user": frappe.session.user,
+		"installed_apps": list(installed_apps),
+		"selected_app": selected_app or None,
+		"query": query,
+		"doctypes": doctypes,
+		"count": len(doctypes),
+		"limit": limit,
+	}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_search_doctypes", "读取")
-def frappe_search_doctypes(query: str, limit: int = 20) -> dict[str, Any]:
+def frappe_search_doctypes(query: str, limit: int = 20, actor_token: str = "") -> dict[str, Any]:
 	"""Find non-child DocTypes that the authenticated user can read.
 
 	Args:
@@ -71,16 +147,16 @@ def frappe_search_doctypes(query: str, limit: int = 20) -> dict[str, Any]:
 	visible = [
 		name
 		for name in names
-		if name not in DENIED_DOCTYPES
-		and doctype_allowed_by_scope(name)
+		if doctype_allowed_by_scope(name)
 		and frappe.has_permission(name, ptype="read")
 	][:limit]
 	return {"query": query, "doctypes": visible, "count": len(visible)}
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_get_doctype_meta", "读取")
-def frappe_get_doctype_meta(doctype: str) -> dict[str, Any]:
+def frappe_get_doctype_meta(doctype: str, actor_token: str = "") -> dict[str, Any]:
 	"""Return safe field metadata for one readable business DocType.
 
 	Args:
@@ -119,6 +195,7 @@ def frappe_get_doctype_meta(doctype: str) -> dict[str, Any]:
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_list_documents", "读取")
 def frappe_list_documents(
 	doctype: str,
@@ -127,6 +204,7 @@ def frappe_list_documents(
 	order_by: str = "modified desc",
 	limit: int = 20,
 	start: int = 0,
+	actor_token: str = "",
 ) -> dict[str, Any]:
 	"""List business documents using the current user's Frappe permissions.
 
@@ -163,8 +241,9 @@ def frappe_list_documents(
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_get_document", "读取")
-def frappe_get_document(doctype: str, name: str) -> dict[str, Any]:
+def frappe_get_document(doctype: str, name: str, actor_token: str = "") -> dict[str, Any]:
 	"""Get one business document after checking document-level read permission.
 
 	Args:
@@ -179,11 +258,13 @@ def frappe_get_document(doctype: str, name: str) -> dict[str, Any]:
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_list_attachments", "读取")
 def frappe_list_attachments(
 	doctype: str,
 	document_name: str,
 	include_text_content: bool = True,
+	actor_token: str = "",
 ) -> dict[str, Any]:
 	"""List a document's attachments and optionally read small UTF-8 text attachments.
 
@@ -240,8 +321,14 @@ def frappe_list_attachments(
 
 
 @mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
 @audited_tool("frappe_read_word_attachment", "读取")
-def frappe_read_word_attachment(doctype: str, document_name: str, file_name: str) -> dict[str, Any]:
+def frappe_read_word_attachment(
+	doctype: str,
+	document_name: str,
+	file_name: str,
+	actor_token: str = "",
+) -> dict[str, Any]:
 	"""Read text from one small DOCX attachment after checking parent document permission.
 
 	Args:
@@ -286,8 +373,11 @@ def frappe_read_word_attachment(doctype: str, document_name: str, file_name: str
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
 @audited_tool("frappe_create_document", "写入")
-def frappe_create_document(doctype: str, data: dict[str, Any]) -> dict[str, Any]:
+def frappe_create_document(
+	doctype: str, data: dict[str, Any], actor_token: str = ""
+) -> dict[str, Any]:
 	"""Create one draft business document with normal Frappe validations and permissions.
 
 	Args:
@@ -308,8 +398,11 @@ def frappe_create_document(doctype: str, data: dict[str, Any]) -> dict[str, Any]
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
 @audited_tool("frappe_update_document", "写入")
-def frappe_update_document(doctype: str, name: str, data: dict[str, Any]) -> dict[str, Any]:
+def frappe_update_document(
+	doctype: str, name: str, data: dict[str, Any], actor_token: str = ""
+) -> dict[str, Any]:
 	"""Update one draft business document with normal Frappe validations and permissions.
 
 	Args:
@@ -336,12 +429,14 @@ def frappe_update_document(doctype: str, name: str, data: dict[str, Any]) -> dic
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
 @audited_tool("frappe_attach_text_file", "写入")
 def frappe_attach_text_file(
 	doctype: str,
 	document_name: str,
 	file_name: str,
 	content: str,
+	actor_token: str = "",
 ) -> dict[str, Any]:
 	"""Attach a private UTF-8 text, Markdown, CSV or JSON file to a writable document.
 
@@ -362,12 +457,14 @@ def frappe_attach_text_file(
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
 @audited_tool("frappe_attach_word_file", "写入")
 def frappe_attach_word_file(
 	doctype: str,
 	document_name: str,
 	file_name: str,
 	content_base64: str,
+	actor_token: str = "",
 ) -> dict[str, Any]:
 	"""Attach a private, validated Word .docx file to a writable business document.
 

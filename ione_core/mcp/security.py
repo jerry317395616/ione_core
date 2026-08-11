@@ -15,16 +15,22 @@ DENIED_DOCTYPES = {
 	"Activity Log",
 	"API Request Log",
 	"Auth Token",
+	"Client Script",
 	"Communication",
 	"Connected App",
 	"Custom Field",
+	"Custom DocPerm",
 	"DocField",
 	"DocPerm",
 	"DocType",
 	"Email Account",
+	"Email Queue",
 	"Error Log",
 	"Event Streaming",
+	"File",
+	"Has Role",
 	"Integration Request",
+	"Module Def",
 	"OAuth Authorization Code",
 	"OAuth Bearer Token",
 	"OAuth Client",
@@ -33,6 +39,9 @@ DENIED_DOCTYPES = {
 	"Password",
 	"Property Setter",
 	"RQ Job",
+	"Role",
+	"Role Profile",
+	"Role Profile Role",
 	"Scheduled Job Log",
 	"Server Script",
 	"Session Default Settings",
@@ -81,12 +90,25 @@ def require_login() -> str:
 	return user
 
 
-def allowed_doctype_prefixes(user: str | None = None) -> tuple[str, ...]:
-	"""Return an optional per-user MCP DocType scope from site_config.json."""
+def _configured_values(name: str) -> tuple[str, ...]:
 	import frappe
 
-	user = user or require_login()
-	configuration = frappe.conf.get("ione_mcp_allowed_doctype_prefixes_by_user") or {}
+	values = frappe.conf.get(name)
+	if isinstance(values, str):
+		try:
+			decoded = json.loads(values)
+		except json.JSONDecodeError:
+			decoded = values.split(",")
+		values = decoded
+	if not isinstance(values, (list, tuple, set)):
+		return ()
+	return tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
+
+
+def _configured_values_by_user(name: str, user: str) -> tuple[str, ...]:
+	import frappe
+
+	configuration = frappe.conf.get(name) or {}
 	if isinstance(configuration, str):
 		try:
 			configuration = json.loads(configuration)
@@ -97,12 +119,55 @@ def allowed_doctype_prefixes(user: str | None = None) -> tuple[str, ...]:
 	values = configuration.get(user)
 	if isinstance(values, str):
 		values = values.split(",")
-	if not isinstance(values, (list, tuple)):
+	if not isinstance(values, (list, tuple, set)):
 		return ()
 	return tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
 
 
+def integration_scope_user(user: str | None = None) -> str:
+	"""Return the integration identity whose site-config scope should be applied."""
+	import frappe
+
+	local = getattr(frappe, "local", None)
+	return str(user or getattr(local, "ione_mcp_integration_user", "") or require_login())
+
+
+def allowed_doctype_prefixes(user: str | None = None) -> tuple[str, ...]:
+	"""Return an optional per-user MCP DocType scope from site_config.json."""
+	return _configured_values_by_user(
+		"ione_mcp_allowed_doctype_prefixes_by_user", integration_scope_user(user)
+	)
+
+
+def allowed_doctypes(user: str | None = None) -> tuple[str, ...]:
+	"""Return an optional exact allowlist for this site or integration user."""
+	values = list(_configured_values("ione_mcp_allowed_doctypes"))
+	values.extend(
+		_configured_values_by_user("ione_mcp_allowed_doctypes_by_user", integration_scope_user(user))
+	)
+	return tuple(dict.fromkeys(values))
+
+
+def denied_doctypes(user: str | None = None) -> frozenset[str]:
+	"""Return built-in and site-specific DocTypes that MCP must never expose."""
+	values = set(DENIED_DOCTYPES)
+	values.update(_configured_values("ione_mcp_denied_doctypes"))
+	values.update(
+		_configured_values_by_user("ione_mcp_denied_doctypes_by_user", integration_scope_user(user))
+	)
+	return frozenset(values)
+
+
+def doctype_is_denied(doctype: str, user: str | None = None) -> bool:
+	return doctype in denied_doctypes(user)
+
+
 def doctype_allowed_by_scope(doctype: str, user: str | None = None) -> bool:
+	if doctype_is_denied(doctype, user):
+		return False
+	exact = allowed_doctypes(user)
+	if exact and doctype not in exact:
+		return False
 	prefixes = allowed_doctype_prefixes(user)
 	return not prefixes or any(doctype.startswith(prefix) for prefix in prefixes)
 
@@ -112,7 +177,7 @@ def ensure_doctype_permission(doctype: str, permission_type: str):
 
 	require_login()
 	doctype = (doctype or "").strip()
-	if not doctype or doctype in DENIED_DOCTYPES:
+	if not doctype or doctype_is_denied(doctype):
 		frappe.throw(f"DocType {doctype or '<empty>'} is not available through MCP", frappe.PermissionError)
 	if not doctype_allowed_by_scope(doctype):
 		frappe.throw(f"DocType {doctype} is outside this MCP integration's scope", frappe.PermissionError)

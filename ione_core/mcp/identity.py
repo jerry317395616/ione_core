@@ -5,6 +5,8 @@ import hashlib
 import hmac
 import json
 import time
+from contextlib import contextmanager
+from functools import wraps
 from typing import Any
 
 
@@ -111,10 +113,64 @@ def resolve_actor_user(token: str) -> str:
 
 	if not user:
 		frappe.throw("The logged-in Manager account no longer exists", frappe.AuthenticationError)
-	for doctype in ("CRM Lead", "CRM Task"):
-		if not frappe.has_permission(doctype, ptype="read", user=user):
-			frappe.throw(
-				f"The logged-in Manager account has no read permission for {doctype}",
-				frappe.PermissionError,
-			)
 	return str(user)
+
+
+def actor_identity_required() -> bool:
+	"""Return whether this site requires all generic MCP tools to use a signed actor."""
+	import frappe
+
+	value = frappe.conf.get("ione_mcp_require_actor_token")
+	if isinstance(value, str):
+		return value.strip().lower() not in {"", "0", "false", "no", "off"}
+	return bool(value)
+
+
+@contextmanager
+def actor_context(token: str | None):
+	"""Temporarily run a tool as the signed, currently logged-in Frappe user.
+
+	Sites that have not enabled ``ione_mcp_require_actor_token`` remain backward
+	compatible: when no token is supplied, the authenticated integration user is
+	used exactly as before.
+	"""
+	import frappe
+
+	from ione_core.mcp.security import require_login
+
+	integration_user = require_login()
+	value = str(token or "").strip()
+	if not value:
+		if actor_identity_required():
+			frappe.throw("The current Frappe login identity is required", frappe.AuthenticationError)
+		yield integration_user
+		return
+
+	actor_user = resolve_actor_user(value)
+	previous_integration_user = getattr(frappe.local, "ione_mcp_integration_user", None)
+	frappe.local.ione_mcp_integration_user = integration_user
+	frappe.set_user(actor_user)
+	try:
+		yield actor_user
+	finally:
+		frappe.set_user(integration_user)
+		if previous_integration_user is None:
+			try:
+				delattr(frappe.local, "ione_mcp_integration_user")
+			except AttributeError:
+				pass
+		else:
+			frappe.local.ione_mcp_integration_user = previous_integration_user
+
+
+def as_verified_actor(fn):
+	"""Run one MCP tool inside :func:`actor_context` while preserving its schema."""
+	@wraps(fn)
+	def wrapper(*args, **kwargs):
+		import inspect
+
+		bound = inspect.signature(fn).bind_partial(*args, **kwargs)
+		with actor_context(bound.arguments.get("actor_token")):
+			return fn(*args, **kwargs)
+
+	return wrapper

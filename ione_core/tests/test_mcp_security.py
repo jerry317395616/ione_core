@@ -19,6 +19,32 @@ from ione_core.mcp.security import (
 
 
 class TestMCPSecurity(TestCase):
+	def test_applies_site_exact_allow_and_deny_lists(self):
+		frappe = ModuleType("frappe")
+		frappe.session = SimpleNamespace(user="integration@example.com")
+		frappe.local = SimpleNamespace()
+		frappe.conf = {
+			"ione_mcp_allowed_doctypes": ["Sales Order", "Tongjianyun Recipe"],
+			"ione_mcp_denied_doctypes": ["Tongjianyun Recipe"],
+		}
+		with patch.dict(sys.modules, {"frappe": frappe}):
+			self.assertTrue(doctype_allowed_by_scope("Sales Order"))
+			self.assertFalse(doctype_allowed_by_scope("Tongjianyun Recipe"))
+			self.assertFalse(doctype_allowed_by_scope("Purchase Order"))
+
+	def test_actor_uses_integration_user_scope(self):
+		frappe = ModuleType("frappe")
+		frappe.session = SimpleNamespace(user="operator@example.com")
+		frappe.local = SimpleNamespace(ione_mcp_integration_user="integration@example.com")
+		frappe.conf = {
+			"ione_mcp_allowed_doctype_prefixes_by_user": {
+				"integration@example.com": ["Tongjianyun"]
+			}
+		}
+		with patch.dict(sys.modules, {"frappe": frappe}):
+			self.assertTrue(doctype_allowed_by_scope("Tongjianyun Recipe"))
+			self.assertFalse(doctype_allowed_by_scope("Sales Order"))
+
 	def test_limits_doctypes_for_configured_mcp_user(self):
 		frappe = ModuleType("frappe")
 		frappe.session = SimpleNamespace(user="tongjianyun-agent@example.com")
