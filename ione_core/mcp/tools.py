@@ -25,6 +25,7 @@ from ione_core.mcp.security import (
 	validate_text_file,
 )
 from ione_core.mcp.server import mcp
+from ione_core.mcp.tongjianyun_recipe import upsert_tongjianyun_recipe
 
 READ_ONLY = ToolAnnotations(
 	readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
@@ -451,6 +452,27 @@ def frappe_update_document(
 		frappe.db.rollback(save_point=savepoint)
 		raise
 	return {"doctype": doctype, "name": doc.name, "modified": serializable(doc.modified)}
+
+
+@mcp.tool(annotations=UPSERT_WRITE)
+@as_verified_actor
+@audited_tool("frappe_upsert_tongjianyun_recipe", "写入")
+def frappe_upsert_tongjianyun_recipe(
+	recipe: dict[str, Any],
+	days: list[dict[str, Any]],
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Create or replace one complete draft Tongjianyun recipe atomically.
+
+	The server generates every dish and ingredient row ID, rebuilds their
+	relationships and verifies the saved row counts before returning.
+
+	Args:
+		recipe: Recipe metadata using recipeId, title, weekStart, weekEnd and optional source fields.
+		days: Recipe days containing portions, dishes and dishIngredientRows.
+		actor_token: Signed identity for the current Frappe login.
+	"""
+	return upsert_tongjianyun_recipe(recipe, days)
 
 
 @mcp.tool(annotations=DRAFT_WRITE)

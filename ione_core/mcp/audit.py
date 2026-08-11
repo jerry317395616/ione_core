@@ -11,6 +11,13 @@ def request_summary(arguments) -> str:
 	for key, value in arguments.items():
 		if key in {"data", "deal_data", "lead_data"} and isinstance(value, dict):
 			summary[key] = {"fields": sorted(value)}
+		elif key == "recipe" and isinstance(value, dict):
+			summary[key] = {
+				"recipe_id": value.get("recipeId"),
+				"fields": sorted(value),
+			}
+		elif key == "days" and isinstance(value, list):
+			summary[key] = {"count": len(value)}
 		elif key == "analysis" and isinstance(value, dict):
 			summary[key] = {
 				"sections": len(value.get("sections") or []),
@@ -51,6 +58,10 @@ def result_summary(result) -> str:
 			"created",
 			"task",
 			"assignee",
+			"recipe_id",
+			"day_count",
+			"dish_count",
+			"ingredient_count",
 		)
 		if key in result
 	}
