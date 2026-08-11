@@ -73,6 +73,7 @@ def after_install():
 	ensure_video_integration()
 	sync_translation_overrides()
 	install_translation_bundle()
+	ensure_desktop_app_labels()
 
 
 def after_migrate():
@@ -88,6 +89,7 @@ def after_migrate():
 	ensure_runtime_config()
 	sync_translation_overrides()
 	install_translation_bundle()
+	ensure_desktop_app_labels()
 
 
 def after_app_install(app_name):
@@ -118,6 +120,12 @@ def install_translation_bundle():
 	from ione_core.translation_bundle import install_translation_bundle as install
 
 	return install()
+
+
+def ensure_desktop_app_labels():
+	from ione_core.desktop_i18n import ensure_desktop_app_labels as ensure
+
+	return ensure()
 
 
 def ensure_runtime_config():
