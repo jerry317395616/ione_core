@@ -10,6 +10,7 @@ from ione_core.mcp.audit import audited_tool
 from ione_core.mcp.runtime import ToolAnnotations
 from ione_core.mcp.security import (
 	DENIED_DOCTYPES,
+	doctype_allowed_by_scope,
 	ensure_doctype_permission,
 	extract_docx_text,
 	permitted_fields,
@@ -68,7 +69,11 @@ def frappe_search_doctypes(query: str, limit: int = 20) -> dict[str, Any]:
 		order_by="name asc",
 	)
 	visible = [
-		name for name in names if name not in DENIED_DOCTYPES and frappe.has_permission(name, ptype="read")
+		name
+		for name in names
+		if name not in DENIED_DOCTYPES
+		and doctype_allowed_by_scope(name)
+		and frappe.has_permission(name, ptype="read")
 	][:limit]
 	return {"query": query, "doctypes": visible, "count": len(visible)}
 

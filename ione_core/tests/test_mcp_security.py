@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from ione_core.mcp.audit import request_summary
 from ione_core.mcp.security import (
+	doctype_allowed_by_scope,
 	extract_docx_text,
 	permitted_fields,
 	sanitize_for_audit,
@@ -18,6 +19,31 @@ from ione_core.mcp.security import (
 
 
 class TestMCPSecurity(TestCase):
+	def test_limits_doctypes_for_configured_mcp_user(self):
+		frappe = ModuleType("frappe")
+		frappe.session = SimpleNamespace(user="tongjianyun-agent@example.com")
+		frappe.conf = {
+			"ione_mcp_allowed_doctype_prefixes_by_user": {
+				"tongjianyun-agent@example.com": ["Tongjianyun"]
+			}
+		}
+		with patch.dict(sys.modules, {"frappe": frappe}):
+			self.assertTrue(doctype_allowed_by_scope("Tongjianyun Child"))
+			self.assertFalse(doctype_allowed_by_scope("CRM Lead"))
+			self.assertTrue(doctype_allowed_by_scope("CRM Lead", user="another@example.com"))
+
+	def test_accepts_json_encoded_mcp_scope(self):
+		frappe = ModuleType("frappe")
+		frappe.session = SimpleNamespace(user="tongjianyun-agent@example.com")
+		frappe.conf = {
+			"ione_mcp_allowed_doctype_prefixes_by_user": (
+				'{"tongjianyun-agent@example.com": "Tongjianyun"}'
+			)
+		}
+		with patch.dict(sys.modules, {"frappe": frappe}):
+			self.assertTrue(doctype_allowed_by_scope("Tongjianyun Recipe"))
+			self.assertFalse(doctype_allowed_by_scope("User"))
+
 	def test_reads_permitted_fields_from_frappe_model(self):
 		frappe = ModuleType("frappe")
 		frappe.session = SimpleNamespace(user="integration@example.com")

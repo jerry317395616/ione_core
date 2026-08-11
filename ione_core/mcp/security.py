@@ -81,6 +81,32 @@ def require_login() -> str:
 	return user
 
 
+def allowed_doctype_prefixes(user: str | None = None) -> tuple[str, ...]:
+	"""Return an optional per-user MCP DocType scope from site_config.json."""
+	import frappe
+
+	user = user or require_login()
+	configuration = frappe.conf.get("ione_mcp_allowed_doctype_prefixes_by_user") or {}
+	if isinstance(configuration, str):
+		try:
+			configuration = json.loads(configuration)
+		except json.JSONDecodeError:
+			return ()
+	if not isinstance(configuration, dict) or user not in configuration:
+		return ()
+	values = configuration.get(user)
+	if isinstance(values, str):
+		values = values.split(",")
+	if not isinstance(values, (list, tuple)):
+		return ()
+	return tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
+
+
+def doctype_allowed_by_scope(doctype: str, user: str | None = None) -> bool:
+	prefixes = allowed_doctype_prefixes(user)
+	return not prefixes or any(doctype.startswith(prefix) for prefix in prefixes)
+
+
 def ensure_doctype_permission(doctype: str, permission_type: str):
 	import frappe
 
@@ -88,6 +114,8 @@ def ensure_doctype_permission(doctype: str, permission_type: str):
 	doctype = (doctype or "").strip()
 	if not doctype or doctype in DENIED_DOCTYPES:
 		frappe.throw(f"DocType {doctype or '<empty>'} is not available through MCP", frappe.PermissionError)
+	if not doctype_allowed_by_scope(doctype):
+		frappe.throw(f"DocType {doctype} is outside this MCP integration's scope", frappe.PermissionError)
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} does not exist")
 	meta = frappe.get_meta(doctype)
