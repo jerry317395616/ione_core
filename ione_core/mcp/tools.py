@@ -25,6 +25,7 @@ from ione_core.mcp.security import (
 	validate_text_file,
 )
 from ione_core.mcp.server import mcp
+from ione_core.mcp.tongjianyun_analysis import generate_tongjianyun_recipe_analysis
 from ione_core.mcp.tongjianyun_recipe import upsert_tongjianyun_recipe
 
 READ_ONLY = ToolAnnotations(
@@ -473,6 +474,24 @@ def frappe_upsert_tongjianyun_recipe(
 		actor_token: Signed identity for the current Frappe login.
 	"""
 	return upsert_tongjianyun_recipe(recipe, days)
+
+
+@mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
+@audited_tool("frappe_generate_tongjianyun_recipe_analysis", "写入")
+def frappe_generate_tongjianyun_recipe_analysis(
+	recipe_name: str,
+	standard: dict[str, Any] | None = None,
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Generate the template-identical Tongjianyun recipe analysis workbook and attach it.
+
+	Args:
+		recipe_name: Exact Tongjianyun Recipe document name returned by the recipe upsert tool.
+		standard: Optional nutrition-standard overrides. Omit to use the configured preschool profile.
+		actor_token: Signed identity for the current Frappe login.
+	"""
+	return generate_tongjianyun_recipe_analysis(recipe_name, standard)
 
 
 @mcp.tool(annotations=DRAFT_WRITE)
