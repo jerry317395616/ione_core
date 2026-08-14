@@ -1,3 +1,5 @@
+import csv
+from pathlib import Path
 from unittest import TestCase
 
 from ione_core import hooks
@@ -5,6 +7,27 @@ from ione_core.dashboard_labels import localize_chart_config, localize_period_la
 
 
 class TestDashboardLabels(TestCase):
+	def test_education_home_dashboard_strings_are_localized(self):
+		translations_path = Path(__file__).resolve().parents[1] / "translations" / "zh.csv"
+		with translations_path.open(encoding="utf-8", newline="") as translations_file:
+			translations = dict(csv.reader(translations_file))
+
+		expected = {
+			"Select Date Range": "选择日期范围",
+			"Last Year": "过去一年",
+			"Last Quarter": "过去一个季度",
+			"Last Month": "过去一个月",
+			"Last Week": "过去一周",
+			"Yearly": "按年",
+			"Quarterly": "按季度",
+			"Monthly": "按月",
+			"Weekly": "按周",
+			"Daily": "按日",
+			"No Data": "暂无数据",
+			"just now": "刚刚",
+		}
+		self.assertEqual({key: translations.get(key) for key in expected}, expected)
+
 	def test_monthly_label_is_localized_for_chinese(self):
 		self.assertEqual(localize_period_label("Jul 2026", "zh"), "2026年7月")
 
