@@ -28,6 +28,7 @@ class TestDashboardLabels(TestCase):
 			"Refresh": "刷新",
 			"Edit": "编辑",
 			"Export": "导出",
+			"Loading...": "加载中...",
 		}
 		self.assertEqual({key: translations.get(key) for key in expected}, expected)
 
