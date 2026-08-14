@@ -15,6 +15,7 @@ from ione_core.mcp.security import (
 	sanitize_for_audit,
 	validate_docx_file,
 	validate_text_file,
+	validate_xlsx_file,
 )
 
 
@@ -161,6 +162,32 @@ class TestMCPSecurity(TestCase):
 				"<w:p><w:r><w:t>建设统一数据平台</w:t></w:r></w:p></w:body></w:document>",
 			)
 		self.assertEqual(extract_docx_text(buffer.getvalue()), "客户需求\n建设统一数据平台")
+
+	def test_accepts_structurally_valid_spreadsheet_attachment(self):
+		buffer = io.BytesIO()
+		with zipfile.ZipFile(buffer, "w") as archive:
+			archive.writestr("[Content_Types].xml", "<Types />")
+			archive.writestr("xl/workbook.xml", "<workbook />")
+		content = base64.b64encode(buffer.getvalue()).decode("ascii")
+
+		name, payload = validate_xlsx_file("folder/report.xlsx", content)
+
+		self.assertEqual(name, "report.xlsx")
+		self.assertEqual(payload, buffer.getvalue())
+
+	def test_rejects_macro_enabled_or_invalid_spreadsheet_attachment(self):
+		with self.assertRaisesRegex(ValueError, "Only .xlsx"):
+			validate_xlsx_file("report.xlsm", base64.b64encode(b"data").decode("ascii"))
+		with self.assertRaisesRegex(ValueError, "valid Base64"):
+			validate_xlsx_file("report.xlsx", "not-base64")
+
+		buffer = io.BytesIO()
+		with zipfile.ZipFile(buffer, "w") as archive:
+			archive.writestr("[Content_Types].xml", "<Types />")
+			archive.writestr("xl/workbook.xml", "<workbook />")
+			archive.writestr("xl/vbaProject.bin", b"macro")
+		with self.assertRaisesRegex(ValueError, "Macro"):
+			validate_xlsx_file("report.xlsx", base64.b64encode(buffer.getvalue()).decode("ascii"))
 
 	def test_audit_summary_does_not_store_slide_content(self):
 		result = request_summary(

@@ -23,6 +23,8 @@ from ione_core.mcp.security import (
 	validate_docx_file,
 	validate_order_by,
 	validate_text_file,
+	validate_xlsx_file,
+	validate_xlsx_payload,
 )
 from ione_core.mcp.server import mcp
 from ione_core.mcp.tongjianyun_analysis import generate_tongjianyun_recipe_analysis
@@ -399,6 +401,59 @@ def frappe_read_word_attachment(
 	}
 
 
+@mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
+@audited_tool("frappe_read_spreadsheet_attachment", "读取")
+def frappe_read_spreadsheet_attachment(
+	doctype: str,
+	document_name: str,
+	file_name: str,
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Read one validated .xlsx attachment after checking its parent document permission.
+
+	This is a transport tool for the I-ONE Agent bridge. The bridge stages the decoded
+	bytes inside the assigned workspace and never exposes the Base64 payload to the model.
+	"""
+	import base64
+
+	ensure_doctype_permission(doctype, "read")
+	doc = frappe.get_doc(doctype, document_name)
+	doc.check_permission("read")
+	name = str(file_name or "").strip()
+	if not name.lower().endswith(".xlsx"):
+		raise ValueError("Only .xlsx spreadsheet attachments can be read")
+	file_row = frappe.get_all(
+		"File",
+		filters={
+			"attached_to_doctype": doctype,
+			"attached_to_name": document_name,
+			"file_name": name,
+		},
+		fields=["name", "file_name", "file_url", "file_size", "modified"],
+		order_by="modified desc",
+		limit_page_length=1,
+	)
+	if not file_row:
+		frappe.throw(f"Spreadsheet attachment {name} was not found on {doctype} {document_name}")
+	row = file_row[0]
+	if str(row.file_url or "").startswith(("http://", "https://")):
+		frappe.throw("Remote spreadsheet attachments cannot be read through MCP")
+	payload = frappe.get_doc("File", row.name).get_content()
+	if isinstance(payload, str):
+		payload = payload.encode("utf-8")
+	payload = validate_xlsx_payload(bytes(payload))
+	return {
+		"doctype": doctype,
+		"name": document_name,
+		"file_name": row.file_name,
+		"file_url": row.file_url,
+		"file_size": len(payload),
+		"modified": serializable(row.modified),
+		"content_base64": base64.b64encode(payload).decode("ascii"),
+	}
+
+
 @mcp.tool(annotations=DRAFT_WRITE)
 @as_verified_actor
 @audited_tool("frappe_create_document", "写入")
@@ -548,6 +603,33 @@ def frappe_attach_word_file(
 
 	file_doc = save_file(name, payload, doctype, document_name, is_private=1)
 	return {"doctype": doctype, "name": document_name, "file": file_doc.file_url}
+
+
+@mcp.tool(annotations=DRAFT_WRITE)
+@as_verified_actor
+@audited_tool("frappe_attach_spreadsheet_file", "写入")
+def frappe_attach_spreadsheet_file(
+	doctype: str,
+	document_name: str,
+	file_name: str,
+	content_base64: str,
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Attach a private, validated and macro-free .xlsx file to a writable document."""
+	ensure_doctype_permission(doctype, "write")
+	doc = frappe.get_doc(doctype, document_name)
+	doc.check_permission("write")
+	name, payload = validate_xlsx_file(file_name, content_base64)
+	from frappe.utils.file_manager import save_file
+
+	file_doc = save_file(name, payload, doctype, document_name, is_private=1)
+	return {
+		"doctype": doctype,
+		"name": document_name,
+		"file_name": name,
+		"file_size": len(payload),
+		"file": file_doc.file_url,
+	}
 
 
 @mcp.tool(annotations=DRAFT_WRITE)

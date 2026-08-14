@@ -70,6 +70,9 @@ MAX_DOCX_BYTES = 5 * 1024 * 1024
 MAX_DOCX_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
 MAX_DOCX_TEXT_CHARACTERS = 300000
 REQUIRED_DOCX_PARTS = {"[Content_Types].xml", "word/document.xml"}
+MAX_XLSX_BYTES = 8 * 1024 * 1024
+MAX_XLSX_UNCOMPRESSED_BYTES = 64 * 1024 * 1024
+REQUIRED_XLSX_PARTS = {"[Content_Types].xml", "xl/workbook.xml"}
 SENSITIVE_KEYS = {
 	"actor_token",
 	"api_key",
@@ -388,6 +391,60 @@ def validate_docx_file(file_name: str, content_base64: str) -> tuple[str, bytes]
 	except zipfile.BadZipFile as exc:
 		raise ValueError("Word attachment is not a valid DOCX package") from exc
 	return name, payload
+
+
+def validate_xlsx_payload(payload: bytes) -> bytes:
+	"""Validate a bounded, macro-free Open XML workbook package."""
+	if not isinstance(payload, bytes) or not payload:
+		raise ValueError("Spreadsheet attachment content cannot be empty")
+	if len(payload) > MAX_XLSX_BYTES:
+		raise ValueError("Spreadsheet attachment exceeds the 8 MB limit")
+	if not payload.startswith(b"PK\x03\x04"):
+		raise ValueError("Spreadsheet attachment is not a valid XLSX package")
+	try:
+		with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+			infos = archive.infolist()
+			names = {item.filename for item in infos}
+			if not REQUIRED_XLSX_PARTS.issubset(names):
+				raise ValueError("Spreadsheet attachment is missing required XLSX parts")
+			if len(infos) > 2000:
+				raise ValueError("Spreadsheet attachment contains too many package parts")
+			if any(item.flag_bits & 0x1 for item in infos):
+				raise ValueError("Encrypted spreadsheet attachments are not allowed")
+			if sum(item.file_size for item in infos) > MAX_XLSX_UNCOMPRESSED_BYTES:
+				raise ValueError("Spreadsheet attachment expands beyond the 64 MB limit")
+			for item in infos:
+				part = PurePath(item.filename)
+				if item.filename.startswith(("/", "\\")) or ".." in part.parts:
+					raise ValueError("Spreadsheet attachment contains an unsafe package path")
+				if (item.external_attr >> 16) & 0o170000 == 0o120000:
+					raise ValueError("Spreadsheet attachment contains an unsupported symbolic link")
+			lower_names = {name.lower() for name in names}
+			if "xl/vbaproject.bin" in lower_names or any(
+				name.startswith(("xl/activex/", "xl/embeddings/")) for name in lower_names
+			):
+				raise ValueError("Macro and embedded-object spreadsheet attachments are not allowed")
+			for required_xml in REQUIRED_XLSX_PARTS:
+				ElementTree.fromstring(archive.read(required_xml))
+	except zipfile.BadZipFile as exc:
+		raise ValueError("Spreadsheet attachment is not a valid XLSX package") from exc
+	except ElementTree.ParseError as exc:
+		raise ValueError("Spreadsheet attachment contains invalid workbook XML") from exc
+	return payload
+
+
+def validate_xlsx_file(file_name: str, content_base64: str) -> tuple[str, bytes]:
+	"""Validate one .xlsx file supplied as Base64 and return its safe name and bytes."""
+	name = PurePath(file_name or "").name
+	if not name or PurePath(name).suffix.lower() != ".xlsx":
+		raise ValueError("Only .xlsx spreadsheet attachments are allowed")
+	if not isinstance(content_base64, str) or not content_base64.strip():
+		raise ValueError("Spreadsheet attachment content cannot be empty")
+	try:
+		payload = base64.b64decode(content_base64, validate=True)
+	except (binascii.Error, ValueError) as exc:
+		raise ValueError("Spreadsheet attachment content must be valid Base64") from exc
+	return name, validate_xlsx_payload(payload)
 
 
 def extract_docx_text(payload: bytes) -> str:
