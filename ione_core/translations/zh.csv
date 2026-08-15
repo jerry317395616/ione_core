@@ -19264,3 +19264,10 @@ Work Order,工单
 Production Plan,生产计划
 Payment Request,付款请求
 Payment,付款
+Billing Status,开票状态
+Advance Payment Status,预付款状态
+Currency and Price List,币种与价格表
+Rate at which customer's currency is converted to company's base currency,客户币种兑换为公司本位币时使用的汇率
+Rate at which Price list currency is converted to company's base currency,价格表币种兑换为公司本位币时使用的汇率
+Student Info,学生信息
+Standard Selling,标准销售
