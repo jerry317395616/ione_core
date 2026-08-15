@@ -40,7 +40,35 @@
 			"询问数据、起草单据或执行任务。",
 		"Ask Flow…": "询问 Flow…",
 		"Attach file": "附加文件",
+		"All Assessment Groups": "全部考核组",
+		"Education Settings": "教育管理设置",
+		Actions: "操作",
+		"Assign To": "分配给",
+		"Clear Assignment": "清除分配",
+		Delete: "删除",
+		Message: "消息",
+		Docstatus: "文档状态",
+		Assign: "分配",
+		Attachments: "附件",
+		Share: "分享",
+		Comments: "评论",
+		"New Email": "新建邮件",
+		Attach: "上传",
 	};
+	const UI_TEXT_FALLBACK_CONTAINERS = [
+		".form-sidebar",
+		".list-row-container",
+		".modal",
+		".dropdown-menu",
+		".awesomplete",
+		".page-actions",
+	].join(",");
+	const UI_TEXT_FALLBACK_SKIP_TAGS = new Set([
+		"INPUT",
+		"TEXTAREA",
+		"SCRIPT",
+		"STYLE",
+	]);
 
 	function translate_label(label) {
 		if (!label) {
@@ -129,6 +157,29 @@
 			});
 	}
 
+	function translate_ui_text_fallback() {
+		document.querySelectorAll(UI_TEXT_FALLBACK_CONTAINERS).forEach((container) => {
+			const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+			let node = walker.nextNode();
+			while (node) {
+				const parent = node.parentElement;
+				if (
+					parent &&
+					!UI_TEXT_FALLBACK_SKIP_TAGS.has(parent.tagName) &&
+					!parent.isContentEditable
+				) {
+					const value = node.nodeValue || "";
+					const trimmed = value.trim();
+					const translated = FALLBACK_LABELS[trimmed];
+					if (translated && translated !== trimmed) {
+						node.nodeValue = value.replace(trimmed, translated);
+					}
+				}
+				node = walker.nextNode();
+			}
+		});
+	}
+
 	let translation_scheduled = false;
 	function schedule_translation() {
 		if (translation_scheduled) {
@@ -140,6 +191,7 @@
 			translate_existing_items();
 			translate_flow_panel();
 			translate_workspace_content();
+			translate_ui_text_fallback();
 		});
 	}
 
@@ -181,6 +233,7 @@
 			translate_existing_items();
 			translate_flow_panel();
 			translate_workspace_content();
+			translate_ui_text_fallback();
 
 			if (installed || attempts >= 100) {
 				window.clearInterval(timer);
@@ -194,6 +247,7 @@
 			window.setTimeout(() => {
 				translate_flow_panel();
 				translate_workspace_content();
+				translate_ui_text_fallback();
 			}, delay);
 		}
 	}
