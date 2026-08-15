@@ -82,8 +82,8 @@ cyan,青色
 amber,琥珀色
 pink,粉色
 purple,紫色
-Interests,兴趣,Guardian
-Interest,兴趣,Guardian Interest
+Interests,可提供的资源与参与意向,Guardian
+Interest,资源、特长或参与意向,Guardian Interest
 Year Start Date,学年开始日期
 Year End Date,学年结束日期
 Name,名称
@@ -14301,8 +14301,8 @@ Group Based on,分组依据
 Group Roll No,班级序号
 Group Roll Number,班级序号
 Guardian Details,监护人详情
-Guardian Interest,监护人兴趣
-Guardian Interests,监护人兴趣
+Guardian Interest,家长资源与参与意向
+Guardian Interests,家长资源与参与意向
 Guardian Name,监护人姓名
 Guardian Of ,被监护学生
 Guardian Student,被监护学生

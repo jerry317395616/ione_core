@@ -145,8 +145,12 @@ class TestDashboardLabels(TestCase):
 			"Next Year": "明年",
 		}
 		self.assertEqual({key: translations.get(key) for key in expected}, expected)
-		self.assertEqual(contextual_translations[("Interests", "Guardian")], "兴趣")
-		self.assertEqual(contextual_translations[("Interest", "Guardian Interest")], "兴趣")
+		self.assertEqual(translations["Guardian Interest"], "家长资源与参与意向")
+		self.assertEqual(translations["Guardian Interests"], "家长资源与参与意向")
+		self.assertEqual(contextual_translations[("Interests", "Guardian")], "可提供的资源与参与意向")
+		self.assertEqual(
+			contextual_translations[("Interest", "Guardian Interest")], "资源、特长或参与意向"
+		)
 
 	def test_monthly_label_is_localized_for_chinese(self):
 		self.assertEqual(localize_period_label("Jul 2026", "zh"), "2026年7月")
