@@ -84,6 +84,20 @@ pink,粉色
 purple,紫色
 Interests,兴趣,Guardian
 Interest,兴趣,Guardian Interest
+Year Start Date,学年开始日期
+Year End Date,学年结束日期
+Name,名称
+Content Type,内容类型
+Content,内容
+Description,说明
+Employee,员工
+Monday,星期一
+Tuesday,星期二
+Wednesday,星期三
+Thursday,星期四
+Friday,星期五
+Saturday,星期六
+Sunday,星期日
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
