@@ -302,6 +302,12 @@ class TestDashboardLabels(TestCase):
 			("Max Attempts", "Quiz"): "最大尝试次数",
 			("Duration", "Quiz"): "时长",
 			("Question", "Quiz Question"): "题目",
+			("Application Status", "Student Applicant"): "申请状态",
+			("Paid", "Student Applicant"): "已缴费",
+			("Applied", "Student Applicant"): "已申请",
+			("Approved", "Student Applicant"): "已批准",
+			("Rejected", "Student Applicant"): "已拒绝",
+			("Admitted", "Student Applicant"): "已录取",
 		}
 		self.assertEqual(
 			{key: contextual_translations.get(key) for key in child_table_expected},

@@ -223,6 +223,12 @@ Question,题目,Quiz
 Max Attempts,最大尝试次数,Quiz
 Duration,时长,Quiz
 Question,题目,Quiz Question
+Application Status,申请状态,Student Applicant
+Paid,已缴费,Student Applicant
+Applied,已申请,Student Applicant
+Approved,已批准,Student Applicant
+Rejected,已拒绝,Student Applicant
+Admitted,已录取,Student Applicant
 Get Items From,获取项目来源
 Download,下载
 Upload,上传
