@@ -100,6 +100,36 @@ Thursday,星期四
 Friday,星期五
 Saturday,星期六
 Sunday,星期日
+All Assessment Groups,全部考核组
+Actions,操作
+Assign To,分配给
+Clear Assignment,清除分配
+Delete,删除
+Message,消息
+Please set a default Holiday List for Company {0},请为公司 {0} 设置默认节假日列表
+Docstatus,文档状态
+Assign,分配
+Attachments,附件
+Share,分享
+Comments,评论
+New Email,新建邮件
+Attach,上传
+Education Settings,教育管理设置
+Type,类型,Student Log
+Log,日志内容,Student Log
+Result,考核结果,Assessment Result
+Summary,考核汇总,Assessment Result
+Comment,评语,Assessment Result
+Score,得分,Assessment Result Detail
+Grade,等级,Assessment Result Detail
+Amount,金额,Fee Component
+Total,合计,Fee Component
+Accounts,会计信息,Fee Structure
+Receivable Account,应收账款科目,Fee Structure
+Accounting Dimensions,会计维度,Fee Structure
+Cost Center,成本中心,Fee Structure
+Default Income Account,默认收入科目,Fee Category Default
+Default Cost Center,默认成本中心,Fee Category Default
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票

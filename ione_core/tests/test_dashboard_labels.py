@@ -113,6 +113,21 @@ class TestDashboardLabels(TestCase):
 			"Friday": "星期五",
 			"Saturday": "星期六",
 			"Sunday": "星期日",
+			"All Assessment Groups": "全部考核组",
+			"Actions": "操作",
+			"Assign To": "分配给",
+			"Clear Assignment": "清除分配",
+			"Delete": "删除",
+			"Message": "消息",
+			"Please set a default Holiday List for Company {0}": "请为公司 {0} 设置默认节假日列表",
+			"Docstatus": "文档状态",
+			"Assign": "分配",
+			"Attachments": "附件",
+			"Share": "分享",
+			"Comments": "评论",
+			"New Email": "新建邮件",
+			"Attach": "上传",
+			"Education Settings": "教育管理设置",
 			"Refresh": "刷新",
 			"Edit": "编辑",
 			"Export": "导出",
@@ -150,6 +165,31 @@ class TestDashboardLabels(TestCase):
 		self.assertEqual(contextual_translations[("Interests", "Guardian")], "可提供的资源与参与意向")
 		self.assertEqual(
 			contextual_translations[("Interest", "Guardian Interest")], "资源、特长或参与意向"
+		)
+		self.assertEqual(contextual_translations[("Type", "Student Log")], "类型")
+		self.assertEqual(contextual_translations[("Log", "Student Log")], "日志内容")
+		self.assertEqual(contextual_translations[("Result", "Assessment Result")], "考核结果")
+		self.assertEqual(contextual_translations[("Summary", "Assessment Result")], "考核汇总")
+		self.assertEqual(contextual_translations[("Comment", "Assessment Result")], "评语")
+		self.assertEqual(contextual_translations[("Score", "Assessment Result Detail")], "得分")
+		self.assertEqual(contextual_translations[("Grade", "Assessment Result Detail")], "等级")
+		self.assertEqual(contextual_translations[("Amount", "Fee Component")], "金额")
+		self.assertEqual(contextual_translations[("Total", "Fee Component")], "合计")
+		self.assertEqual(contextual_translations[("Accounts", "Fee Structure")], "会计信息")
+		self.assertEqual(
+			contextual_translations[("Receivable Account", "Fee Structure")], "应收账款科目"
+		)
+		self.assertEqual(
+			contextual_translations[("Accounting Dimensions", "Fee Structure")], "会计维度"
+		)
+		self.assertEqual(contextual_translations[("Cost Center", "Fee Structure")], "成本中心")
+		self.assertEqual(
+			contextual_translations[("Default Income Account", "Fee Category Default")],
+			"默认收入科目",
+		)
+		self.assertEqual(
+			contextual_translations[("Default Cost Center", "Fee Category Default")],
+			"默认成本中心",
 		)
 
 	def test_monthly_label_is_localized_for_chinese(self):
