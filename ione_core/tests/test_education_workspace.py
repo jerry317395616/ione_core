@@ -28,6 +28,19 @@ class EducationWorkspaceTest(unittest.TestCase):
 		self.assertTrue(all(item["keep_closed"] for item in sections))
 		self.assertTrue(all(item["child"] == 1 for item in items if not item["icon"]))
 
+	def test_sidebar_exposes_all_standard_education_user_features(self):
+		items = build_sidebar_items()
+		links = {(item.get("link_type"), item.get("link_to")) for item in items if item["type"] == "Link"}
+		required_links = {
+			("DocType", "Course Activity"),
+			("DocType", "Fee Schedule"),
+			("DocType", "Sales Order"),
+			("DocType", "Program Enrollment Tool"),
+			("DocType", "Student Report Generation Tool"),
+			("Report", "Student and Guardian Contact Details"),
+		}
+		self.assertTrue(required_links.issubset(links))
+
 	def test_workspace_content_references_every_configured_component(self):
 		content = json.loads(build_workspace_content())
 		ids = [block["id"] for block in content]

@@ -211,9 +211,12 @@ def build_sidebar_items():
 			(
 				("招生计划", "DocType", "Student Admission"),
 				("培养项目注册", "DocType", "Program Enrollment"),
+				("培养项目批量注册", "DocType", "Program Enrollment Tool"),
 				("课程注册", "DocType", "Course Enrollment"),
 				("监护人", "DocType", "Guardian"),
 				("学生日志", "DocType", "Student Log"),
+				("学生报告生成", "DocType", "Student Report Generation Tool"),
+				("学生及监护人联系方式", "Report", "Student and Guardian Contact Details"),
 			),
 		),
 		(
@@ -225,6 +228,7 @@ def build_sidebar_items():
 				("培养项目", "DocType", "Program"),
 				("课程", "DocType", "Course"),
 				("主题", "DocType", "Topic"),
+				("课程活动", "DocType", "Course Activity"),
 				("教师", "DocType", "Instructor"),
 				("教室", "DocType", "Room"),
 				("班级创建工具", "DocType", "Student Group Creation Tool"),
@@ -262,7 +266,9 @@ def build_sidebar_items():
 			(
 				("收费标准", "DocType", "Fee Structure"),
 				("收费类别", "DocType", "Fee Category"),
+				("收费计划", "DocType", "Fee Schedule"),
 				("销售发票", "DocType", "Sales Invoice"),
+				("销售订单", "DocType", "Sales Order"),
 				("学生收费报表", "Report", "Student Fee Collection"),
 				("培养项目收费报表", "Report", "Program wise Fee Collection"),
 			),
