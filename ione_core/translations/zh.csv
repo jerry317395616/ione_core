@@ -8930,7 +8930,7 @@ Pay {0} {1},支付 {0} {1}
 Payable Account is mandatory,应付账户为必填项
 Payable Charges,应付费用
 "Payable Charges can only be added if Charge Payment, or for Charges Waiver/Capitalization during Loan Restructure",仅在费用支付或贷款重组期间的费用豁免/资本化时才能添加应付费用
-Payload,有效载荷
+Payload,业务数据
 Payload Count,有效载荷数量
 Payload Hash,载荷哈希
 Payload JSON,载荷 JSON
@@ -19271,3 +19271,127 @@ Rate at which customer's currency is converted to company's base currency,客户
 Rate at which Price list currency is converted to company's base currency,价格表币种兑换为公司本位币时使用的汇率
 Student Info,学生信息
 Standard Selling,标准销售
+Status,状态
+Category,类别
+BMI,BMI
+Tongjianyun Daily Meal Confirmation,每日就餐确认
+Tongjianyun Daily Meal Confirmation Row,每日就餐确认班级明细
+Tongjianyun Daily Meal Adjustment,就餐调整记录
+Tongjianyun Child Health Profile,幼儿健康档案
+Tongjianyun Growth Measurement,生长测量
+Tongjianyun Special Diet,特殊膳食
+Tongjianyun Food Purchase,食材采购
+Tongjianyun Food Supplier,供应商
+Tongjianyun Food Sample,验收与留样
+Tongjianyun Food Trace Event,追溯事件
+Tongjianyun Meal Attendance,就餐人数记录
+Tongjianyun Meal Attendance Row,就餐人数班级明细
+Tongjianyun Meal Nutrition,膳食营养
+Tongjianyun Recipe,食谱
+Tongjianyun Recipe Dish,食谱菜品明细
+Tongjianyun Recipe Ingredient,食谱食材明细
+Tongjianyun Recipe Student Group,食谱适用班级
+Tongjianyun Service,童健云服务
+Tongjianyun Director,园长
+Tongjianyun Academic,教务
+Tongjianyun Teacher,教师
+Tongjianyun Health,保健
+Tongjianyun Nutrition,营养
+Tongjianyun Kitchen,厨房
+Tongjianyun Procurement,采购
+Tongjianyun Food Safety,食品安全
+Food Purchase Identity,食材采购标识
+Food Supplier Identity,供应商标识
+Food Sample Identity,验收与留样标识
+Food Trace Event Identity,追溯事件标识
+Meal Nutrition Identity,膳食营养标识
+Data Key,数据键
+Record Type,记录类型
+Record ID,记录编号
+Risk,风险
+Source,来源
+Sort Order,排序
+Record JSON,记录 JSON
+Expand,展开
+Recipe Relation,食谱关联
+Dish Row ID,菜品行编号
+Recipe,食谱
+Day ID,日期编号
+Meal Date,就餐日期
+Day Label,日期标签
+Meal Slot,餐次
+Meal Label,餐次名称
+Dish,菜品
+Dish Name,菜品名称
+Dish Order,菜品顺序
+Amount Per Child,每名幼儿用量
+Total Amount,总用量
+Day Metadata,日期元数据
+Day Score,当日评分
+Day Risk,当日风险
+Day Locked,当日已锁定
+Day Version,当日版本
+Day Updated At,当日更新时间
+Day Updated By,当日更新人
+Day Edit Reason,当日修改原因
+Dish Relation,菜品关联
+Ingredient Row ID,食材行编号
+Recipe Dish,食谱菜品
+Ingredient,食材
+Ingredient Name,食材名称
+Unit,单位
+Grams Per Child,每名幼儿克数
+breakfast,早餐
+morningSnack,早点
+lunch,午餐
+snack,午点
+dinner,晚餐
+normal,正常
+watch,关注
+warning,预警
+critical,严重
+Not logged in.,尚未登录。
+Not permitted.,没有操作权限。
+Recipe not found.,未找到食谱。
+Ingredients must be linked to a dish: {0},食材必须关联到菜品：{0}
+Only recipes awaiting review can be withdrawn.,只有待审核的食谱可以撤回。
+Only published recipes can be archived.,只有已发布的食谱可以归档。
+Recipe is already in the recycle bin.,食谱已在回收站中。
+Recipe is not in the recycle bin.,食谱不在回收站中。
+Unsupported recipe action.,不支持此食谱操作。
+Unsupported Tongjianyun record type: {0},不支持的童健云记录类型：{0}
+record_type and record_id are required.,记录类型和记录编号为必填项。
+record_type is required.,记录类型为必填项。
+record_id is required.,记录编号为必填项。
+Tongjianyun requires the Education app.,童健云需要安装教育管理应用。
+details,明细
+Education考勤,教育管理考勤
+food_purchase,食材采购
+food_sample,食材验收与留样
+food_supplier,食材供应商
+food_trace_event,食材追溯事件
+meal_generation_config,膳食生成配置
+meal_draft,膳食草稿
+meal_review_history,膳食审核历史
+"meal_generation_config, meal_draft, meal_review_history","膳食生成配置、膳食草稿、膳食审核历史"
+Students,学生
+Joining Date,入园日期
+Date of Birth,出生日期
+Blood Group,血型
+Gender,性别
+Mobile Number,手机号码
+Relation,与幼儿关系
+Student Groups,班级
+Present,到园
+Absent,缺勤
+Leave,请假
+From Date,开始日期
+To Date,结束日期
+Reason,原因
+Medical,健康
+General,日常
+Enabled,启用
+Disabled,停用
+Active,在园
+User,用户
+JSON,JSON 数据
