@@ -82,8 +82,10 @@ cyan,青色
 amber,琥珀色
 pink,粉色
 purple,紫色
-Interests,兴趣,Guardian
-Interest,兴趣,Guardian Interest
+Interests,可提供的资源与参与意向,Guardian
+Interest,资源、特长或参与意向,Guardian Interest
+Guardian Interest,家长资源与参与意向
+Guardian Interests,家长资源与参与意向
 Year Start Date,学年开始日期
 Year End Date,学年结束日期
 Name,名称
