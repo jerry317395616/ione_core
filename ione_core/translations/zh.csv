@@ -29,6 +29,10 @@ Webhook URL,Webhook 地址
 1 year ago,1 年前
 yesterday,昨天
 now,现在
+List View,列表视图
+Filter,筛选
+Create,新建
+First Name,名字
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
