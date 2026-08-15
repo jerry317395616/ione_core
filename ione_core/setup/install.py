@@ -62,9 +62,18 @@ def before_install():
 
 
 def after_install():
+	set_chinese_locale_defaults()
 	ensure_roles()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	ensure_flow_tools()
+	ensure_education_workspace()
+	ensure_healthcare_workspace()
+	ensure_slides_integration()
+	ensure_video_integration()
+	sync_translation_overrides()
+	install_translation_bundle()
+	ensure_desktop_app_labels()
 
 
 def after_migrate():
@@ -72,13 +81,87 @@ def after_migrate():
 	migrate_agent_fields()
 	ensure_default_agent()
 	ensure_default_onboarding_flow()
+	ensure_flow_tools()
+	ensure_education_workspace()
+	ensure_healthcare_workspace()
+	ensure_slides_integration()
+	ensure_video_integration()
 	ensure_runtime_config()
+	sync_translation_overrides()
+	install_translation_bundle()
+	ensure_desktop_app_labels()
+
+
+def after_app_install(app_name):
+	if app_name == "wiki":
+		install_translation_bundle()
+
+
+def set_chinese_locale_defaults():
+	"""Make a newly installed I-ONE site use the packaged Chinese catalog."""
+	frappe.db.set_single_value("System Settings", "language", "zh")
+	if frappe.db.exists("User", "Administrator"):
+		frappe.db.set_value(
+			"User",
+			"Administrator",
+			"language",
+			"zh",
+			update_modified=False,
+		)
+
+
+def sync_translation_overrides():
+	from ione_core.translation_overrides import sync_translation_overrides as sync
+
+	return sync()
+
+
+def install_translation_bundle():
+	from ione_core.translation_bundle import install_translation_bundle as install
+
+	return install()
+
+
+def ensure_desktop_app_labels():
+	from ione_core.desktop_i18n import ensure_desktop_app_labels as ensure
+
+	return ensure()
 
 
 def ensure_runtime_config():
 	from ione_core.runtime_config import ensure_web_request_timeout
 
 	ensure_web_request_timeout()
+
+
+def ensure_flow_tools():
+	from ione_core.setup.flow_tools import ensure_frappe_document_tool
+
+	ensure_frappe_document_tool()
+
+
+def ensure_education_workspace():
+	from ione_core.setup.education_workspace import ensure_education_workspace as ensure
+
+	return ensure()
+
+
+def ensure_healthcare_workspace():
+	from ione_core.setup.healthcare_workspace import ensure_healthcare_workspace as ensure
+
+	return ensure()
+
+
+def ensure_slides_integration():
+	from ione_core.setup.slides_integration import ensure_deal_presentation_field
+
+	return ensure_deal_presentation_field()
+
+
+def ensure_video_integration():
+	from ione_core.setup.video_integration import ensure_deal_video_field
+
+	return ensure_deal_video_field()
 
 
 def migrate_agent_fields():

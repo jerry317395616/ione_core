@@ -127,7 +127,6 @@ class TestDashboardLabels(TestCase):
 			"Comments": "评论",
 			"New Email": "新建邮件",
 			"Attach": "上传",
-			"Education Settings": "教育管理设置",
 			"Refresh": "刷新",
 			"Edit": "编辑",
 			"Export": "导出",
@@ -191,6 +190,16 @@ class TestDashboardLabels(TestCase):
 			contextual_translations[("Default Cost Center", "Fee Category Default")],
 			"默认成本中心",
 		)
+
+	def test_dynamic_ui_fallbacks_cover_non_translatable_framework_values(self):
+		script_path = (
+			Path(__file__).resolve().parents[1] / "public" / "js" / "workspace_dock_i18n.js"
+		)
+		script = script_path.read_text(encoding="utf-8")
+
+		self.assertIn('"All Assessment Groups": "全部考核组"', script)
+		self.assertIn('"Education Settings": "教育管理设置"', script)
+		self.assertIn("translate_ui_text_fallback();", script)
 
 	def test_monthly_label_is_localized_for_chinese(self):
 		self.assertEqual(localize_period_label("Jul 2026", "zh"), "2026年7月")
