@@ -198,6 +198,7 @@ class TestDashboardLabels(TestCase):
 			"Customer": "客户",
 			"Customer Name": "客户名称",
 			"Posting Date": "记账日期",
+			"Posting Time": "记账时间",
 			"Series": "编号规则",
 			"Include Payment (POS)": "包含付款（POS）",
 			"Is Return (Credit Note)": "退货（贷项通知单）",

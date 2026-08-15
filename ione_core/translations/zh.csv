@@ -130,6 +130,7 @@ Default Cost Center,默认成本中心,Fee Category Default
 Customer,客户,Sales Invoice
 Customer Name,客户名称,Sales Invoice
 Posting Date,记账日期,Sales Invoice
+Posting Time,记账时间,Sales Invoice
 Series,编号规则,Sales Invoice
 Include Payment (POS),包含付款（POS）,Sales Invoice
 Is Return (Credit Note),退货（贷项通知单）,Sales Invoice
