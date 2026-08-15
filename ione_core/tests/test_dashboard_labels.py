@@ -190,6 +190,91 @@ class TestDashboardLabels(TestCase):
 			contextual_translations[("Default Cost Center", "Fee Category Default")],
 			"默认成本中心",
 		)
+		self.assertEqual(translations["Get Items From"], "获取项目来源")
+		self.assertEqual(translations["Download"], "下载")
+		self.assertEqual(translations["Upload"], "上传")
+
+		sales_invoice_expected = {
+			"Customer": "客户",
+			"Customer Name": "客户名称",
+			"Posting Date": "记账日期",
+			"Series": "编号规则",
+			"Include Payment (POS)": "包含付款（POS）",
+			"Is Return (Credit Note)": "退货（贷项通知单）",
+			"Is Rate Adjustment Entry (Debit Note)": "价格调整分录（借项通知单）",
+			"Edit Posting Date and Time": "编辑记账日期和时间",
+			"Payment Due Date": "付款到期日",
+			"Student Info": "学生信息",
+			"Address & Contact": "地址与联系人",
+			"Items": "物料明细",
+			"Scan Barcode": "扫描条码",
+			"Update Stock": "更新库存",
+			"Taxes and Charges": "税费",
+			"Shipping Rule": "发运规则",
+			"Incoterm": "国际贸易术语",
+			"Sales Taxes and Charges Template": "销售税费模板",
+			"Advance Payments": "预付款",
+			"Allocate Advances Automatically (FIFO)": "自动分配预付款（先进先出）",
+			"Get Advances Received": "获取已收预付款",
+			"Advances": "预付款明细",
+			"Billing Address": "账单地址",
+			"Customer Address": "客户地址",
+			"Contact Person": "联系人",
+			"Territory": "地区",
+			"Shipping Address Name": "收货地址",
+			"Dispatch Address Name": "发货地址",
+			"Company Address": "公司地址",
+			"Company Address Name": "公司地址",
+			"Company Contact Person": "公司联系人",
+			"Payment Terms": "付款条款",
+			"Payment Terms Template": "付款条款模板",
+			"Payment Schedule": "付款计划",
+			"Terms": "条款",
+			"Terms and Conditions Details": "条款及条件详情",
+			"Customer PO Details": "客户采购订单信息",
+			"Customer's Purchase Order": "客户采购订单",
+			"Customer's Purchase Order Date": "客户采购订单日期",
+			"Accounting Details": "会计信息",
+			"Debit To": "应收账款科目",
+			"Commission": "佣金",
+			"Sales Partner": "销售合作伙伴",
+			"Sales Team": "销售团队",
+			"Sales Contributions and Incentives": "销售贡献与激励",
+			"Group same items": "合并相同物料",
+		}
+		self.assertEqual(
+			{
+				key: contextual_translations.get((key, "Sales Invoice"))
+				for key in sales_invoice_expected
+			},
+			sales_invoice_expected,
+		)
+
+		child_table_expected = {
+			("Item", "Sales Invoice Item"): "物料",
+			("Quantity", "Sales Invoice Item"): "数量",
+			("Rate", "Sales Invoice Item"): "单价",
+			("Amount", "Sales Invoice Item"): "金额",
+			("Reference Name", "Sales Invoice Advance"): "参考单据",
+			("Remarks", "Sales Invoice Advance"): "备注",
+			("Advance amount", "Sales Invoice Advance"): "预付款金额",
+			("Allocated amount", "Sales Invoice Advance"): "已分配金额",
+			("Difference Posting Date", "Sales Invoice Advance"): "差额记账日期",
+			("Due Date", "Payment Schedule"): "到期日",
+			("Invoice Portion", "Payment Schedule"): "发票比例",
+			("Payment Amount", "Payment Schedule"): "付款金额",
+			("Sales Person", "Sales Team"): "销售人员",
+			("Contribution (%)", "Sales Team"): "贡献比例（%）",
+			("Contribution to Net Total", "Sales Team"): "对净额的贡献",
+			("Commission Rate", "Sales Team"): "佣金率",
+			("Incentives", "Sales Team"): "激励金额",
+			("Category", "Student Category"): "类别",
+			("Batch Name", "Student Batch Name"): "批次名称",
+		}
+		self.assertEqual(
+			{key: contextual_translations.get(key) for key in child_table_expected},
+			child_table_expected,
+		)
 
 	def test_dynamic_ui_fallbacks_cover_non_translatable_framework_values(self):
 		script_path = (

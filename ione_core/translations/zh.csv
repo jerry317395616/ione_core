@@ -127,6 +127,74 @@ Accounting Dimensions,会计维度,Fee Structure
 Cost Center,成本中心,Fee Structure
 Default Income Account,默认收入科目,Fee Category Default
 Default Cost Center,默认成本中心,Fee Category Default
+Customer,客户,Sales Invoice
+Customer Name,客户名称,Sales Invoice
+Posting Date,记账日期,Sales Invoice
+Series,编号规则,Sales Invoice
+Include Payment (POS),包含付款（POS）,Sales Invoice
+Is Return (Credit Note),退货（贷项通知单）,Sales Invoice
+Is Rate Adjustment Entry (Debit Note),价格调整分录（借项通知单）,Sales Invoice
+Edit Posting Date and Time,编辑记账日期和时间,Sales Invoice
+Payment Due Date,付款到期日,Sales Invoice
+Student Info,学生信息,Sales Invoice
+Address & Contact,地址与联系人,Sales Invoice
+Items,物料明细,Sales Invoice
+Scan Barcode,扫描条码,Sales Invoice
+Update Stock,更新库存,Sales Invoice
+Taxes and Charges,税费,Sales Invoice
+Shipping Rule,发运规则,Sales Invoice
+Incoterm,国际贸易术语,Sales Invoice
+Sales Taxes and Charges Template,销售税费模板,Sales Invoice
+Advance Payments,预付款,Sales Invoice
+Allocate Advances Automatically (FIFO),自动分配预付款（先进先出）,Sales Invoice
+Get Advances Received,获取已收预付款,Sales Invoice
+Advances,预付款明细,Sales Invoice
+Billing Address,账单地址,Sales Invoice
+Customer Address,客户地址,Sales Invoice
+Contact Person,联系人,Sales Invoice
+Territory,地区,Sales Invoice
+Shipping Address Name,收货地址,Sales Invoice
+Dispatch Address Name,发货地址,Sales Invoice
+Company Address,公司地址,Sales Invoice
+Company Address Name,公司地址,Sales Invoice
+Company Contact Person,公司联系人,Sales Invoice
+Payment Terms,付款条款,Sales Invoice
+Payment Terms Template,付款条款模板,Sales Invoice
+Payment Schedule,付款计划,Sales Invoice
+Terms,条款,Sales Invoice
+Terms and Conditions Details,条款及条件详情,Sales Invoice
+Customer PO Details,客户采购订单信息,Sales Invoice
+Customer's Purchase Order,客户采购订单,Sales Invoice
+Customer's Purchase Order Date,客户采购订单日期,Sales Invoice
+Accounting Details,会计信息,Sales Invoice
+Debit To,应收账款科目,Sales Invoice
+Commission,佣金,Sales Invoice
+Sales Partner,销售合作伙伴,Sales Invoice
+Sales Team,销售团队,Sales Invoice
+Sales Contributions and Incentives,销售贡献与激励,Sales Invoice
+Group same items,合并相同物料,Sales Invoice
+Item,物料,Sales Invoice Item
+Quantity,数量,Sales Invoice Item
+Rate,单价,Sales Invoice Item
+Amount,金额,Sales Invoice Item
+Reference Name,参考单据,Sales Invoice Advance
+Remarks,备注,Sales Invoice Advance
+Advance amount,预付款金额,Sales Invoice Advance
+Allocated amount,已分配金额,Sales Invoice Advance
+Difference Posting Date,差额记账日期,Sales Invoice Advance
+Due Date,到期日,Payment Schedule
+Invoice Portion,发票比例,Payment Schedule
+Payment Amount,付款金额,Payment Schedule
+Sales Person,销售人员,Sales Team
+Contribution (%),贡献比例（%）,Sales Team
+Contribution to Net Total,对净额的贡献,Sales Team
+Commission Rate,佣金率,Sales Team
+Incentives,激励金额,Sales Team
+Category,类别,Student Category
+Batch Name,批次名称,Student Batch Name
+Get Items From,获取项目来源
+Download,下载
+Upload,上传
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
