@@ -10,7 +10,9 @@ class TestDashboardLabels(TestCase):
 	def test_education_home_dashboard_strings_are_localized(self):
 		translations_path = Path(__file__).resolve().parents[1] / "translations" / "zh.csv"
 		with translations_path.open(encoding="utf-8", newline="") as translations_file:
-			translations = dict(csv.reader(translations_file))
+			rows = list(csv.reader(translations_file))
+			translations = {row[0]: row[1] for row in rows if len(row) == 2}
+			contextual_translations = {(row[0], row[2]): row[1] for row in rows if len(row) == 3}
 
 		expected = {
 			"Select Date Range": "选择日期范围",
@@ -70,6 +72,33 @@ class TestDashboardLabels(TestCase):
 			"Full Name": "姓名",
 			"Customer Group": "客户组",
 			"Begin typing for results.": "输入内容以搜索。",
+			"Batch": "批次",
+			"Activity": "活动",
+			"Instructors": "教师",
+			"Schedule Date": "安排日期",
+			"From Time": "开始时间",
+			"To Time": "结束时间",
+			"Based On": "依据",
+			"Assessment Name": "考核名称",
+			"Schedule": "日程安排",
+			"Title": "标题",
+			"Route": "路由",
+			"Publish on website": "发布到网站",
+			"Introduction": "简介",
+			"Courses": "课程",
+			"Course Name": "课程名称",
+			"Table": "表格",
+			"blue": "蓝色",
+			"green": "绿色",
+			"red": "红色",
+			"orange": "橙色",
+			"yellow": "黄色",
+			"teal": "青绿色",
+			"violet": "紫罗兰色",
+			"cyan": "青色",
+			"amber": "琥珀色",
+			"pink": "粉色",
+			"purple": "紫色",
 			"Refresh": "刷新",
 			"Edit": "编辑",
 			"Export": "导出",
@@ -102,6 +131,8 @@ class TestDashboardLabels(TestCase):
 			"Next Year": "明年",
 		}
 		self.assertEqual({key: translations.get(key) for key in expected}, expected)
+		self.assertEqual(contextual_translations[("Interests", "Guardian")], "兴趣")
+		self.assertEqual(contextual_translations[("Interest", "Guardian Interest")], "兴趣")
 
 	def test_monthly_label_is_localized_for_chinese(self):
 		self.assertEqual(localize_period_label("Jul 2026", "zh"), "2026年7月")
