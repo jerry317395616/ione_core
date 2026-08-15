@@ -193,6 +193,7 @@ class TestDashboardLabels(TestCase):
 		self.assertEqual(translations["Get Items From"], "获取项目来源")
 		self.assertEqual(translations["Download"], "下载")
 		self.assertEqual(translations["Upload"], "上传")
+		self.assertEqual(translations["Watch Video"], "观看视频")
 
 		sales_invoice_expected = {
 			"Customer": "客户",
@@ -242,6 +243,18 @@ class TestDashboardLabels(TestCase):
 			"Sales Team": "销售团队",
 			"Sales Contributions and Incentives": "销售贡献与激励",
 			"Group same items": "合并相同物料",
+			"Sales Taxes and Charges": "销售税费",
+			"Total Taxes and Charges (Company Currency)": "税费合计（公司币种）",
+			"Total Taxes and Charges": "税费合计",
+			"Use Company default Cost Center for Round off": "舍入调整使用公司默认成本中心",
+			"Grand Total": "总计",
+			"Rounding Adjustment": "舍入调整",
+			"Rounded Total": "舍入后总计",
+			"Total Advance": "预付款合计",
+			"Time Sheet List": "工时单列表",
+			"Time Sheets": "工时单",
+			"Source": "来源",
+			"Medium": "媒介",
 		}
 		self.assertEqual(
 			{
@@ -271,6 +284,24 @@ class TestDashboardLabels(TestCase):
 			("Incentives", "Sales Team"): "激励金额",
 			("Category", "Student Category"): "类别",
 			("Batch Name", "Student Batch Name"): "批次名称",
+			("Type", "Sales Taxes and Charges"): "类型",
+			("Account Head", "Sales Taxes and Charges"): "会计科目",
+			("Tax Rate", "Sales Taxes and Charges"): "税率",
+			("Net Amount", "Sales Taxes and Charges"): "净额",
+			("Amount", "Sales Taxes and Charges"): "金额",
+			("Total", "Sales Taxes and Charges"): "合计",
+			("Activity Type", "Sales Invoice Timesheet"): "活动类型",
+			("Billing Hours", "Sales Invoice Timesheet"): "计费工时",
+			("Billing Amount", "Sales Invoice Timesheet"): "计费金额",
+			("Time Sheet", "Sales Invoice Timesheet"): "工时单",
+			("Author", "Article"): "作者",
+			("Publish Date", "Article"): "发布日期",
+			("Publish Date", "Video"): "发布日期",
+			("Duration", "Video"): "时长",
+			("Question", "Quiz"): "题目",
+			("Max Attempts", "Quiz"): "最大尝试次数",
+			("Duration", "Quiz"): "时长",
+			("Question", "Quiz Question"): "题目",
 		}
 		self.assertEqual(
 			{key: contextual_translations.get(key) for key in child_table_expected},

@@ -174,15 +174,37 @@ Sales Partner,销售合作伙伴,Sales Invoice
 Sales Team,销售团队,Sales Invoice
 Sales Contributions and Incentives,销售贡献与激励,Sales Invoice
 Group same items,合并相同物料,Sales Invoice
+Sales Taxes and Charges,销售税费,Sales Invoice
+Total Taxes and Charges (Company Currency),税费合计（公司币种）,Sales Invoice
+Total Taxes and Charges,税费合计,Sales Invoice
+Use Company default Cost Center for Round off,舍入调整使用公司默认成本中心,Sales Invoice
+Grand Total,总计,Sales Invoice
+Rounding Adjustment,舍入调整,Sales Invoice
+Rounded Total,舍入后总计,Sales Invoice
+Total Advance,预付款合计,Sales Invoice
+Time Sheet List,工时单列表,Sales Invoice
+Time Sheets,工时单,Sales Invoice
+Source,来源,Sales Invoice
+Medium,媒介,Sales Invoice
 Item,物料,Sales Invoice Item
 Quantity,数量,Sales Invoice Item
 Rate,单价,Sales Invoice Item
 Amount,金额,Sales Invoice Item
+Type,类型,Sales Taxes and Charges
+Account Head,会计科目,Sales Taxes and Charges
+Tax Rate,税率,Sales Taxes and Charges
+Net Amount,净额,Sales Taxes and Charges
+Amount,金额,Sales Taxes and Charges
+Total,合计,Sales Taxes and Charges
 Reference Name,参考单据,Sales Invoice Advance
 Remarks,备注,Sales Invoice Advance
 Advance amount,预付款金额,Sales Invoice Advance
 Allocated amount,已分配金额,Sales Invoice Advance
 Difference Posting Date,差额记账日期,Sales Invoice Advance
+Activity Type,活动类型,Sales Invoice Timesheet
+Billing Hours,计费工时,Sales Invoice Timesheet
+Billing Amount,计费金额,Sales Invoice Timesheet
+Time Sheet,工时单,Sales Invoice Timesheet
 Due Date,到期日,Payment Schedule
 Invoice Portion,发票比例,Payment Schedule
 Payment Amount,付款金额,Payment Schedule
@@ -193,9 +215,18 @@ Commission Rate,佣金率,Sales Team
 Incentives,激励金额,Sales Team
 Category,类别,Student Category
 Batch Name,批次名称,Student Batch Name
+Author,作者,Article
+Publish Date,发布日期,Article
+Publish Date,发布日期,Video
+Duration,时长,Video
+Question,题目,Quiz
+Max Attempts,最大尝试次数,Quiz
+Duration,时长,Quiz
+Question,题目,Quiz Question
 Get Items From,获取项目来源
 Download,下载
 Upload,上传
+Watch Video,观看视频
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
