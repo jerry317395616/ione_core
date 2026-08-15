@@ -14284,9 +14284,9 @@ Student Monthly Attendance Sheet,学生月度考勤表
 Student Report Generation Tool,学生报告生成工具
 Tools,工具
 Video,视频
- days,天
- meetings,次会议
- out of ,中的
+ days, 天
+ meetings, 次
+ out of ,/
 ...Adding Article to Topics,...正在将文章添加到主题
 ...Adding Course to Programs,...正在将课程添加到培养项目
 ...Adding Quiz to Topics,...正在将测验添加到主题
@@ -14530,7 +14530,7 @@ Please select the assessment group other than 'All Assessment Groups',请选择�
 Please set the Email ID for the Student to send the Payment Request,请为学生设置电子邮件 ID 以发送付款请求
 Please setup Instructor Naming System in Education > Education Settings,请在“教育 > 教育设置”中设置教师命名系统
 Please setup Students under Student Groups,请在学生班级下设置学生
-Present ,出席
+Present ,出勤 
 Print Report Card,打印成绩单
 Program Abbreviation,培养项目缩写
 Program and Course,培养项目与课程
@@ -19012,3 +19012,255 @@ Next Month,下月
 Next Quarter,下季度
 Next 6 Months,未来 6 个月
 Next Year,明年
+Due Date,到期日期
+Draft,草稿
+Cancelled,已取消
+In Process,处理中
+Failed,失败
+Grand Total,总计
+In Words,金额大写
+Printing Settings,打印设置
+Receivable Account,应收账款科目
+Cost Center,成本中心
+Amended From,修订自
+Accounting Dimensions,会计维度
+Posting Date,过账日期
+Fee Creation Failed,收费单创建失败
+Amount,金额
+Item,物料
+Total,合计
+Batch Name,学生批次名称
+Terms,条款
+Score,得分
+Grade,等级
+Series,编号规则
+Customer,客户
+Customer Name,客户名称
+Order Type,订单类型
+Sales,销售
+Maintenance,维护
+Shopping Cart,购物车
+Delivery Date,交货日期
+Customer's Purchase Order,客户采购订单
+Customer's Purchase Order Date,客户采购订单日期
+Tax Id,税务编号
+Customer Address,客户地址
+Contact Person,联系人
+Contact,联系方式
+Mobile No,手机号码
+Company Address,公司地址
+Company Address Name,公司地址名称
+Shipping Address Name,收货地址名称
+Territory,销售区域
+Exchange Rate,汇率
+Price List,价格表
+Price List Currency,价格表币种
+Price List Exchange Rate,价格表汇率
+Ignore Pricing Rule,忽略定价规则
+Set Source Warehouse,设置源仓库
+Scan Barcode,扫描条码
+Items,物料明细
+Pricing Rule Detail,定价规则明细
+Total Quantity,总数量
+Total (Company Currency),合计（公司币种）
+Net Total (Company Currency),净额合计（公司币种）
+Net Total,净额合计
+Total Net Weight,总净重
+Shipping Rule,配送规则
+Sales Taxes and Charges Template,销售税费模板
+Sales Taxes and Charges,销售税费
+Taxes and Charges Calculation,税费计算
+Total Taxes and Charges (Company Currency),税费合计（公司币种）
+Total Taxes and Charges,税费合计
+Coupon Code,优惠券代码
+Apply Additional Discount On,额外折扣适用基准
+Additional Discount Amount,额外折扣金额
+Additional Discount Percentage,额外折扣百分比
+Rounding Adjustment,舍入调整
+Rounded Total,舍入后总计
+Advance Paid,已付预付款
+Packed Items,包装物料
+Payment Terms Template,付款条款模板
+Payment Schedule,付款计划
+Terms and Conditions Details,条款和条件详情
+Inter Company Order Reference,公司间订单引用
+Group same items,合并相同物料
+On Hold,已暂停
+To Pay,待付款
+To Deliver and Bill,待交货和开票
+To Bill,待开票
+To Deliver,待交货
+Completed,已完成
+Closed,已关闭
+% Delivered,交货百分比
+% Amount Billed,已开票金额百分比
+Sales Partner,销售合作伙伴
+Commission Rate,佣金率
+Total Commission,佣金合计
+Sales Team,销售团队
+Update Auto Repeat Reference,更新自动重复引用
+Phone,电话
+Skip Delivery Note,跳过交货单
+Is Internal Customer,是否内部客户
+Represents Company,代表公司
+Disable Rounded Total,禁用舍入总计
+Dispatch Address Name,发货地址名称
+Dispatch Address,发货地址
+Amount Eligible for Commission,可计佣金额
+% Picked,拣货百分比
+Incoterm,国际贸易术语
+Named Place,指定地点
+Reserve Stock,预留库存
+Medium,媒介
+Source,来源
+Company Contact Person,公司联系人
+Last Scanned Warehouse,最后扫描仓库
+Is Subcontracted,是否分包
+Time,时间
+Item Code,物料编码
+Product Bundle,产品组合
+Ensure Delivery Based on Produced Serial No,按生产序列号确保交货
+Item Name,物料名称
+Quantity,数量
+Stock UOM,库存计量单位
+UOM,计量单位
+UOM Conversion Factor,计量单位换算系数
+Qty as per Stock UOM,库存单位数量
+Price List Rate,价格表单价
+Price List Rate (Company Currency),价格表单价（公司币种）
+Margin Type,毛利类型
+Percentage,百分比
+Margin Rate or Amount,毛利率或金额
+Rate With Margin,含毛利单价
+Discount (%) on Price List Rate with Margin,含毛利价格表单价折扣（%）
+Discount Amount,折扣金额
+Rate With Margin (Company Currency),含毛利单价（公司币种）
+Rate,单价
+Basic Rate (Company Currency),基本单价（公司币种）
+Amount (Company Currency),金额（公司币种）
+Is Free Item,是否免费物料
+Net Rate,净单价
+Net Amount,净额
+Net Rate (Company Currency),净单价（公司币种）
+Net Amount (Company Currency),净额（公司币种）
+Supplier delivers to Customer,供应商直接交付客户
+Supplier,供应商
+Weight Per Unit,单位重量
+Total Weight,总重量
+Weight UOM,重量单位
+Source Warehouse,源仓库
+Quotation,报价单
+Billed Amt,已开票金额
+Valuation Rate,估值单价
+Gross Profit,毛利
+Blanket Order,长期订单
+Blanket Order Rate,长期订单单价
+Projected Qty,预计数量
+Qty (Warehouse),仓库数量
+Ordered Qty,已订购数量
+Delivered Qty,已交货数量
+Work Order Qty,工单数量
+Returned Qty,退货数量
+Additional Notes,附加说明
+Against Blanket Order,对应长期订单
+BOM No,物料清单编号
+Rate of Stock UOM,库存单位单价
+Grant Commission,计提佣金
+Picked Qty (in Stock UOM),已拣数量（库存单位）
+Purchase Order,采购订单
+Purchase Order Item,采购订单物料
+Material Request,物料请求
+Material Request Item,物料请求项目
+Stock Reserved Qty (in Stock UOM),库存预留数量（库存单位）
+Production Plan Qty,生产计划数量
+Distributed Discount Amount,分摊折扣金额
+Qty (Company),公司数量
+Add Schedule,添加计划
+Subcontracted Quantity,分包数量
+Finished Good,成品
+Finished Good Qty,成品数量
+Requested Qty,请求数量
+Pricing Rule,定价规则
+Rule Applied,已应用规则
+Type,类型
+Actual,实际
+On Net Total,按净额合计
+On Previous Row Amount,按上一行金额
+On Previous Row Total,按上一行合计
+On Item Quantity,按物料数量
+Reference Row #,引用行号
+Account Head,科目
+Is this Tax included in Basic Rate?,此税费是否包含在基本单价中？
+Tax Rate,税率
+Tax Amount After Discount Amount,折扣后税额
+Tax Amount After Discount Amount (Company Currency),折扣后税额（公司币种）
+Considered In Paid Amount,计入已付金额
+Account Currency,科目币种
+Is Tax Withholding Account,是否预扣税科目
+Parent Item,父物料
+From Warehouse,源仓库
+To Warehouse (Optional),目标仓库（可选）
+Qty,数量
+Serial No,序列号
+Batch No,批次号
+Actual Qty,实际数量
+Actual Batch Quantity,批次实际数量
+Incoming Rate,入库单价
+Conversion Factor,换算系数
+Picked Qty,已拣数量
+Packed Qty,已包装数量
+Serial and Batch Bundle,序列号和批次组合
+Pick Serial / Batch No,选择序列号/批次号
+Use Serial No / Batch Fields,使用序列号/批次字段
+Invoice Portion,发票比例
+Payment Amount,付款金额
+Paid Amount,已付金额
+Discounted Amount,折扣后金额
+Outstanding,未结金额
+Discount Date,折扣日期
+Discount Type,折扣类型
+Discount,折扣
+Payment Amount (Company Currency),付款金额（公司币种）
+Outstanding (Company Currency),未结金额（公司币种）
+Paid Amount (Company Currency),已付金额（公司币种）
+Day(s) after invoice date,发票日期后天数
+Day(s) after the end of the invoice month,发票月份结束后天数
+Month(s) after the end of the invoice month,发票月份结束后月数
+Credit Days,信用天数
+Credit Months,信用月数
+Discount Validity Based On,折扣有效期依据
+Discount Validity,折扣有效期
+Sales Person,销售人员
+Contribution (%),贡献比例（%）
+Contribution to Net Total,净额贡献
+Incentives,激励金额
+Update Items,更新物料
+Reserve,预留
+Stock Reservation,库存预留
+Unreserve,取消预留
+Reserved Stock,已预留库存
+Set Warehouse,设置仓库
+Add Item,添加物料
+Items to Reserve,待预留物料
+Reserving Stock...,正在预留库存...
+Please select items to reserve.,请选择要预留的物料。
+Stock Unreservation,取消库存预留
+Stock Reservation Entry,库存预留记录
+Unreserve Stock,取消预留库存
+Unreserving Stock...,正在取消库存预留...
+Please select items to unreserve.,请选择要取消预留的物料。
+First Delivery Date,首次交货日期
+Frequency,频率
+No of Deliveries,交货次数
+Get Delivery Schedule,获取交货计划
+Delivery Schedule,交货计划
+Select,选择
+Resume,恢复
+Re-open,重新打开
+Hold,暂停
+Pick List,拣货单
+Delivery Note,交货单
+Work Order,工单
+Production Plan,生产计划
+Payment Request,付款请求
+Payment,付款
