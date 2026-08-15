@@ -33,6 +33,28 @@ List View,列表视图
 Filter,筛选
 Create,新建
 First Name,名字
+Import,导入
+Customize Quick Filters,自定义快速筛选
+New {0},新建{0}
+Not Saved,未保存
+Templates,模板
+Save,保存
+Details,基本信息
+Address,地址
+Customer Details,客户信息
+Exit,离校
+Naming Series,编号规则
+Middle Name,中间名
+Last Name,姓氏
+Personal Details,个人信息
+Address Line 1,地址第一行
+Address Line 2,地址第二行
+City,城市
+Country,国家
+No.,序号
+Full Name,姓名
+Customer Group,客户组
+Begin typing for results.,输入内容以搜索。
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
