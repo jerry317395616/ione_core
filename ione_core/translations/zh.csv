@@ -55,6 +55,35 @@ No.,序号
 Full Name,姓名
 Customer Group,客户组
 Begin typing for results.,输入内容以搜索。
+Batch,批次
+Activity,活动
+Instructors,教师
+Schedule Date,安排日期
+From Time,开始时间
+To Time,结束时间
+Based On,依据
+Assessment Name,考核名称
+Schedule,日程安排
+Title,标题
+Route,路由
+Publish on website,发布到网站
+Introduction,简介
+Courses,课程
+Course Name,课程名称
+Table,表格
+blue,蓝色
+green,绿色
+red,红色
+orange,橙色
+yellow,黄色
+teal,青绿色
+violet,紫罗兰色
+cyan,青色
+amber,琥珀色
+pink,粉色
+purple,紫色
+Interests,兴趣,Guardian
+Interest,兴趣,Guardian Interest
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
