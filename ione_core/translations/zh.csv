@@ -10,6 +10,229 @@ Slack Webhook URL,Slack Webhook 地址
 TOS URI,服务条款 URI
 Webhook URL,Webhook 地址
 {0} of {1},第 {0} 项，共 {1} 项
+{0} m,{0} 分钟
+{0} h,{0} 小时
+{0} d,{0} 天
+{0} w,{0} 周
+{0} M,{0} 个月
+{0} y,{0} 年
+{0} minutes ago,{0} 分钟前
+{0} hours ago,{0} 小时前
+{0} days ago,{0} 天前
+{0} weeks ago,{0} 周前
+{0} months ago,{0} 个月前
+{0} years ago,{0} 年前
+1 minute ago,1 分钟前
+1 hour ago,1 小时前
+1 week ago,1 周前
+1 month ago,1 个月前
+1 year ago,1 年前
+yesterday,昨天
+now,现在
+List View,列表视图
+Filter,筛选
+Create,新建
+First Name,名字
+Import,导入
+Customize Quick Filters,自定义快速筛选
+New {0},新建{0}
+Not Saved,未保存
+Templates,模板
+Save,保存
+Details,基本信息
+Address,地址
+Customer Details,客户信息
+Exit,离校
+Naming Series,编号规则
+Middle Name,中间名
+Last Name,姓氏
+Personal Details,个人信息
+Address Line 1,地址第一行
+Address Line 2,地址第二行
+City,城市
+Country,国家
+No.,序号
+Full Name,姓名
+Customer Group,客户组
+Begin typing for results.,输入内容以搜索。
+Batch,批次
+Activity,活动
+Instructors,教师
+Schedule Date,安排日期
+From Time,开始时间
+To Time,结束时间
+Based On,依据
+Assessment Name,考核名称
+Schedule,日程安排
+Title,标题
+Route,路由
+Publish on website,发布到网站
+Introduction,简介
+Courses,课程
+Course Name,课程名称
+Table,表格
+blue,蓝色
+green,绿色
+red,红色
+orange,橙色
+yellow,黄色
+teal,青绿色
+violet,紫罗兰色
+cyan,青色
+amber,琥珀色
+pink,粉色
+purple,紫色
+Interests,可提供的资源与参与意向,Guardian
+Interest,资源、特长或参与意向,Guardian Interest
+Year Start Date,学年开始日期
+Year End Date,学年结束日期
+Name,名称
+Content Type,内容类型
+Content,内容
+Description,说明
+Employee,员工
+Monday,星期一
+Tuesday,星期二
+Wednesday,星期三
+Thursday,星期四
+Friday,星期五
+Saturday,星期六
+Sunday,星期日
+All Assessment Groups,全部考核组
+Actions,操作
+Assign To,分配给
+Clear Assignment,清除分配
+Delete,删除
+Message,消息
+Please set a default Holiday List for Company {0},请为公司 {0} 设置默认节假日列表
+Docstatus,文档状态
+Assign,分配
+Attachments,附件
+Share,分享
+Comments,评论
+New Email,新建邮件
+Attach,上传
+Type,类型,Student Log
+Log,日志内容,Student Log
+Result,考核结果,Assessment Result
+Summary,考核汇总,Assessment Result
+Comment,评语,Assessment Result
+Score,得分,Assessment Result Detail
+Grade,等级,Assessment Result Detail
+Amount,金额,Fee Component
+Total,合计,Fee Component
+Accounts,会计信息,Fee Structure
+Receivable Account,应收账款科目,Fee Structure
+Accounting Dimensions,会计维度,Fee Structure
+Cost Center,成本中心,Fee Structure
+Default Income Account,默认收入科目,Fee Category Default
+Default Cost Center,默认成本中心,Fee Category Default
+Customer,客户,Sales Invoice
+Customer Name,客户名称,Sales Invoice
+Posting Date,记账日期,Sales Invoice
+Posting Time,记账时间,Sales Invoice
+Series,编号规则,Sales Invoice
+Include Payment (POS),包含付款（POS）,Sales Invoice
+Is Return (Credit Note),退货（贷项通知单）,Sales Invoice
+Is Rate Adjustment Entry (Debit Note),价格调整分录（借项通知单）,Sales Invoice
+Edit Posting Date and Time,编辑记账日期和时间,Sales Invoice
+Payment Due Date,付款到期日,Sales Invoice
+Student Info,学生信息,Sales Invoice
+Address & Contact,地址与联系人,Sales Invoice
+Items,物料明细,Sales Invoice
+Scan Barcode,扫描条码,Sales Invoice
+Update Stock,更新库存,Sales Invoice
+Taxes and Charges,税费,Sales Invoice
+Shipping Rule,发运规则,Sales Invoice
+Incoterm,国际贸易术语,Sales Invoice
+Sales Taxes and Charges Template,销售税费模板,Sales Invoice
+Advance Payments,预付款,Sales Invoice
+Allocate Advances Automatically (FIFO),自动分配预付款（先进先出）,Sales Invoice
+Get Advances Received,获取已收预付款,Sales Invoice
+Advances,预付款明细,Sales Invoice
+Billing Address,账单地址,Sales Invoice
+Customer Address,客户地址,Sales Invoice
+Contact Person,联系人,Sales Invoice
+Territory,地区,Sales Invoice
+Shipping Address Name,收货地址,Sales Invoice
+Dispatch Address Name,发货地址,Sales Invoice
+Company Address,公司地址,Sales Invoice
+Company Address Name,公司地址,Sales Invoice
+Company Contact Person,公司联系人,Sales Invoice
+Payment Terms,付款条款,Sales Invoice
+Payment Terms Template,付款条款模板,Sales Invoice
+Payment Schedule,付款计划,Sales Invoice
+Terms,条款,Sales Invoice
+Terms and Conditions Details,条款及条件详情,Sales Invoice
+Customer PO Details,客户采购订单信息,Sales Invoice
+Customer's Purchase Order,客户采购订单,Sales Invoice
+Customer's Purchase Order Date,客户采购订单日期,Sales Invoice
+Accounting Details,会计信息,Sales Invoice
+Debit To,应收账款科目,Sales Invoice
+Commission,佣金,Sales Invoice
+Sales Partner,销售合作伙伴,Sales Invoice
+Sales Team,销售团队,Sales Invoice
+Sales Contributions and Incentives,销售贡献与激励,Sales Invoice
+Group same items,合并相同物料,Sales Invoice
+Sales Taxes and Charges,销售税费,Sales Invoice
+Total Taxes and Charges (Company Currency),税费合计（公司币种）,Sales Invoice
+Total Taxes and Charges,税费合计,Sales Invoice
+Use Company default Cost Center for Round off,舍入调整使用公司默认成本中心,Sales Invoice
+Grand Total,总计,Sales Invoice
+Rounding Adjustment,舍入调整,Sales Invoice
+Rounded Total,舍入后总计,Sales Invoice
+Total Advance,预付款合计,Sales Invoice
+Time Sheet List,工时单列表,Sales Invoice
+Time Sheets,工时单,Sales Invoice
+Source,来源,Sales Invoice
+Medium,媒介,Sales Invoice
+Item,物料,Sales Invoice Item
+Quantity,数量,Sales Invoice Item
+Rate,单价,Sales Invoice Item
+Amount,金额,Sales Invoice Item
+Type,类型,Sales Taxes and Charges
+Account Head,会计科目,Sales Taxes and Charges
+Tax Rate,税率,Sales Taxes and Charges
+Net Amount,净额,Sales Taxes and Charges
+Amount,金额,Sales Taxes and Charges
+Total,合计,Sales Taxes and Charges
+Reference Name,参考单据,Sales Invoice Advance
+Remarks,备注,Sales Invoice Advance
+Advance amount,预付款金额,Sales Invoice Advance
+Allocated amount,已分配金额,Sales Invoice Advance
+Difference Posting Date,差额记账日期,Sales Invoice Advance
+Activity Type,活动类型,Sales Invoice Timesheet
+Billing Hours,计费工时,Sales Invoice Timesheet
+Billing Amount,计费金额,Sales Invoice Timesheet
+Time Sheet,工时单,Sales Invoice Timesheet
+Due Date,到期日,Payment Schedule
+Invoice Portion,发票比例,Payment Schedule
+Payment Amount,付款金额,Payment Schedule
+Sales Person,销售人员,Sales Team
+Contribution (%),贡献比例（%）,Sales Team
+Contribution to Net Total,对净额的贡献,Sales Team
+Commission Rate,佣金率,Sales Team
+Incentives,激励金额,Sales Team
+Category,类别,Student Category
+Batch Name,批次名称,Student Batch Name
+Author,作者,Article
+Publish Date,发布日期,Article
+Publish Date,发布日期,Video
+Duration,时长,Video
+Question,题目,Quiz
+Max Attempts,最大尝试次数,Quiz
+Duration,时长,Quiz
+Question,题目,Quiz Question
+Application Status,申请状态,Student Applicant
+Paid,已缴费,Student Applicant
+Applied,已申请,Student Applicant
+Approved,已批准,Student Applicant
+Rejected,已拒绝,Student Applicant
+Admitted,已录取,Student Applicant
+Get Items From,获取项目来源
+Download,下载
+Upload,上传
+Watch Video,观看视频
 "Special Characters except '-', '#', '.', '/', '{{' and '}}' not allowed in naming series {0}",命名序列 {0} 中不允许使用除 '-'、'#'、'.'、'/'、'{{' 和 '}}' 以外的特殊字符
 Home,主页
 Invoicing,发票
@@ -8707,7 +8930,7 @@ Pay {0} {1},支付 {0} {1}
 Payable Account is mandatory,应付账户为必填项
 Payable Charges,应付费用
 "Payable Charges can only be added if Charge Payment, or for Charges Waiver/Capitalization during Loan Restructure",仅在费用支付或贷款重组期间的费用豁免/资本化时才能添加应付费用
-Payload,有效载荷
+Payload,业务数据
 Payload Count,有效载荷数量
 Payload Hash,载荷哈希
 Payload JSON,载荷 JSON
@@ -14061,9 +14284,9 @@ Student Monthly Attendance Sheet,学生月度考勤表
 Student Report Generation Tool,学生报告生成工具
 Tools,工具
 Video,视频
- days,天
- meetings,次会议
- out of ,中的
+ days, 天
+ meetings, 次
+ out of ,/
 ...Adding Article to Topics,...正在将文章添加到主题
 ...Adding Course to Programs,...正在将课程添加到培养项目
 ...Adding Quiz to Topics,...正在将测验添加到主题
@@ -14213,8 +14436,8 @@ Group Based on,分组依据
 Group Roll No,班级序号
 Group Roll Number,班级序号
 Guardian Details,监护人详情
-Guardian Interest,监护人兴趣
-Guardian Interests,监护人兴趣
+Guardian Interest,家长资源与参与意向
+Guardian Interests,家长资源与参与意向
 Guardian Name,监护人姓名
 Guardian Of ,被监护学生
 Guardian Student,被监护学生
@@ -14307,7 +14530,7 @@ Please select the assessment group other than 'All Assessment Groups',请选择�
 Please set the Email ID for the Student to send the Payment Request,请为学生设置电子邮件 ID 以发送付款请求
 Please setup Instructor Naming System in Education > Education Settings,请在“教育 > 教育设置”中设置教师命名系统
 Please setup Students under Student Groups,请在学生班级下设置学生
-Present ,出席
+Present ,出勤 
 Print Report Card,打印成绩单
 Program Abbreviation,培养项目缩写
 Program and Course,培养项目与课程
@@ -16719,7 +16942,7 @@ Duplicate Payment Schedule selected,选择了重复的付款计划
 Duplicate Serial Number Error,序列号重复错误
 Duplicate entry: {0}{1},重复条目：{0}{1}
 Duplicate languages found on Dunning Letter Text. Keep only one of them.,催收信文本中发现重复语言。仅保留其中一种。
-EDI,EDI
+EDI,电子数据交换
 ERPNext,企业管理
 ERPNext Integrations,ERPNext 集成
 ERPNext will make a stock ledger entry for each transaction of this item. Keep unchecked for non-stock or service items.,ERPNext 将为此物料的每笔交易创建库存分类账条目。对于非库存或服务类物料，请保持未选中状态。
@@ -18747,3 +18970,479 @@ yyyy2,yyyy2
 {0}: select the typed value {1} from the list or clear it,{0}：从列表中选择输入的值 {1} 或将其清除
 {0}: {1} does not exist,{0}: {1} 不存在
 美妍伊人医院 HRP,医院运营管理
+Select Date Range,选择日期范围
+Last Year,过去一年
+Last Quarter,过去一个季度
+Last Month,过去一个月
+Last Week,过去一周
+Yearly,按年
+Quarterly,按季度
+Monthly,按月
+Weekly,按周
+Daily,按日
+No Data,暂无数据
+just now,刚刚
+Refresh,刷新
+Edit,编辑
+Export,导出
+Loading...,加载中...
+Equals,等于
+Apply Filters,应用筛选
+Date,日期
+Timespan,时间范围
+This Month,本月
+ID,编号
+New,新建
+Like,匹配
+In,在...中
+Is,是
+Between,介于
+Last 7 Days,最近 7 天
+Last 30 Days,最近 30 天
+Last 90 Days,最近 90 天
+Last 6 Months,最近 6 个月
+Yesterday,昨天
+Today,今天
+Tomorrow,明天
+This Week,本周
+This Quarter,本季度
+This Year,今年
+Next Week,下周
+Next Month,下月
+Next Quarter,下季度
+Next 6 Months,未来 6 个月
+Next Year,明年
+Due Date,到期日期
+Draft,草稿
+Cancelled,已取消
+In Process,处理中
+Failed,失败
+Grand Total,总计
+In Words,金额大写
+Printing Settings,打印设置
+Receivable Account,应收账款科目
+Cost Center,成本中心
+Amended From,修订自
+Accounting Dimensions,会计维度
+Posting Date,过账日期
+Fee Creation Failed,收费单创建失败
+Amount,金额
+Item,物料
+Total,合计
+Batch Name,学生批次名称
+Terms,条款
+Score,得分
+Grade,等级
+Series,编号规则
+Customer,客户
+Customer Name,客户名称
+Order Type,订单类型
+Sales,销售
+Maintenance,维护
+Shopping Cart,购物车
+Delivery Date,交货日期
+Customer's Purchase Order,客户采购订单
+Customer's Purchase Order Date,客户采购订单日期
+Tax Id,税务编号
+Customer Address,客户地址
+Contact Person,联系人
+Contact,联系方式
+Mobile No,手机号码
+Company Address,公司地址
+Company Address Name,公司地址名称
+Shipping Address Name,收货地址名称
+Territory,销售区域
+Exchange Rate,汇率
+Price List,价格表
+Price List Currency,价格表币种
+Price List Exchange Rate,价格表汇率
+Ignore Pricing Rule,忽略定价规则
+Set Source Warehouse,设置源仓库
+Scan Barcode,扫描条码
+Items,物料明细
+Pricing Rule Detail,定价规则明细
+Total Quantity,总数量
+Total (Company Currency),合计（公司币种）
+Net Total (Company Currency),净额合计（公司币种）
+Net Total,净额合计
+Total Net Weight,总净重
+Shipping Rule,配送规则
+Sales Taxes and Charges Template,销售税费模板
+Sales Taxes and Charges,销售税费
+Taxes and Charges Calculation,税费计算
+Total Taxes and Charges (Company Currency),税费合计（公司币种）
+Total Taxes and Charges,税费合计
+Coupon Code,优惠券代码
+Apply Additional Discount On,额外折扣适用基准
+Additional Discount Amount,额外折扣金额
+Additional Discount Percentage,额外折扣百分比
+Rounding Adjustment,舍入调整
+Rounded Total,舍入后总计
+Advance Paid,已付预付款
+Packed Items,包装物料
+Payment Terms Template,付款条款模板
+Payment Schedule,付款计划
+Terms and Conditions Details,条款和条件详情
+Inter Company Order Reference,公司间订单引用
+Group same items,合并相同物料
+On Hold,已暂停
+To Pay,待付款
+To Deliver and Bill,待交货和开票
+To Bill,待开票
+To Deliver,待交货
+Completed,已完成
+Closed,已关闭
+% Delivered,交货百分比
+% Amount Billed,已开票金额百分比
+Sales Partner,销售合作伙伴
+Commission Rate,佣金率
+Total Commission,佣金合计
+Sales Team,销售团队
+Update Auto Repeat Reference,更新自动重复引用
+Phone,电话
+Skip Delivery Note,跳过交货单
+Is Internal Customer,是否内部客户
+Represents Company,代表公司
+Disable Rounded Total,禁用舍入总计
+Dispatch Address Name,发货地址名称
+Dispatch Address,发货地址
+Amount Eligible for Commission,可计佣金额
+% Picked,拣货百分比
+Incoterm,国际贸易术语
+Named Place,指定地点
+Reserve Stock,预留库存
+Medium,媒介
+Source,来源
+Company Contact Person,公司联系人
+Last Scanned Warehouse,最后扫描仓库
+Is Subcontracted,是否分包
+Time,时间
+Item Code,物料编码
+Product Bundle,产品组合
+Ensure Delivery Based on Produced Serial No,按生产序列号确保交货
+Item Name,物料名称
+Quantity,数量
+Stock UOM,库存计量单位
+UOM,计量单位
+UOM Conversion Factor,计量单位换算系数
+Qty as per Stock UOM,库存单位数量
+Price List Rate,价格表单价
+Price List Rate (Company Currency),价格表单价（公司币种）
+Margin Type,毛利类型
+Percentage,百分比
+Margin Rate or Amount,毛利率或金额
+Rate With Margin,含毛利单价
+Discount (%) on Price List Rate with Margin,含毛利价格表单价折扣（%）
+Discount Amount,折扣金额
+Rate With Margin (Company Currency),含毛利单价（公司币种）
+Rate,单价
+Basic Rate (Company Currency),基本单价（公司币种）
+Amount (Company Currency),金额（公司币种）
+Is Free Item,是否免费物料
+Net Rate,净单价
+Net Amount,净额
+Net Rate (Company Currency),净单价（公司币种）
+Net Amount (Company Currency),净额（公司币种）
+Supplier delivers to Customer,供应商直接交付客户
+Supplier,供应商
+Weight Per Unit,单位重量
+Total Weight,总重量
+Weight UOM,重量单位
+Source Warehouse,源仓库
+Quotation,报价单
+Billed Amt,已开票金额
+Valuation Rate,估值单价
+Gross Profit,毛利
+Blanket Order,长期订单
+Blanket Order Rate,长期订单单价
+Projected Qty,预计数量
+Qty (Warehouse),仓库数量
+Ordered Qty,已订购数量
+Delivered Qty,已交货数量
+Work Order Qty,工单数量
+Returned Qty,退货数量
+Additional Notes,附加说明
+Against Blanket Order,对应长期订单
+BOM No,物料清单编号
+Rate of Stock UOM,库存单位单价
+Grant Commission,计提佣金
+Picked Qty (in Stock UOM),已拣数量（库存单位）
+Purchase Order,采购订单
+Purchase Order Item,采购订单物料
+Material Request,物料请求
+Material Request Item,物料请求项目
+Stock Reserved Qty (in Stock UOM),库存预留数量（库存单位）
+Production Plan Qty,生产计划数量
+Distributed Discount Amount,分摊折扣金额
+Qty (Company),公司数量
+Add Schedule,添加计划
+Subcontracted Quantity,分包数量
+Finished Good,成品
+Finished Good Qty,成品数量
+Requested Qty,请求数量
+Pricing Rule,定价规则
+Rule Applied,已应用规则
+Type,类型
+Actual,实际
+On Net Total,按净额合计
+On Previous Row Amount,按上一行金额
+On Previous Row Total,按上一行合计
+On Item Quantity,按物料数量
+Reference Row #,引用行号
+Account Head,科目
+Is this Tax included in Basic Rate?,此税费是否包含在基本单价中？
+Tax Rate,税率
+Tax Amount After Discount Amount,折扣后税额
+Tax Amount After Discount Amount (Company Currency),折扣后税额（公司币种）
+Considered In Paid Amount,计入已付金额
+Account Currency,科目币种
+Is Tax Withholding Account,是否预扣税科目
+Parent Item,父物料
+From Warehouse,源仓库
+To Warehouse (Optional),目标仓库（可选）
+Qty,数量
+Serial No,序列号
+Batch No,批次号
+Actual Qty,实际数量
+Actual Batch Quantity,批次实际数量
+Incoming Rate,入库单价
+Conversion Factor,换算系数
+Picked Qty,已拣数量
+Packed Qty,已包装数量
+Serial and Batch Bundle,序列号和批次组合
+Pick Serial / Batch No,选择序列号/批次号
+Use Serial No / Batch Fields,使用序列号/批次字段
+Invoice Portion,发票比例
+Payment Amount,付款金额
+Paid Amount,已付金额
+Discounted Amount,折扣后金额
+Outstanding,未结金额
+Discount Date,折扣日期
+Discount Type,折扣类型
+Discount,折扣
+Payment Amount (Company Currency),付款金额（公司币种）
+Outstanding (Company Currency),未结金额（公司币种）
+Paid Amount (Company Currency),已付金额（公司币种）
+Day(s) after invoice date,发票日期后天数
+Day(s) after the end of the invoice month,发票月份结束后天数
+Month(s) after the end of the invoice month,发票月份结束后月数
+Credit Days,信用天数
+Credit Months,信用月数
+Discount Validity Based On,折扣有效期依据
+Discount Validity,折扣有效期
+Sales Person,销售人员
+Contribution (%),贡献比例（%）
+Contribution to Net Total,净额贡献
+Incentives,激励金额
+Update Items,更新物料
+Reserve,预留
+Stock Reservation,库存预留
+Unreserve,取消预留
+Reserved Stock,已预留库存
+Set Warehouse,设置仓库
+Add Item,添加物料
+Items to Reserve,待预留物料
+Reserving Stock...,正在预留库存...
+Please select items to reserve.,请选择要预留的物料。
+Stock Unreservation,取消库存预留
+Stock Reservation Entry,库存预留记录
+Unreserve Stock,取消预留库存
+Unreserving Stock...,正在取消库存预留...
+Please select items to unreserve.,请选择要取消预留的物料。
+First Delivery Date,首次交货日期
+Frequency,频率
+No of Deliveries,交货次数
+Get Delivery Schedule,获取交货计划
+Delivery Schedule,交货计划
+Select,选择
+Resume,恢复
+Re-open,重新打开
+Hold,暂停
+Pick List,拣货单
+Delivery Note,交货单
+Work Order,工单
+Production Plan,生产计划
+Payment Request,付款请求
+Payment,付款
+Billing Status,开票状态
+Advance Payment Status,预付款状态
+Currency and Price List,币种与价格表
+Rate at which customer's currency is converted to company's base currency,客户币种兑换为公司本位币时使用的汇率
+Rate at which Price list currency is converted to company's base currency,价格表币种兑换为公司本位币时使用的汇率
+Student Info,学生信息
+Standard Selling,标准销售
+Status,状态
+Category,类别
+BMI,BMI
+Tongjianyun Daily Meal Confirmation,每日就餐确认
+Tongjianyun Daily Meal Confirmation Row,每日就餐确认班级明细
+Tongjianyun Daily Meal Adjustment,就餐调整记录
+Tongjianyun Child Health Profile,幼儿健康档案
+Tongjianyun Growth Measurement,生长测量
+Tongjianyun Special Diet,特殊膳食
+Tongjianyun Food Purchase,食材采购
+Tongjianyun Food Supplier,供应商
+Tongjianyun Food Sample,验收与留样
+Tongjianyun Food Trace Event,追溯事件
+Tongjianyun Meal Attendance,就餐人数记录
+Tongjianyun Meal Attendance Row,就餐人数班级明细
+Tongjianyun Meal Nutrition,膳食营养
+Tongjianyun Recipe,食谱
+Tongjianyun Recipe Dish,食谱菜品明细
+Tongjianyun Recipe Ingredient,食谱食材明细
+Tongjianyun Recipe Student Group,食谱适用班级
+Tongjianyun Service,童健云服务
+Tongjianyun Director,园长
+Tongjianyun Academic,教务
+Tongjianyun Teacher,教师
+Tongjianyun Health,保健
+Tongjianyun Nutrition,营养
+Tongjianyun Kitchen,厨房
+Tongjianyun Procurement,采购
+Tongjianyun Food Safety,食品安全
+Food Purchase Identity,食材采购标识
+Food Supplier Identity,供应商标识
+Food Sample Identity,验收与留样标识
+Food Trace Event Identity,追溯事件标识
+Meal Nutrition Identity,膳食营养标识
+Data Key,数据键
+Record Type,记录类型
+Record ID,记录编号
+Risk,风险
+Source,来源
+Sort Order,排序
+Record JSON,记录 JSON
+Expand,展开
+Recipe Relation,食谱关联
+Dish Row ID,菜品行编号
+Recipe,食谱
+Day ID,日期编号
+Meal Date,就餐日期
+Day Label,日期标签
+Meal Slot,餐次
+Meal Label,餐次名称
+Dish,菜品
+Dish Name,菜品名称
+Dish Order,菜品顺序
+Amount Per Child,每名幼儿用量
+Total Amount,总用量
+Day Metadata,日期元数据
+Day Score,当日评分
+Day Risk,当日风险
+Day Locked,当日已锁定
+Day Version,当日版本
+Day Updated At,当日更新时间
+Day Updated By,当日更新人
+Day Edit Reason,当日修改原因
+Dish Relation,菜品关联
+Ingredient Row ID,食材行编号
+Recipe Dish,食谱菜品
+Ingredient,食材
+Ingredient Name,食材名称
+Unit,单位
+Grams Per Child,每名幼儿克数
+breakfast,早餐
+morningSnack,早点
+lunch,午餐
+snack,午点
+dinner,晚餐
+normal,正常
+watch,关注
+warning,预警
+critical,严重
+Not logged in.,尚未登录。
+Not permitted.,没有操作权限。
+Recipe not found.,未找到食谱。
+Ingredients must be linked to a dish: {0},食材必须关联到菜品：{0}
+Only recipes awaiting review can be withdrawn.,只有待审核的食谱可以撤回。
+Only published recipes can be archived.,只有已发布的食谱可以归档。
+Recipe is already in the recycle bin.,食谱已在回收站中。
+Recipe is not in the recycle bin.,食谱不在回收站中。
+Unsupported recipe action.,不支持此食谱操作。
+Unsupported Tongjianyun record type: {0},不支持的童健云记录类型：{0}
+record_type and record_id are required.,记录类型和记录编号为必填项。
+record_type is required.,记录类型为必填项。
+record_id is required.,记录编号为必填项。
+Tongjianyun requires the Education app.,童健云需要安装教育管理应用。
+details,明细
+Education考勤,教育管理考勤
+food_purchase,食材采购
+food_sample,食材验收与留样
+food_supplier,食材供应商
+food_trace_event,食材追溯事件
+meal_generation_config,膳食生成配置
+meal_draft,膳食草稿
+meal_review_history,膳食审核历史
+"meal_generation_config, meal_draft, meal_review_history","膳食生成配置、膳食草稿、膳食审核历史"
+Students,学生
+Joining Date,入园日期
+Date of Birth,出生日期
+Blood Group,血型
+Gender,性别
+Mobile Number,手机号码
+Relation,与幼儿关系
+Student Groups,班级
+Present,到园
+Absent,缺勤
+Leave,请假
+From Date,开始日期
+To Date,结束日期
+Reason,原因
+Medical,健康
+General,日常
+Enabled,启用
+Disabled,停用
+Active,在园
+User,用户
+JSON,JSON 数据
+Permissions,权限
+Password,密码
+Role,角色
+Permission Manager,权限管理
+Audits,审计
+Academics User,教务用户
+Auditor,审计员
+Delivery Manager,交付管理员
+Delivery User,交付用户
+Fleet Manager,车队管理员
+Fulfillment User,履约用户
+HR Manager,人力资源管理员
+HR User,人力资源用户
+I-ONE Agent Manager,I-ONE 智能体管理员
+I-ONE Agent User,I-ONE 智能体用户
+I-ONE AI Employee,I-ONE AI 员工
+Item Manager,物料管理员
+Manufacturing Manager,制造管理员
+Manufacturing User,制造用户
+Projects Manager,项目管理员
+Projects User,项目用户
+Quality Manager,质量管理员
+Sales Manager,销售管理员
+Sales User,销售用户
+Shop Floor Manager,车间管理员
+Shop Floor User,车间用户
+Stock Manager,库存管理员
+Stock User,库存用户
+Support Team,支持团队
+System Manager,系统管理员
+Tongjianyun Administrator,童健云管理员
+Email,邮件
+Integrations,集成
+Quality Management,质量管理
+Regional,区域
+Telephony,电话
+Tongjianyun,童健云
+Website,网站
+Workflow,工作流
+Accounts,财务
+Automation,自动化
+Communication,沟通
+Contacts,联系人
+CRM,客户关系管理
+Desk,工作台
+Notifications,通知
+Events,事件
+Ingredient Nutrition Statistics,食材营养统计
+Select {0},选择{0}
+Search,搜索
+More,更多
