@@ -3,9 +3,9 @@ const localize_role_sidebar_title = (frm) => {
 		return;
 	}
 
-	const translated_name = __(frm.doc.name);
+	const translated_name = __(frm.get_title());
 	frm.sidebar.sidebar
-		.find(".sidebar-meta-details .form-title-text .text-medium")
+		.find(".sidebar-meta-details .form-title-text > span")
 		.text(translated_name);
 };
 
