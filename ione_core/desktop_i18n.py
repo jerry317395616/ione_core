@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import json
+
 import frappe
 
 APP_TITLES = {
 	"frappe": "框架",
 }
+
+HIDDEN_APPS_CONFIG_KEY = "ione_hidden_apps"
 
 
 def ensure_desktop_app_labels() -> dict[str, int]:
@@ -42,8 +46,25 @@ def ensure_desktop_app_labels() -> dict[str, int]:
 
 
 def localize_app_titles(bootinfo) -> None:
-	"""Localize titles for the hook-driven Apps desktop page."""
+	"""Localize app titles and apply site-scoped Apps desktop visibility."""
+	hidden_apps = get_hidden_apps()
 	for app in getattr(bootinfo, "app_data", None) or []:
 		app_name = app.get("app_name")
 		if app_name in APP_TITLES:
 			app["app_title"] = APP_TITLES[app_name]
+		if app_name in hidden_apps:
+			app["on_apps_screen"] = False
+
+
+def get_hidden_apps() -> set[str]:
+	"""Return app names hidden by this site's ``site_config.json``."""
+	config = getattr(frappe, "conf", None) or {}
+	raw_value = config.get(HIDDEN_APPS_CONFIG_KEY) or []
+	if isinstance(raw_value, str):
+		try:
+			raw_value = json.loads(raw_value)
+		except json.JSONDecodeError:
+			raw_value = raw_value.split(",")
+	if not isinstance(raw_value, (list, tuple, set)):
+		return set()
+	return {str(app).strip() for app in raw_value if str(app).strip()}

@@ -70,7 +70,26 @@ class TestInstallHooks(TestCase):
 			{"app_name": "ione_core", "app_title": "I-ONE AI"},
 		]
 
-		localize_app_titles(bootinfo)
+		with patch.object(install.frappe, "conf", {}, create=True):
+			localize_app_titles(bootinfo)
 
 		self.assertEqual(bootinfo.app_data[0]["app_title"], "框架")
 		self.assertEqual(bootinfo.app_data[1]["app_title"], "I-ONE AI")
+
+	def test_site_config_hides_app_from_apps_desktop(self):
+		bootinfo = MagicMock()
+		bootinfo.app_data = [
+			{"app_name": "tongjianyun", "on_apps_screen": True},
+			{"app_name": "erpnext", "on_apps_screen": True},
+		]
+
+		with patch.object(
+			install.frappe,
+			"conf",
+			{"ione_hidden_apps": ["erpnext"]},
+			create=True,
+		):
+			localize_app_titles(bootinfo)
+
+		self.assertTrue(bootinfo.app_data[0]["on_apps_screen"])
+		self.assertFalse(bootinfo.app_data[1]["on_apps_screen"])
