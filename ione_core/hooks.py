@@ -12,6 +12,7 @@ app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260804-1"]
 
 doctype_list_js = {
 	"Role": "public/js/role_list.js",
+	"Data Import": "public/js/data_import_list.js",
 }
 
 doctype_js = {

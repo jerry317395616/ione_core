@@ -19463,3 +19463,6 @@ More,更多
 Bulk Operation Successful,批量操作成功
 Deleted {0} records from {1} doctype,已成功删除 {0} 条记录
 Data Import,数据导入
+Document Type,单据类型
+Success,成功
+{0} Import on {1},{0}导入（{1}）
