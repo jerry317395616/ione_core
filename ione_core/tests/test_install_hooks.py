@@ -82,6 +82,10 @@ class TestInstallHooks(TestCase):
 			{"app_name": "tongjianyun", "on_apps_screen": True},
 			{"app_name": "erpnext", "on_apps_screen": True},
 		]
+		bootinfo.desktop_icons = [
+			{"label": "童健云", "app": "tongjianyun"},
+			{"label": "企业管理", "app": "erpnext"},
+		]
 
 		with patch.object(
 			install.frappe,
@@ -91,5 +95,11 @@ class TestInstallHooks(TestCase):
 		):
 			localize_app_titles(bootinfo)
 
-		self.assertTrue(bootinfo.app_data[0]["on_apps_screen"])
-		self.assertFalse(bootinfo.app_data[1]["on_apps_screen"])
+		self.assertEqual(
+			bootinfo.app_data,
+			[{"app_name": "tongjianyun", "on_apps_screen": True}],
+		)
+		self.assertEqual(
+			bootinfo.desktop_icons,
+			[{"label": "童健云", "app": "tongjianyun"}],
+		)

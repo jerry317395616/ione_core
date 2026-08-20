@@ -48,12 +48,24 @@ def ensure_desktop_app_labels() -> dict[str, int]:
 def localize_app_titles(bootinfo) -> None:
 	"""Localize app titles and apply site-scoped Apps desktop visibility."""
 	hidden_apps = get_hidden_apps()
+	visible_apps = []
 	for app in getattr(bootinfo, "app_data", None) or []:
 		app_name = app.get("app_name")
 		if app_name in APP_TITLES:
 			app["app_title"] = APP_TITLES[app_name]
 		if app_name in hidden_apps:
-			app["on_apps_screen"] = False
+			continue
+		visible_apps.append(app)
+	bootinfo.app_data = visible_apps
+
+	# Keep the alternative "Desktop Icons" layout consistent with the Apps
+	# desktop. Removing the records here also prevents an old saved layout from
+	# re-introducing a site-hidden application.
+	desktop_icons = getattr(bootinfo, "desktop_icons", None)
+	if isinstance(desktop_icons, (list, tuple)):
+		bootinfo.desktop_icons = [
+			icon for icon in desktop_icons if icon.get("app") not in hidden_apps
+		]
 
 
 def get_hidden_apps() -> set[str]:
