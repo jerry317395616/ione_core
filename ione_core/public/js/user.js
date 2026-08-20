@@ -3,14 +3,22 @@ const schedule_user_timezone_localization = (frm) => {
 
 	const apply = (attempt = 0) => {
 		const control = frm.fields_dict.time_zone;
+		const timezone = frm.doc.time_zone || control?.value || control?.$input?.val();
 		const ready =
-			frm.doc.time_zone &&
-			control?._data?.length &&
+			timezone &&
 			!control.$input?.is(":focus") &&
+			typeof control.set_data === "function" &&
 			typeof control.set_formatted_input === "function";
 
 		if (ready) {
-			control.set_formatted_input(frm.doc.time_zone);
+			const timezones = frappe.all_timezones?.length ? frappe.all_timezones : [timezone];
+			control.set_data(
+				timezones.map((value) => ({
+					label: __(value),
+					value,
+				}))
+			);
+			control.set_formatted_input(timezone);
 			return;
 		}
 
