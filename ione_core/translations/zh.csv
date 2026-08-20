@@ -19453,6 +19453,9 @@ DocType,单据类型
 Read,读取
 Submit,提交
 Cancel,取消
+Username,用户名
+Language,语言
+Asia/Chongqing,亚洲/重庆
 Ingredient Nutrition Statistics,食材营养统计
 Select {0},选择{0}
 Search,搜索
