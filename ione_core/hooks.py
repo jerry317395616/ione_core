@@ -10,6 +10,10 @@ app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 
 app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260804-1"]
 
+doctype_list_js = {
+	"Role": "public/js/role_list.js",
+}
+
 boot_session = "ione_core.desktop_i18n.localize_app_titles"
 
 after_request = [
