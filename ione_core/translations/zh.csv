@@ -19466,3 +19466,24 @@ Data Import,数据导入
 Document Type,单据类型
 Success,成功
 {0} Import on {1},{0}导入（{1}）
+Accounting Ledger,会计账簿
+Student Activity,学生活动
+Jan,1月,Heatmap
+Feb,2月,Heatmap
+Mar,3月,Heatmap
+Apr,4月,Heatmap
+May,5月,Heatmap
+Jun,6月,Heatmap
+Jul,7月,Heatmap
+Aug,8月,Heatmap
+Sep,9月,Heatmap
+Oct,10月,Heatmap
+Nov,11月,Heatmap
+Dec,12月,Heatmap
+Sun,周日,Heatmap
+Mon,周一,Heatmap
+Tue,周二,Heatmap
+Wed,周三,Heatmap
+Thu,周四,Heatmap
+Fri,周五,Heatmap
+Sat,周六,Heatmap

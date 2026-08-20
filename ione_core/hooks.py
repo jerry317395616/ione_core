@@ -18,6 +18,7 @@ doctype_list_js = {
 doctype_js = {
 	"Role": "public/js/role.js",
 	"User": "public/js/user.js",
+	"Student": "public/js/student.js",
 }
 
 boot_session = "ione_core.desktop_i18n.localize_app_titles"
