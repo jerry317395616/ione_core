@@ -8267,6 +8267,7 @@ No Results found,未找到结果
 No results found for,未找到以下内容的搜索结果
 No results found for the given query.,未找到给定查询的结果。
 No roles configured (open to all logged-in users).,未配置角色（对所有登录用户开放）。
+No {0} found,未找到{0}
 No roles found,未找到角色
 No roles found.,未找到角色。
 No Roles Specified,未指定角色
@@ -16942,7 +16943,7 @@ Duplicate Payment Schedule selected,选择了重复的付款计划
 Duplicate Serial Number Error,序列号重复错误
 Duplicate entry: {0}{1},重复条目：{0}{1}
 Duplicate languages found on Dunning Letter Text. Keep only one of them.,催收信文本中发现重复语言。仅保留其中一种。
-EDI,EDI
+EDI,电子数据交换
 ERPNext,企业管理
 ERPNext Integrations,ERPNext 集成
 ERPNext will make a stock ledger entry for each transaction of this item. Keep unchecked for non-stock or service items.,ERPNext 将为此物料的每笔交易创建库存分类账条目。对于非库存或服务类物料，请保持未选中状态。
@@ -19395,3 +19396,97 @@ Disabled,停用
 Active,在园
 User,用户
 JSON,JSON 数据
+Permissions,权限
+Password,密码
+Role,角色
+Permission Manager,权限管理
+Audits,审计
+Academics User,教务用户
+Auditor,审计员
+Delivery Manager,交付管理员
+Delivery User,交付用户
+Fleet Manager,车队管理员
+Fulfillment User,履约用户
+HR Manager,人力资源管理员
+HR User,人力资源用户
+I-ONE Agent Manager,I-ONE 智能体管理员
+I-ONE Agent User,I-ONE 智能体用户
+I-ONE AI Employee,I-ONE AI 员工
+Item Manager,物料管理员
+Manufacturing Manager,制造管理员
+Manufacturing User,制造用户
+Projects Manager,项目管理员
+Projects User,项目用户
+Quality Manager,质量管理员
+Sales Manager,销售管理员
+Sales User,销售用户
+Shop Floor Manager,车间管理员
+Shop Floor User,车间用户
+Stock Manager,库存管理员
+Stock User,库存用户
+Support Team,支持团队
+System Manager,系统管理员
+Tongjianyun Administrator,童健云管理员
+Administrator,超级管理员
+All,所有用户
+Guest,访客
+Email,邮件
+Integrations,集成
+Quality Management,质量管理
+Regional,区域
+Telephony,电话
+Tongjianyun,童健云
+Website,网站
+Workflow,工作流
+Accounts,财务
+Automation,自动化
+Communication,沟通
+Contacts,联系人
+CRM,客户关系管理
+Desk,工作台
+Notifications,通知
+Events,事件
+Users,用户
+Action,操作
+Tags,标签
+DocType,单据类型
+Read,读取
+Submit,提交
+Cancel,取消
+Username,用户名
+Language,语言
+Asia/Chongqing,亚洲/重庆
+Ingredient Nutrition Statistics,食材营养统计
+Select {0},选择{0}
+Search,搜索
+More,更多
+Bulk Operation Successful,批量操作成功
+Deleted {0} records from {1} doctype,已成功删除 {0} 条记录
+Data Import,数据导入
+Document Type,单据类型
+Success,成功
+{0} Import on {1},{0}导入（{1}）
+Accounting Ledger,会计账簿
+Student Activity,学生活动
+Jan,1月,Heatmap
+Feb,2月,Heatmap
+Mar,3月,Heatmap
+Apr,4月,Heatmap
+May,5月,Heatmap
+Jun,6月,Heatmap
+Jul,7月,Heatmap
+Aug,8月,Heatmap
+Sep,9月,Heatmap
+Oct,10月,Heatmap
+Nov,11月,Heatmap
+Dec,12月,Heatmap
+Sun,周日,Heatmap
+Mon,周一,Heatmap
+Tue,周二,Heatmap
+Wed,周三,Heatmap
+Thu,周四,Heatmap
+Fri,周五,Heatmap
+Sat,周六,Heatmap
+Library,文件库
+Link,链接
+Camera,相机
