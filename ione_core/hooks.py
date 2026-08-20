@@ -14,6 +14,10 @@ doctype_list_js = {
 	"Role": "public/js/role_list.js",
 }
 
+doctype_js = {
+	"Role": "public/js/role.js",
+}
+
 boot_session = "ione_core.desktop_i18n.localize_app_titles"
 
 after_request = [
