@@ -19449,6 +19449,10 @@ Events,事件
 Users,用户
 Action,操作
 Tags,标签
+DocType,单据类型
+Read,读取
+Submit,提交
+Cancel,取消
 Ingredient Nutrition Statistics,食材营养统计
 Select {0},选择{0}
 Search,搜索
