@@ -1,6 +1,18 @@
 (() => {
 	"use strict";
 
+	// Frappe's lazy asset loader determines the file type from the URL. The
+	// site asset manifest is versioned with a query string, so strip the query
+	// before resolving the extension (otherwise `?v=...` is mistaken for one).
+	if (window.frappe?.assets?.extn && !window.frappe.assets.__ione_query_extn) {
+		const original_extn = window.frappe.assets.extn;
+		window.frappe.assets.extn = function (path) {
+			const clean_path = String(path || "").split("?")[0].split("#")[0];
+			return original_extn.call(this, clean_path);
+		};
+		window.frappe.assets.__ione_query_extn = true;
+	}
+
 	const PATCH_FLAG = "__ione_workspace_dock_i18n";
 	const FALLBACK_LABELS = {
 		Home: "首页",

@@ -8,7 +8,7 @@ app_license = "mit"
 app_home = "/desk/i-one-ai"
 app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 
-app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260815-2"]
+app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260827-asset-query-fix"]
 
 doctype_list_js = {
 	"Role": "public/js/role_list.js",
