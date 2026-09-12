@@ -235,7 +235,11 @@ def frappe_list_documents(
 	start: int = 0,
 	actor_token: str = "",
 ) -> dict[str, Any]:
-	"""List business documents using the current user's Frappe permissions.
+	"""List a PAGE of documents using the current user's Frappe permissions.
+
+	count/page_count is ONLY this page's size, never the total. For questions
+	like '有多少学生/how many', use frappe_count_documents or total_count.
+	Report the filters and permission scope; enabled students are not attendance.
 
 	Args:
 		doctype: Exact business DocType name.
@@ -249,9 +253,10 @@ def frappe_list_documents(
 	readable = permitted_fields(doctype, "read")
 	limit = max(1, min(int(limit), 100))
 	start = max(0, min(int(start), 100000))
+	validated_filters = safe_filters(meta, filters, readable)
 	rows = frappe.get_list(
 		doctype,
-		filters=safe_filters(meta, filters, readable),
+		filters=validated_filters,
 		fields=safe_fields(meta, fields, readable),
 		order_by=validate_order_by(meta, order_by, readable),
 		limit_start=start,
@@ -263,9 +268,53 @@ def frappe_list_documents(
 		"doctype": doctype,
 		"records": serializable(rows),
 		"count": len(rows),
+		"page_count": len(rows),
+		"count_scope": "current_page_only",
+		"total_count": _permission_aware_count(doctype, validated_filters),
+		"filters": validated_filters,
+		"permission_scope": "current_user",
 		"start": start,
 		"has_more": has_more,
 		"next_start": start + len(rows) if has_more else None,
+	}
+
+
+def _permission_aware_count(doctype: str, filters: Any) -> int:
+	"""Use Frappe's list count, including row permissions and distinct names."""
+	from frappe.desk.reportview import get_count
+
+	previous = frappe.local.form_dict
+	try:
+		frappe.local.form_dict = frappe._dict(
+			doctype=doctype, filters=filters, distinct=1, limit=0
+		)
+		return int(get_count())
+	finally:
+		frappe.local.form_dict = previous
+
+
+@mcp.tool(annotations=READ_ONLY)
+@as_verified_actor
+@audited_tool("frappe_count_documents", "读取")
+def frappe_count_documents(
+	doctype: str,
+	filters: dict[str, Any] | None = None,
+	actor_token: str = "",
+) -> dict[str, Any]:
+	"""Count ALL matching records visible to the current user, without pagination.
+
+	Use for totals/how many/有多少/人数, not len(list records) or page count.
+	For active student archives use Student with enabled=1; this is NOT actual
+	attendance or meal participation. State filters and permission scope in answers.
+	"""
+	meta = ensure_doctype_permission(doctype, "read")
+	filters = safe_filters(meta, filters, permitted_fields(doctype, "read"))
+	return {
+		"doctype": doctype,
+		"total_count": _permission_aware_count(doctype, filters),
+		"filters": filters,
+		"count_scope": "all_matching_records",
+		"permission_scope": "current_user",
 	}
 
 
