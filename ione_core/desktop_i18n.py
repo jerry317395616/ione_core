@@ -48,6 +48,11 @@ def ensure_desktop_app_labels() -> dict[str, int]:
 def localize_app_titles(bootinfo) -> None:
 	"""Localize app titles and apply site-scoped Apps desktop visibility."""
 	hidden_apps = get_hidden_apps()
+	# The built-in Administrator is the site recovery account and must retain
+	# access to every installed app. Site-level hiding remains in effect for
+	# ordinary users, including accounts that happen to hold System Manager.
+	if getattr(getattr(frappe, "session", None), "user", None) == "Administrator":
+		hidden_apps.clear()
 	visible_apps = []
 	for app in getattr(bootinfo, "app_data", None) or []:
 		app_name = app.get("app_name")

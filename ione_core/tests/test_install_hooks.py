@@ -103,3 +103,33 @@ class TestInstallHooks(TestCase):
 			bootinfo.desktop_icons,
 			[{"label": "童健云", "app": "tongjianyun"}],
 		)
+
+	def test_administrator_bypasses_site_hidden_apps(self):
+		bootinfo = MagicMock()
+		bootinfo.app_data = [
+			{"app_name": "tongjianyun", "on_apps_screen": True},
+			{"app_name": "erpnext", "on_apps_screen": True},
+		]
+		bootinfo.desktop_icons = [
+			{"label": "童健云", "app": "tongjianyun"},
+			{"label": "企业管理", "app": "erpnext"},
+		]
+
+		with (
+			patch.object(
+				install.frappe,
+				"conf",
+				{"ione_hidden_apps": ["erpnext"]},
+				create=True,
+			),
+			patch.object(
+				install.frappe,
+				"session",
+				SimpleNamespace(user="Administrator"),
+				create=True,
+			),
+		):
+			localize_app_titles(bootinfo)
+
+		self.assertEqual(len(bootinfo.app_data), 2)
+		self.assertEqual(len(bootinfo.desktop_icons), 2)
