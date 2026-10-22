@@ -1,0 +1,2 @@
+# Collector-only virtualenv; do not add the Stream SDK to the Frappe environment.
+dingtalk-stream==0.24.4b1

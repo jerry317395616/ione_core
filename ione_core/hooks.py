@@ -13,6 +13,7 @@ app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260827-asset-
 doctype_list_js = {
 	"Role": "public/js/role_list.js",
 	"Data Import": "public/js/data_import_list.js",
+	"Employee Checkin": "public/js/dingtalk_employee_checkin_list.js",
 }
 
 doctype_js = {
@@ -93,4 +94,14 @@ override_whitelisted_methods = {
 
 scheduler_events = {
 	"hourly": ["ione_core.ai.expire_pending_approvals"],
+	"cron": {
+		"0 18 * * *": ["ione_core.dingtalk_schedule.run_daily"],
+		"5-59/10 * * * *": ["ione_core.dingtalk_schedule.run_catchup"],
+	},
+}
+
+extend_doctype_class = {
+	"Shift Schedule Assignment": [
+		"ione_core.hrms_compat.shift_schedule_assignment.PreserveShiftCycleBoundaryMixin"
+	]
 }

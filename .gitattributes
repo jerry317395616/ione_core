@@ -1,1 +1,3 @@
 ione_core/translations/zh.csv -whitespace
+deploy/dingtalk_stream/** text eol=lf
+ione_core/hrms_compat/*.py text eol=lf
