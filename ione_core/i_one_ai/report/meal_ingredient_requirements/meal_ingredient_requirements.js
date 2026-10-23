@@ -40,7 +40,7 @@
 			const wrapper = $(datatable.wrapper);
 			wrapper.children(".meal-live-detail-note").remove();
 			$("<div class=\"meal-live-detail-note text-muted\" style=\"padding:8px 0 16px\">")
-				.text("备料总量＝每名幼儿带量×该餐已保存的计划供餐人数。人数来自周计划，属于计划供餐人数，不代表当天实际出勤、实际进餐或摄入。各食材保留配方单位，克与毫升不混算；该表为食材需求，采购量还需核对库存和待到货。")
+				.text("备料总量＝每名幼儿带量×该餐有效计划供餐人数；已批准的单餐变更以变更后安排计算，整餐停供不计入需求。人数属于计划供餐人数，不代表当天实际出勤、实际进餐或摄入。各食材保留配方单位，克与毫升不混算；该表为食材需求，采购量还需核对重量口径、库存和待到货。")
 				.prependTo(wrapper);
 		},
 		formatter(value, row, column, data, default_formatter) {

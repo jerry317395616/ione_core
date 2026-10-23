@@ -97,7 +97,8 @@ def _load_week(week_name):
 
 def _check_create_permission(week, plans):
 	week.check_permission("read")
-	if not {"System Manager", "Purchase Manager"}.intersection(frappe.get_roles()):
+	roles = set(frappe.get_roles())
+	if not {"System Manager", "Purchase Manager", "膳食业务经办员"}.intersection(roles):
 		frappe.throw(
 			_("Only a System Manager or Purchase Manager may create meal purchase requests."),
 			frappe.PermissionError,
@@ -107,7 +108,7 @@ def _check_create_permission(week, plans):
 			_("You do not have permission to create purchase material requests."), frappe.PermissionError
 		)
 	for plan in plans:
-		plan.check_permission("write")
+		plan.check_permission("read" if "膳食业务经办员" in roles else "write")
 
 
 def _verify_existing_request(week, existing, plans):
@@ -129,7 +130,7 @@ def _verify_existing_request(week, existing, plans):
 		)
 
 
-def _native_demands(week):
+def _native_demands(week, *, for_update=False):
 	"""Read native full-demand BOM expansion; never persist or invoke a create method."""
 	from erpnext.manufacturing.doctype.production_plan.services.material_request import (
 		get_items_for_material_requests,
@@ -153,13 +154,17 @@ def _native_demands(week):
 			frappe.throw(_("A meal date and meal type cannot occur twice."))
 		seen_meals.add(meal_key)
 		headcount = _decimal(meal.planned_headcount)
+		if meal.get("service_suspended") in (True, 1, "1"):
+			if headcount != ZERO or not str(meal.get("suspension_reason") or "").strip():
+				frappe.throw(_("A suspended meal needs zero headcount and an explicit suspension reason."))
+			continue
 		if headcount <= ZERO or headcount != headcount.to_integral_value():
 			frappe.throw(_("Every meal must have a positive whole student headcount."))
 		if not meal.production_plan:
 			frappe.throw(_("Every meal must reference a Production Plan."))
 		if meal.production_plan in plans:
 			frappe.throw(_("A Production Plan cannot be assigned to more than one meal."))
-		plan = frappe.get_doc("Production Plan", meal.production_plan)
+		plan = frappe.get_doc("Production Plan", meal.production_plan, for_update=for_update)
 		plan.check_permission("read")
 		if plan.company != week.company or plan.docstatus == 2:
 			frappe.throw(_("A meal Production Plan has an invalid company or is cancelled."))
@@ -201,10 +206,17 @@ def _native_demands(week):
 	return plans, demands, blockers
 
 
-def _load_context(week, demands):
+def _load_context(week, demands, include_draft_requests=False, *, for_update=False):
+	for_update = bool(for_update or include_draft_requests)
+	locking = " FOR UPDATE" if for_update else ""
 	codes = sorted({row["native"]["item_code"] for row in demands})
 	warehouses = sorted({row["native"]["warehouse"] for row in demands})
-	items = {code: frappe.get_cached_doc("Item", code) for code in codes}
+	items = {
+		code: frappe.get_doc("Item", code, for_update=True)
+		if for_update
+		else frappe.get_cached_doc("Item", code)
+		for code in codes
+	}
 	if not codes:
 		return {
 			"items": {},
@@ -215,68 +227,127 @@ def _load_context(week, demands):
 			"whole_uoms": {},
 			"own_plan_reservations": {},
 			"has_linked_work_orders": False,
+			"owned_plan_names": set(),
+			"excluded_supply": [],
 		}
 	plan_names = sorted({row["production_plan"] for row in demands if row.get("production_plan")})
+	# Adjustments can replace a meal's active PP while its original source
+	# requests and orders still belong to this week. Retain their native scope.
+	linked_names = (
+		[
+			row.name
+			for row in frappe.db.sql(
+				"SELECT name FROM `tabProduction Plan` WHERE company=%s AND custom_meal_week=%s FOR UPDATE",
+				(week.company, week.name),
+				as_dict=True,
+			)
+		]
+		if for_update
+		else frappe.get_all(
+			"Production Plan", filters={"company": week.company, "custom_meal_week": week.name}, pluck="name"
+		)
+	)
+	owned_plan_names = sorted(set(plan_names) | set(linked_names))
 	own_plan_reservations = {}
 	has_linked_work_orders = False
-	if plan_names:
-		has_linked_work_orders = bool(
-			frappe.db.exists("Work Order", {"production_plan": ["in", plan_names], "docstatus": ["<", 2]})
+	if owned_plan_names:
+		has_linked_work_orders = (
+			bool(
+				frappe.db.sql(
+					"SELECT name FROM `tabWork Order` WHERE production_plan IN %s AND docstatus<2 FOR UPDATE",
+					(owned_plan_names,),
+					as_dict=True,
+				)
+			)
+			if for_update
+			else bool(
+				frappe.db.exists(
+					"Work Order", {"production_plan": ["in", owned_plan_names], "docstatus": ["<", 2]}
+				)
+			)
 		)
 		if not has_linked_work_orders:
 			# PP.on_submit updates this Bin counter even when reserve_stock=0.
 			# The week's own open plans are the demand being allocated, so remove
 			# precisely their native contribution, while retaining other plans'.
-			own_plan_reservations = {
-				(row.item_code, row.warehouse): _decimal(row.reserved_qty)
-				for row in frappe.db.sql(
-					"""SELECT i.item_code, i.warehouse, SUM(i.required_bom_qty) AS reserved_qty
+			reservation_rows = frappe.db.sql(
+				"""SELECT i.item_code, i.warehouse, i.required_bom_qty AS reserved_qty
 					FROM `tabMaterial Request Plan Item` i
 					JOIN `tabProduction Plan` p ON p.name=i.parent
 					WHERE p.name IN %(plans)s AND p.docstatus=1
 					AND p.status NOT IN ('Completed','Closed')
-					GROUP BY i.item_code,i.warehouse""",
-					{"plans": plan_names},
-					as_dict=True,
-				)
-			}
-	bins = {
-		(row.item_code, row.warehouse): row
-		for row in frappe.get_all(
+					"""
+				+ locking,
+				{"plans": owned_plan_names},
+				as_dict=True,
+			)
+			own_plan_reservations = defaultdict(lambda: ZERO)
+			for row in reservation_rows:
+				own_plan_reservations[(row.item_code, row.warehouse)] += _decimal(row.reserved_qty)
+	bin_fields = [
+		"item_code",
+		"warehouse",
+		"actual_qty",
+		"reserved_qty",
+		"reserved_qty_for_production",
+		"reserved_qty_for_sub_contract",
+		"reserved_qty_for_production_plan",
+	]
+	bin_rows = (
+		frappe.db.sql(
+			"SELECT "
+			+ ",".join(bin_fields)
+			+ " FROM `tabBin` WHERE item_code IN %(codes)s AND warehouse IN %(warehouses)s FOR UPDATE",
+			{"codes": codes, "warehouses": warehouses},
+			as_dict=True,
+		)
+		if for_update
+		else frappe.get_all(
 			"Bin",
 			filters={"item_code": ["in", codes], "warehouse": ["in", warehouses]},
-			fields=[
-				"item_code",
-				"warehouse",
-				"actual_qty",
-				"reserved_qty",
-				"reserved_qty_for_production",
-				"reserved_qty_for_sub_contract",
-				"reserved_qty_for_production_plan",
-			],
+			fields=bin_fields,
 		)
-	}
+	)
+	bins = {(row.item_code, row.warehouse): row for row in bin_rows}
 	orders = frappe.db.sql(
 		"""SELECT i.name, i.item_code, i.warehouse, i.schedule_date, i.qty,
-		i.received_qty, i.conversion_factor, p.name AS purchase_order
+		i.received_qty, i.conversion_factor, p.name AS purchase_order,
+		i.sales_order, mri.production_plan, src.parent AS source_plan_parent,
+		src.item_code AS source_item_code, src.warehouse AS source_warehouse
 		FROM `tabPurchase Order Item` i JOIN `tabPurchase Order` p ON p.name=i.parent
+		LEFT JOIN `tabMaterial Request Item` mri
+		ON mri.name=i.material_request_item AND mri.parent=i.material_request AND mri.docstatus=1
+		LEFT JOIN `tabMaterial Request Plan Item` src
+		ON src.name=mri.material_request_plan_item AND src.parent=mri.production_plan
 		WHERE p.company=%(company)s AND p.docstatus=1
 		AND p.status NOT IN ('Closed', 'Cancelled', 'Completed')
 		AND COALESCE(i.closed,0)=0 AND COALESCE(i.delivered_by_supplier,0)=0
 		AND i.item_code IN %(codes)s AND i.warehouse IN %(warehouses)s
-		ORDER BY i.schedule_date, p.name, i.idx""",
+		ORDER BY i.schedule_date, p.name, i.idx"""
+		+ locking,
 		{"company": week.company, "codes": codes, "warehouses": warehouses},
 		as_dict=True,
 	)
 	requests = frappe.db.sql(
 		"""SELECT i.name, i.item_code, i.warehouse, i.schedule_date, i.stock_qty,
-		i.ordered_qty, i.received_qty, m.name AS material_request
+		i.ordered_qty, i.received_qty, m.name AS material_request, m.docstatus,
+		i.sales_order, i.production_plan, src.parent AS source_plan_parent,
+		src.item_code AS source_item_code, src.warehouse AS source_warehouse
 		FROM `tabMaterial Request Item` i JOIN `tabMaterial Request` m ON m.name=i.parent
-		WHERE m.company=%(company)s AND m.docstatus=1 AND m.material_request_type='Purchase'
+		LEFT JOIN `tabMaterial Request Plan Item` src
+		ON src.name=i.material_request_plan_item AND src.parent=i.production_plan
+		WHERE m.company=%(company)s AND (m.docstatus=1 OR (%(include_drafts)s=1 AND m.docstatus=0))
+		AND m.material_request_type='Purchase'
 		AND m.status NOT IN ('Stopped', 'Cancelled', 'Ordered', 'Received')
 		AND i.item_code IN %(codes)s AND i.warehouse IN %(warehouses)s
-		ORDER BY i.schedule_date, m.name, i.idx""",
-		{"company": week.company, "codes": codes, "warehouses": warehouses},
+		ORDER BY i.schedule_date, m.name, i.idx"""
+		+ locking,
+		{
+			"company": week.company,
+			"codes": codes,
+			"warehouses": warehouses,
+			"include_drafts": int(include_draft_requests),
+		},
 		as_dict=True,
 	)
 	price_list = frappe.db.get_single_value("Buying Settings", "buying_price_list")
@@ -308,7 +379,49 @@ def _load_context(week, demands):
 		"whole_uoms": whole_uoms,
 		"own_plan_reservations": own_plan_reservations,
 		"has_linked_work_orders": has_linked_work_orders,
+		"owned_plan_names": set(owned_plan_names),
+		"excluded_supply": [],
+		"for_update": for_update,
 	}
+
+
+def _supply_purpose(row, context):
+	"""Only a verified native source owned by this week is promised to it.
+
+	An unlinked PO is not proof of free warehouse replenishment, and another
+	request is not a physical arrival. Such supply can be reviewed separately;
+	when received, its unreserved stock follows normal shared-stock allocation.
+	"""
+	if row.get("sales_order"):
+		return "reserved_for_sales_order"
+	owner = row.get("source_plan_parent")
+	if not owner:
+		return "unassigned_or_unverified_source"
+	if owner not in context.get("owned_plan_names", set()):
+		return "another_production_plan"
+	if row.get("source_item_code") != row.item_code or row.get("source_warehouse") != row.warehouse:
+		return "source_item_or_warehouse_mismatch"
+	return "this_week"
+
+
+def _record_excluded_supply(row, context, doctype, quantity, reason, warnings):
+	context.setdefault("excluded_supply", []).append(
+		{
+			"doctype": doctype,
+			"name": row.get("purchase_order") if doctype == "Purchase Order" else row.get("material_request"),
+			"source_item": row.name,
+			"item_code": row.item_code,
+			"warehouse": row.warehouse,
+			"remaining_stock_qty": _text(quantity),
+			"reason": reason,
+		}
+	)
+	_add_message(
+		warnings,
+		_(
+			"Incoming orders and requests for other purposes or without verified meal sources do not reduce this week's procurement."
+		),
+	)
 
 
 def _prepare_supply(context, as_of, warnings, exclude_request=None):
@@ -341,6 +454,10 @@ def _prepare_supply(context, as_of, warnings, exclude_request=None):
 		)
 		if qty <= ZERO:
 			continue
+		purpose = _supply_purpose(row, context)
+		if purpose != "this_week":
+			_record_excluded_supply(row, context, "Purchase Order", qty, purpose, warnings)
+			continue
 		if not row.schedule_date or _date(row.schedule_date) < as_of:
 			_add_message(
 				warnings,
@@ -355,10 +472,23 @@ def _prepare_supply(context, as_of, warnings, exclude_request=None):
 	for row in context["requests"]:
 		if row.material_request == exclude_request:
 			continue
+		if row.get("docstatus") == 0:
+			from ione_core.meal_purchasing import is_verified_superseded_request
+
+			if is_verified_superseded_request(
+				frappe.get_doc(
+					"Material Request", row.material_request, for_update=bool(context.get("for_update"))
+				)
+			):
+				continue
 		# ordered_qty and received_qty describe overlapping fulfilment, not two
 		# independent supplies. The corresponding PO is accounted for above.
 		qty = max(ZERO, _decimal(row.stock_qty) - max(_decimal(row.ordered_qty), _decimal(row.received_qty)))
 		if qty <= ZERO:
+			continue
+		purpose = _supply_purpose(row, context)
+		if purpose != "this_week":
+			_record_excluded_supply(row, context, "Material Request", qty, purpose, warnings)
 			continue
 		if not row.schedule_date or _date(row.schedule_date) < as_of:
 			_add_message(
@@ -511,16 +641,19 @@ def _allocate(week, demands, context, blockers=None):
 	return rows, warnings, blockers
 
 
-def _compute(week):
-	plans, demands, blockers = _native_demands(week)
-	for other in _other_stock_commitments(week):
+def _compute(week, include_draft_requests=False, *, for_update=False):
+	for_update = bool(for_update or include_draft_requests)
+	plans, demands, blockers = _native_demands(week, for_update=for_update)
+	for other in _other_stock_commitments(week, for_update=for_update) if demands else []:
 		_add_message(
 			blockers,
 			_(
 				"Meal week {0} has an unreconciled stock commitment. Reconcile it before requesting procurement for another week."
 			).format(other),
 		)
-	context = _load_context(week, demands)
+	context = _load_context(
+		week, demands, include_draft_requests=include_draft_requests, for_update=for_update
+	)
 	if context.get("has_linked_work_orders"):
 		_add_message(
 			blockers,
@@ -565,6 +698,7 @@ def _compute(week):
 		"basis_hash": snapshot["basis_hash"],
 		"warnings": warnings,
 		"blockers": blockers,
+		"excluded_supply": context.get("excluded_supply", []),
 		"totals": {
 			"ingredient_count": len({row["item_code"] for row in public_rows}),
 			"need_quote_count": len(
@@ -581,17 +715,25 @@ def _compute(week):
 	return plans, rows, snapshot, preview
 
 
-def _other_stock_commitments(week):
+def _other_stock_commitments(week, *, for_update=False):
 	"""Do not allocate the same unissued stock independently to consecutive weeks.
 
 	A completed request or receipt does not prove kitchen consumption. This first
 	phase intentionally requires a separate reconciliation before another frozen
 	week can procure; ordinary draft menu editing remains available.
 	"""
-	other_weeks = frappe.get_all(
-		WEEK_DOCTYPE,
-		filters={"company": week.company, "docstatus": 1, "name": ["!=", week.name]},
-		fields=["name", "procurement_snapshot"],
+	other_weeks = (
+		frappe.db.sql(
+			"SELECT name,procurement_snapshot FROM `tabMeal Planning Week` WHERE company=%s AND docstatus=1 AND name!=%s FOR UPDATE",
+			(week.company, week.name),
+			as_dict=True,
+		)
+		if for_update
+		else frappe.get_all(
+			WEEK_DOCTYPE,
+			filters={"company": week.company, "docstatus": 1, "name": ["!=", week.name]},
+			fields=["name", "procurement_snapshot"],
+		)
 	)
 	result = []
 	for other in other_weeks:
@@ -600,7 +742,16 @@ def _other_stock_commitments(week):
 		except (ValueError, TypeError):
 			snapshot = {}
 		if snapshot.get("rows"):
-			result.append(other.name)
+			try:
+				from ione_core.meal_kitchen import verify_week_kitchen_reconciled
+
+				proof = verify_week_kitchen_reconciled(other.name)
+				if not proof or proof.get("reconciled") is not True:
+					result.append(other.name)
+			except Exception:
+				# Fail closed: only independently revalidated SE/SLE, purchasing
+				# and native PP closure evidence releases an earlier commitment.
+				result.append(other.name)
 	return result
 
 
@@ -618,7 +769,7 @@ def prepare_procurement_rows(week_doc):
 	Production Plans are drafts. This function does not save or submit anything.
 	"""
 	week_doc.check_permission("read")
-	plans, rows, snapshot, preview = _compute(week_doc)
+	plans, rows, snapshot, preview = _compute(week_doc, for_update=True)
 	prepared = {name: [] for name in plans}
 	for row in rows:
 		public, native = row["public"], dict(row["native"])
@@ -636,6 +787,41 @@ def prepare_procurement_rows(week_doc):
 		"snapshot": snapshot,
 		"warnings": preview["warnings"],
 		"blockers": preview["blockers"],
+	}
+
+
+def prepare_adjustment_procurement(week_proxy):
+	"""Plan the remaining effective meals without buying a prior draft twice.
+
+	The adjustment controller supplies every not-yet-closed effective meal,
+	including its replacement draft PP, with material_request=None. Existing
+	verified requests from this same week are commitments, including drafts;
+	they are never represented as physical stock or actual arrivals.
+	"""
+	week_proxy.check_permission("read")
+	if week_proxy.get("material_request"):
+		frappe.throw(
+			_("Adjustment procurement must evaluate all of the week's existing request commitments.")
+		)
+	plans, rows, snapshot, preview = _compute(week_proxy, include_draft_requests=True)
+	prepared = {name: [] for name in plans}
+	for row in rows:
+		public, native = row["public"], dict(row["native"])
+		native.update(
+			quantity=float(_decimal(public["purchase_qty"])),
+			required_bom_qty=float(_decimal(public["required_qty"])),
+			uom=public["purchase_uom"],
+			conversion_factor=float(_decimal(public["conversion_factor"] or "1")),
+			material_request_type="Purchase",
+			requested_qty=0,
+		)
+		prepared[public["production_plan"]].append(native)
+	return {
+		"plans": prepared,
+		"snapshot": snapshot,
+		"warnings": preview["warnings"],
+		"blockers": preview["blockers"],
+		"excluded_supply": preview.get("excluded_supply", []),
 	}
 
 
@@ -679,7 +865,7 @@ def create_material_request(week_name):
 	# Lock is transaction scoped. Frappe commits the successful POST together
 	# with the native draft and link; any exception rolls the entire action back.
 	frappe.db.sql("SELECT name FROM `tabMeal Planning Week` WHERE name=%s FOR UPDATE", (week.name,))
-	week.reload()
+	week = frappe.get_doc(WEEK_DOCTYPE, week.name, for_update=True)
 	if week.docstatus != 1 or not week.get("stock_reviewed"):
 		frappe.throw(
 			_("Submit the meal week with its ledger stock review before creating a purchase request.")
@@ -690,10 +876,11 @@ def create_material_request(week_name):
 		)
 	if week.get("material_request"):
 		plans = {
-			row.production_plan: frappe.get_doc("Production Plan", row.production_plan) for row in week.meals
+			row.production_plan: frappe.get_doc("Production Plan", row.production_plan, for_update=True)
+			for row in week.meals
 		}
 		_check_create_permission(week, plans.values())
-		existing = frappe.get_doc("Material Request", week.material_request)
+		existing = frappe.get_doc("Material Request", week.material_request, for_update=True)
 		existing.check_permission("read")
 		_verify_existing_request(week, existing, plans)
 		if existing.docstatus == 2:
@@ -701,7 +888,7 @@ def create_material_request(week_name):
 				_("The linked purchase request is cancelled. Revise the meal week before requesting again.")
 			)
 		return {"material_request": existing.name, "name": existing.name, "created": False}
-	plans, rows, snapshot, preview = _compute(week)
+	plans, rows, snapshot, preview = _compute(week, for_update=True)
 	_check_create_permission(week, plans.values())
 	if preview["blockers"]:
 		frappe.throw("\n".join(preview["blockers"]))

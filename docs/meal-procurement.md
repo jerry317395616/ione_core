@@ -22,8 +22,8 @@
 1. 调用本部署原生 `get_items_for_material_requests`，令 `ignore_existing_ordered_qty=0`，获取 BOM 全量需求。该参数在当前 ERPNext 的 `1` 实际启用预计库存抵扣；不能把它误解为“排除已订货量”。
 2. 按日期、餐次顺序，只分配一次同物料同仓库的账面可用库存，扣除销售、生产、分包和生产计划占用。
    原生生产计划即使 `reserve_stock=0`，提交后仍会把 `mr_items.required_bom_qty` 计入 Bin 的生产计划占用。计算精确扣除本周已提交、仍开放计划的自身贡献，保留其他计划占用，使提交前后净需求不因自身占用被重复计算。本阶段发现本周关联生产工单即阻断，避免错误处理工单接管库存占用。
-3. 仅把尚未收货且到货日期不早于系统当天、且不晚于用餐日的已提交采购订单作为待收供应。过去的逾期单和未填写日期的单据提示人工核对，不自动当作已到货。
-4. 已提交采购申请的未下单数量单列为 `already_requested_qty`。使用 `stock_qty - max(ordered_qty, received_qty)`，避免同一数量在采购申请与采购订单中重复抵扣。逾期申请不自动冲抵。
+3. 仅把 native MR→PP 原料源行经核实属于本周、尚未收货且到货日期不早于系统当天、且不晚于用餐日的已提交采购订单作为待收供应。其他周、销售专用或来源不明的订单不冲抵，列入 `excluded_supply`。入库后的未预留库存仍按正常共享账面库存处理。过去的逾期单和未填写日期的单据提示人工核对，不自动当作已到货。
+4. 本周已提交采购申请的未下单数量单列为 `already_requested_qty`。使用 `stock_qty - max(ordered_qty, received_qty)`，避免同一数量在采购申请与采购订单中重复抵扣。逾期申请不自动冲抵。`prepare_adjustment_procurement(week_proxy)` 专用于尚未日结餐次的单餐变更，额外接受本周经核实来源的未取消草稿申请作为防重复承诺，绝不表示实物可用；默认周预览不把草稿当到货。
 5. 用 `Decimal` 分配和转换。采购单位只使用物料确认的换算；不推断 g 与 ml 的密度。按采购数量精度向上取值，最小舍入余量可供本周后续餐次使用。
 6. 原生来源行完整保留。每条 MR Item 关联原生 `production_plan` 和 `material_request_plan_item`，不把不同来源强行合成失去追溯的行。
 7. 创建操作对周行加事务锁；草稿与周链接一起提交。重复点击返回已创建的同一张申请。冻结后计算结果变化会要求修订复核，不改写已提交生产计划。
@@ -41,13 +41,14 @@
 
 ## 本阶段的跨周边界
 
-账面库存复核不等于厨房实物盘点。生产计划未启用库存预留，因此另一张已提交且具有采购冻结快照的周记录，会作为未核销承诺阻止新一周自动采购，提示其来源周。
-新周仍可编排草稿和查看预览；不能因为上周日期已经过去、申请已经下单或已经收货就假定食材已领用。
-本阶段不提供自动领用/核销或关闭算法，必须先完成上一周承诺的业务核销方案，才可连续发布采购周。取消的周不会继续占用这一保护。
+账面库存复核不等于厨房实物盘点。另一张已提交且具有采购冻结快照的周记录，会作为未核销承诺阻止新一周自动采购，提示其来源周。只有厨房模块的 `verify_week_kitchen_reconciled` 重新核实逐日 Stock Entry／Stock Ledger Entry、采购结清和原生 PP 关闭证据并返回 `reconciled:true`，才释放之前的承诺；不信任单个只读布尔。
+新周仍可编排草稿和查看预览；不能因为上周日期已经过去、申请已经下单或已经收货就假定食材已领用。明确标记停供、附原因且人数为零的餐次不产生采购需求；整周停供也无需虚造采购单。
 
 ## 原生采购衔接
 
 原生 `Material Request → Purchase Order` 映射要求来源申请 `docstatus=1`；`Purchase Order → Purchase Receipt` 要求来源订单 `docstatus=1`。
 因此完整的提交和收货演练必须在隔离数据库进行；正式站只保存实际采购需求草稿，不通过假提交或假收货制造闭环。
 
-离线验证：`python -m unittest ione_core.tests.test_meal_procurement -v`。
+受控下单、真实报价、双人审核与厨房周结采购证明，见 [meal-purchasing.md](meal-purchasing.md)。
+
+离线验证：`python -m unittest ione_core.tests.test_meal_procurement ione_core.tests.test_meal_purchasing -v`。

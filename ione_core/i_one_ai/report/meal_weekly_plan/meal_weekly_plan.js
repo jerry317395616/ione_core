@@ -26,6 +26,13 @@
 			const row = data.find((value) => value.meal_type === meal && value.row_kind === kind) || {};
 			const cells = dates.map((_date, day) => {
 				const value = row[`day_${day}`];
+				const suspended = Boolean(Number(row[`suspended_${day}`] || row[`service_suspended_${day}`] || 0)) || value === "整餐停供";
+				if (suspended) {
+					const reason = row[`suspension_reason_${day}`];
+					return kind === "菜品"
+						? `<td><strong>${escape("整餐停供")}</strong><span class="meal-live-headcount">${escape(reason || "本餐不供餐，计划 0 人")}</span></td>`
+						: `<td>${escape("不计入食材需求")}</td>`;
+				}
 				if (!value) return "<td>—</td>";
 				const plan = row[`plan_${day}`];
 				const href = kind === "菜品" && plan
@@ -54,7 +61,7 @@
 			<div style="overflow-x:auto"><table class="meal-live-week-table">
 			<colgroup><col style="width:65px"><col style="width:60px">${"<col>".repeat(5)}</colgroup>
 			<thead><tr><th>餐次</th><th>内容</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>
-			<p class="text-muted small">点击菜品打开本餐生产计划；点击带量查看本周食材需求明细。各食材保留配方单位，克与毫升不混算。</p>`;
+			<p class="text-muted small">点击菜品打开本餐有效生产计划；点击带量查看本周食材需求明细。整餐停供不计入食材需求。各食材保留配方单位，克与毫升不混算。</p>`;
 	}
 
 	frappe.query_reports[reportName] = {

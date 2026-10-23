@@ -17,6 +17,7 @@ doctype_list_js = {
 }
 
 doctype_js = {
+	"Purchase Order": "public/js/meal_purchase_order.js",
 	"Production Plan": "public/js/meal_production_plan.js",
 	"Role": "public/js/role.js",
 	"User": "public/js/user.js",
@@ -82,6 +83,26 @@ has_permission = {
 }
 
 doc_events = {
+	"Supplier Quotation": {
+		"validate": "ione_core.meal_purchasing.validate_supplier_quotation",
+		"before_submit": "ione_core.meal_purchasing.validate_supplier_quotation",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_supplier_quotation",
+	},
+	"Stock Entry": {
+		"validate": "ione_core.meal_kitchen.validate_stock_entry",
+		"before_update_after_submit": "ione_core.meal_kitchen.validate_stock_entry",
+		"before_cancel": "ione_core.meal_kitchen.before_cancel_stock_entry",
+	},
+	"Material Request": {
+		"validate": "ione_core.meal_purchasing.validate_material_request",
+		"before_submit": "ione_core.meal_purchasing.before_submit_material_request",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_material_request",
+	},
+	"Purchase Order": {
+		"validate": "ione_core.meal_purchasing.validate_purchase_order",
+		"before_submit": "ione_core.meal_purchasing.before_submit_purchase_order",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_purchase_order",
+	},
 	"Production Plan": {
 		"validate": "ione_core.meal_planning.validate_production_plan",
 		"before_submit": "ione_core.meal_planning.validate_production_plan",

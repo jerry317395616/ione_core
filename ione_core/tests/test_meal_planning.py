@@ -91,7 +91,7 @@ class MealPlanningTests(unittest.TestCase):
 		self.frappe.get_doc = Mock()
 		self.frappe.as_json = lambda value: json.dumps(value, default=str)
 		self.frappe.cache = types.SimpleNamespace(lock=Mock(side_effect=lambda *args, **kwargs: nullcontext()))
-		self.frappe.db = types.SimpleNamespace(get_value=Mock(return_value=0), exists=Mock(return_value=False))
+		self.frappe.db = types.SimpleNamespace(get_value=Mock(return_value="operator@example.test"), exists=Mock(return_value=False))
 		self.utils = types.ModuleType("frappe.utils")
 		self.utils.getdate = getdate
 		self.utils.cint = lambda value: int(value or 0)
@@ -109,7 +109,7 @@ class MealPlanningTests(unittest.TestCase):
 		self.modules.stop()
 
 	def make_week(self, meals=True):
-		week = Doc(name="synthetic-week", company="School A", week_start="2026-10-26", week_end="2026-10-30", raw_material_warehouse="Raw A", academic_year="2026-2027", academic_term="Autumn", revision=1, source_week=None, docstatus=0, population_snapshot="{}", population_as_of=None, population_basis="expected", material_request=None, procurement_snapshot=None, stock_reviewed=0, meals=[])
+		week = Doc(name="synthetic-week", owner="operator@example.test", company="School A", week_start="2026-10-26", week_end="2026-10-30", raw_material_warehouse="Raw A", academic_year="2026-2027", academic_term="Autumn", revision=1, source_week=None, docstatus=0, population_snapshot="{}", population_as_of=None, population_basis="expected", material_request=None, procurement_snapshot=None, stock_reviewed=0, meals=[])
 		if meals:
 			for index in range(5):
 				for slot in self.module.SLOTS:
@@ -126,6 +126,19 @@ class MealPlanningTests(unittest.TestCase):
 		self.module.validate_week(self.week)
 		self.assertEqual(self.week.status, "待编排")
 		self.assertEqual(getdate(self.week.week_end), dt.date(2026, 10, 30))
+
+	def test_copy_reads_approved_effective_meals_instead_of_original_references(self):
+		source = self.make_week()
+		source.name = "synthetic-source-week"
+		self.week.source_week = source.name
+		effective = copy.deepcopy(source.meals)
+		effective[0].production_plan = "synthetic-approved-replacement"
+		adjustments = types.ModuleType("ione_core.meal_adjustments")
+		adjustments.get_effective_meals = Mock(return_value=effective)
+		with patch.dict(sys.modules, {"ione_core.meal_adjustments": adjustments}), patch.object(self.module, "_week", return_value=source):
+			plans = self.module._source_plans(self.week)
+		self.assertEqual(plans[0][2], "synthetic-approved-replacement")
+		self.assertNotEqual(plans[0][2], source.meals[0].production_plan)
 
 	def test_initial_rows_require_managed_initialization(self):
 		with self.assertRaises(ValidationFailed):
@@ -330,12 +343,16 @@ class MealPlanningTests(unittest.TestCase):
 			self.assertTrue(all(plan.docstatus == 0 for plan in plans.values()))
 			return {"blockers": [], "plans": {name: [Doc(quantity=10)] for name in plans}, "snapshot": {"basis_hash": "changed"}}
 		procurement.prepare_procurement_rows = Mock(side_effect=prepare)
-		with patch.dict(sys.modules, {"ione_core.meal_procurement": procurement}), patch.object(self.module, "_population", return_value=population), patch.object(self.module, "_bound_plan", side_effect=lambda doc, row: plans[row.production_plan]), patch.object(self.module, "_recipe_signature", return_value="recipe"):
+		reservation = types.ModuleType("ione_core.meal_native_reservations")
+		reservation.ensure_current_native_reservation_inputs = Mock()
+		with patch.dict(sys.modules, {"ione_core.meal_procurement": procurement, "ione_core.meal_native_reservations": reservation}), patch.object(self.module, "verify_purchase_weight_basis", return_value={"confirmed": True}), patch.object(self.module, "_population", return_value=population), patch.object(self.module, "_bound_plan", side_effect=lambda doc, row: plans[row.production_plan]), patch.object(self.module, "_recipe_signature", return_value="recipe"):
 			with self.assertRaises(ValidationFailed):
 				self.module.submit_week(self.week)
 			self.assertTrue(all(plan.docstatus == 0 and plan.saved == 0 for plan in plans.values()))
+			reservation.ensure_current_native_reservation_inputs.assert_not_called()
 			self.week.procurement_snapshot = '{"reviewed_basis_hash":"changed"}'
 			self.module.submit_week(self.week)
+			reservation.ensure_current_native_reservation_inputs.assert_called_once_with(self.week.company)
 		self.assertTrue(all(plan.docstatus == 1 and plan.saved == 1 for plan in plans.values()))
 		self.assertEqual(self.week.status, "已审核")
 		self.assertEqual(json.loads(self.week.procurement_snapshot)["basis_hash"], "changed")
@@ -388,6 +405,25 @@ class MealPlanningTests(unittest.TestCase):
 			with self.assertRaises(ValidationFailed):
 				self.module.submit_week(self.week)
 			population.assert_not_called()
+
+	def test_existing_week_owner_cannot_be_reassigned_even_by_managed_update(self):
+		self.previous()
+		self.week.owner = "another-operator@example.test"
+		with self.assertRaises(PermissionDenied):
+			self.module.validate_week(self.week)
+		with self.module._managed(), self.assertRaises(PermissionDenied):
+			self.module.validate_week(self.week)
+
+	def test_submit_rechecks_original_owner_to_reject_forged_self_approval(self):
+		self.frappe.session.user = "operator@example.test"
+		self.week.owner = "another-operator@example.test"
+		with patch.object(self.module, "_population") as population, self.assertRaises(PermissionDenied):
+			self.module.submit_week(self.week)
+		population.assert_not_called()
+		self.frappe.db.get_value.assert_called_with("Meal Planning Week", self.week.name, "owner", for_update=True)
+		self.week.owner = "operator@example.test"
+		with self.assertRaises(PermissionDenied):
+			self.module.submit_week(self.week)
 
 
 if __name__ == "__main__":

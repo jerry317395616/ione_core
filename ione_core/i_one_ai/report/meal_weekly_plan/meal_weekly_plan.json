@@ -13,9 +13,26 @@
  "report_name": "Meal Weekly Plan",
  "report_type": "Script Report",
  "roles": [
-  {"role": "System Manager"},
-  {"role": "食谱编排员"},
-  {"role": "食谱审核员"},
-  {"role": "Purchase Manager"}
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "食谱编排员"
+  },
+  {
+   "role": "食谱审核员"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "膳食业务经办员"
+  }
  ]
 }

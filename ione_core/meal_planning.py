@@ -25,6 +25,12 @@ _PROTECTED = (
 	"material_request",
 	"procurement_snapshot",
 	"stock_reviewed",
+	"kitchen_warehouse",
+	"kitchen_reconciled",
+	"kitchen_reconciled_at",
+	"kitchen_reconciliation_snapshot",
+	"requirement_weight_basis",
+	"requirement_weight_snapshot",
 )
 
 
@@ -135,6 +141,9 @@ def _title(doc):
 
 
 def validate_week(doc):
+	old = doc.get_doc_before_save()
+	if old and doc.owner != old.owner:
+		frappe.throw(_("周食谱经办人不能更换；请保留原创建人和审核记录。"), frappe.PermissionError)
 	if not _MANAGED.get() and doc.is_new() and doc.get("amended_from"):
 		source = _week(doc.amended_from, "amend")
 		if source.docstatus != 2:
@@ -154,6 +163,11 @@ def validate_week(doc):
 		):
 			doc.set(key, None)
 		doc.stock_reviewed = 0
+		doc.kitchen_reconciled = 0
+		doc.kitchen_reconciled_at = None
+		doc.kitchen_reconciliation_snapshot = None
+		doc.requirement_weight_basis = "待确认"
+		doc.requirement_weight_snapshot = None
 		with _managed():
 			validate_week(doc)
 		return
@@ -163,7 +177,6 @@ def validate_week(doc):
 	doc.revision = cint(doc.revision) or 1
 	doc.active_week_key = _digest([doc.company, str(start)]) if doc.docstatus != 2 else None
 	_validate_warehouse(doc)
-	old = doc.get_doc_before_save()
 	if doc.docstatus != 2 and frappe.db.exists(
 		"Meal Planning Week",
 		{"company": doc.company, "week_start": start, "docstatus": ["<", 2], "name": ["!=", doc.name or ""]},
@@ -188,6 +201,10 @@ def validate_week(doc):
 				"material_request",
 				"procurement_snapshot",
 				"stock_reviewed",
+				"kitchen_reconciled",
+				"kitchen_reconciled_at",
+				"kitchen_reconciliation_snapshot",
+				"requirement_weight_snapshot",
 			)
 		):
 			frappe.throw(_("人数来源、库存核对和采购关联须通过专用操作生成。"))
@@ -228,7 +245,11 @@ def validate_week(doc):
 		if excluded and not str(row.adjustment_reason or "").strip():
 			frappe.throw(_("调整供餐人数时请填写停餐原因。"))
 		row.excluded_count = int(excluded)
-		row.planned_headcount = cint(row.base_student_count) - int(excluded)
+		if row.get("service_suspended") and not str(row.get("suspension_reason") or "").strip():
+			frappe.throw(_("整餐停供时请填写停供原因。"))
+		row.planned_headcount = (
+			0 if row.get("service_suspended") else cint(row.base_student_count) - int(excluded)
+		)
 		if previous and row.planned_headcount != previous.planned_headcount:
 			counts_changed = True
 	if counts_changed and not _MANAGED.get():
@@ -243,14 +264,21 @@ def validate_week(doc):
 				if plan.docstatus:
 					frappe.throw(_("请先修订已经提交的生产计划。"))
 				for dish in plan.po_items:
-					dish.planned_qty = row.planned_headcount
+					if row.planned_headcount:
+						dish.planned_qty = row.planned_headcount
 				plan.set("mr_items", [])
 				plan.custom_meal_headcount = row.planned_headcount
 				plan.save(ignore_permissions=True)
 	doc.status = (
 		"已取消"
 		if doc.docstatus == 2
-		else ("采购申请已生成" if doc.material_request else ("已审核" if doc.docstatus == 1 else "编排草稿"))
+		else (
+			"已核销"
+			if doc.get("kitchen_reconciled")
+			else (
+				"采购申请已生成" if doc.material_request else ("已审核" if doc.docstatus == 1 else "编排草稿")
+			)
+		)
 	)
 
 
@@ -271,7 +299,9 @@ def _source_plans(doc):
 		source = _week(doc.source_week)
 		if source.company != doc.company or len(source.meals) != 25:
 			frappe.throw(_("来源周计划的园所或餐次不完整。"))
-		return [(r.meal_date, r.meal_type, r.production_plan) for r in source.meals]
+		from ione_core.meal_adjustments import get_effective_meals
+
+		return [(r.meal_date, r.meal_type, r.production_plan) for r in get_effective_meals(source)]
 	start = _monday(doc.template_week_start)
 	rows = frappe.get_list(
 		"Production Plan",
@@ -444,14 +474,17 @@ def refresh_population(name):
 	with _managed():
 		for row in doc.meals:
 			row.base_student_count = population[str(getdate(row.meal_date))]["total"]
-			row.planned_headcount = cint(row.base_student_count) - cint(row.excluded_count)
-			if row.planned_headcount <= 0:
+			row.planned_headcount = (
+				0 if row.get("service_suspended") else cint(row.base_student_count) - cint(row.excluded_count)
+			)
+			if row.planned_headcount <= 0 and not row.get("service_suspended"):
 				frappe.throw(_("停餐调整人数已超过刷新后的在册人数。"))
 			plan = _bound_plan(doc, row)
 			if plan.docstatus:
 				frappe.throw(_("已有餐次计划提交，请先修订。"))
 			for dish in plan.po_items:
-				dish.planned_qty = row.planned_headcount
+				if row.planned_headcount:
+					dish.planned_qty = row.planned_headcount
 			plan.custom_meal_headcount = row.planned_headcount
 			plan.set("mr_items", [])
 			plan.save(ignore_permissions=True)
@@ -490,6 +523,7 @@ def copy_next_week(name, target_week_start=None):
 				"source_week": source.name,
 				"template_week_start": source.week_start,
 				"raw_material_warehouse": source.raw_material_warehouse,
+				"kitchen_warehouse": source.get("kitchen_warehouse"),
 				"academic_year": source.academic_year,
 				"academic_term": source.academic_term,
 				"revision": 1,
@@ -550,6 +584,8 @@ def update_meal_dishes(week_name, meal_date, meal_type, boms):
 		doc.population_snapshot = frappe.as_json(snapshot)
 		doc.stock_reviewed = 0
 		doc.procurement_snapshot = None
+		doc.requirement_weight_basis = "待确认"
+		doc.requirement_weight_snapshot = None
 		doc.revision = cint(doc.revision) + 1
 		doc.save(ignore_permissions=True)
 	return {"name": doc.name}
@@ -581,8 +617,14 @@ def confirm_stock_review(name):
 
 
 def submit_week(doc):
+	original_owner = frappe.db.get_value("Meal Planning Week", doc.name, "owner", for_update=True)
+	if not original_owner or doc.owner != original_owner:
+		frappe.throw(_("周食谱经办人与原始创建记录不一致，不能审核。"), frappe.PermissionError)
+	if original_owner == frappe.session.user:
+		frappe.throw(_("周食谱经办人与审核人必须不同，请由另一名授权审核人员提交。"), frappe.PermissionError)
 	if not doc.meals or not doc.stock_reviewed:
 		frappe.throw(_("请先完整编排25餐并核对采购需求与账面库存。"))
+	verify_purchase_weight_basis(doc)
 	current = _population(doc)
 	snapshot = _json(doc.population_snapshot)
 	for day, population in current.items():
@@ -593,6 +635,10 @@ def submit_week(doc):
 			frappe.throw(_("教育名册已变化，请先刷新人数并重新核对采购需求。"))
 	for row in doc.meals:
 		plan = _bound_plan(doc, row)
+		if row.get("service_suspended"):
+			if row.planned_headcount or plan.docstatus:
+				frappe.throw(_("停供餐次应为零人数，并保留未提交的配方草稿。"))
+			continue
 		if plan.docstatus or any(Decimal(str(x.planned_qty)) != row.planned_headcount for x in plan.po_items):
 			frappe.throw(_("餐次草稿数量或状态不一致，请重新核对。"))
 		if _recipe_signature(plan) != snapshot["recipe_hashes"].get(plan.name):
@@ -605,8 +651,13 @@ def submit_week(doc):
 	review = _json(doc.procurement_snapshot)
 	if review.get("reviewed_basis_hash") != prepared["snapshot"].get("basis_hash"):
 		frappe.throw(_("库存、到货或采购需求已变化，请重新核对账面库存后再提交。"))
+	from ione_core.meal_native_reservations import ensure_current_native_reservation_inputs
+
+	ensure_current_native_reservation_inputs(doc.company)
 	with _managed():
 		for row in doc.meals:
+			if row.get("service_suspended"):
+				continue
 			plan = _bound_plan(doc, row)
 			plan.set("mr_items", prepared["plans"].get(plan.name, []))
 			plan.save(ignore_permissions=True)
@@ -618,7 +669,20 @@ def submit_week(doc):
 		doc.status = "已审核"
 
 
+def verify_purchase_weight_basis(week, material_requests=None):
+	from ione_core.meal_weights import verify_purchase_weight_basis as verify
+
+	return verify(week, material_requests)
+
+
 def cancel_week(doc):
+	if (
+		doc.get("kitchen_reconciled")
+		or frappe.db.exists("Meal Plan Adjustment", {"meal_week": doc.name, "docstatus": 1})
+		or frappe.db.exists("Stock Entry", {"custom_meal_week": doc.name, "docstatus": 1})
+		or frappe.db.exists("Meal Kitchen Day", {"meal_week": doc.name, "docstatus": 1})
+	):
+		frappe.throw(_("本周已有厨房执行或已审核单餐变更，请保留业务事实并使用专用调整流程。"))
 	if (
 		doc.material_request
 		and frappe.db.get_value("Material Request", doc.material_request, "docstatus") != 2
@@ -700,10 +764,15 @@ def _report_week(filters):
 
 def _details(doc):
 	data = []
-	snapshot = _json(doc.population_snapshot)
-	for meal in sorted(doc.meals, key=lambda x: (getdate(x.meal_date), SLOTS.index(x.meal_type))):
+	from ione_core.meal_adjustments import get_effective_meals
+
+	for meal in sorted(
+		get_effective_meals(doc), key=lambda x: (getdate(x.meal_date), SLOTS.index(x.meal_type))
+	):
+		if meal.get("service_suspended") or not meal.planned_headcount:
+			continue
 		plan = _bound_plan(doc, meal)
-		if doc.docstatus == 1 and _recipe_signature(plan) != snapshot.get("recipe_hashes", {}).get(plan.name):
+		if doc.docstatus == 1 and _recipe_signature(plan) != meal.get("recipe_hash"):
 			frappe.throw(_("已审核菜品配方发生变化，请先修订周计划。"))
 		for dish in plan.po_items:
 			bom = frappe.get_doc("BOM", dish.bom_no)
@@ -763,15 +832,25 @@ def weekly_report_data(filters=None):
 	for i, day in enumerate(_dates(doc)):
 		columns[i + 2]["label"] = f"星期{'一二三四五'[i]} {day}"
 	details = _details(doc)
+	from ione_core.meal_adjustments import get_effective_meals
+
+	meals = get_effective_meals(doc)
 	data = []
 	for slot in SLOTS:
 		for kind in ("菜品", "带量"):
 			record = {"week_name": doc.name, "meal_type": slot, "row_kind": kind}
 			for i, day in enumerate(_dates(doc)):
-				meal = next(r for r in doc.meals if getdate(r.meal_date) == day and r.meal_type == slot)
-				record[f"plan_{i}"] = meal.production_plan
+				meal = next(r for r in meals if getdate(r.meal_date) == day and r.meal_type == slot)
+				record[f"plan_{i}"] = None if meal.get("service_suspended") else meal.production_plan
 				record[f"headcount_{i}"] = meal.planned_headcount
 				record[f"date_{i}"] = str(day)
+				record[f"suspended_{i}"] = cint(meal.get("service_suspended"))
+				record[f"suspension_reason_{i}"] = meal.get("suspension_reason")
+				if meal.get("service_suspended"):
+					record[f"day_{i}"] = (
+						f"停供：{meal.get('suspension_reason') or ''}" if kind == "菜品" else ""
+					)
+					continue
 				if kind == "菜品":
 					record[f"day_{i}"] = meal.menu
 				else:

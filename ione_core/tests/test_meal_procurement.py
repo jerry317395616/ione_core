@@ -89,6 +89,11 @@ class MealProcurementTests(unittest.TestCase):
 		}
 
 	def context(self, items=None, stock=0, orders=None, requests=None):
+		for row in (orders or []) + (requests or []):
+			if "source_plan_parent" not in row:
+				row.update(
+					source_plan_parent="PP-1", source_item_code=row.item_code, source_warehouse=row.warehouse
+				)
 		return {
 			"items": items or {"rice": self.item()},
 			"bins": {("rice", "Stores"): Record(actual_qty=stock)},
@@ -96,6 +101,8 @@ class MealProcurementTests(unittest.TestCase):
 			"requests": requests or [],
 			"prices": [],
 			"whole_uoms": {},
+			"owned_plan_names": {"PP-1", "PP-2"},
+			"excluded_supply": [],
 		}
 
 	def allocate(self, demands, **kwargs):
@@ -197,6 +204,71 @@ class MealProcurementTests(unittest.TestCase):
 		self.assertEqual(rows[0]["already_requested_qty"], "40")
 		self.assertEqual(rows[0]["purchase_qty"], "20")
 
+	def test_another_business_request_does_not_reduce_meal_procurement(self):
+		request = Record(
+			name="MR-ITEM",
+			material_request="OTHER-MR",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			stock_qty="100",
+			ordered_qty=0,
+			received_qty=0,
+			source_plan_parent="OTHER-PP",
+			source_item_code="rice",
+			source_warehouse="Stores",
+		)
+		rows, _, _ = self.allocate([self.demand("50")], requests=[request])
+		self.assertEqual(rows[0]["purchase_qty"], "50")
+		self.assertEqual(rows[0]["already_requested_qty"], "0")
+
+	def test_an_unassigned_order_is_not_assumed_free_for_the_meal_week(self):
+		order = Record(
+			name="PO-ITEM",
+			purchase_order="PO",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			qty="100",
+			received_qty=0,
+			conversion_factor=1,
+			source_plan_parent=None,
+		)
+		context = self.context(orders=[order])
+		rows, _, _ = self.module._allocate(self.week, [self.demand("50")], context)
+		self.assertEqual(rows[0]["public"]["purchase_qty"], "50")
+		self.assertEqual(context["excluded_supply"][0]["reason"], "unassigned_or_unverified_source")
+
+	def test_a_sales_order_reservation_is_not_available_even_with_an_owned_plan(self):
+		order = Record(
+			name="PO-ITEM",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			qty="100",
+			received_qty=0,
+			conversion_factor=1,
+			sales_order="SALES-ORDER",
+		)
+		rows, _, _ = self.allocate([self.demand("50")], orders=[order])
+		self.assertEqual(rows[0]["purchase_qty"], "50")
+
+	def test_matching_week_label_cannot_hide_a_wrong_native_source_item(self):
+		order = Record(
+			name="PO-ITEM",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			qty="100",
+			received_qty=0,
+			conversion_factor=1,
+			source_plan_parent="PP-1",
+			source_item_code="OTHER-ITEM",
+			source_warehouse="Stores",
+		)
+		rows, _, _ = self.allocate([self.demand("50")], orders=[order])
+		self.assertEqual(rows[0]["purchase_qty"], "50")
+
 	def test_decimal_rounding_and_pack_surplus_are_not_lost_or_bought_twice(self):
 		item = self.item(purchase_uom="kg", uoms=[Record(uom="kg", conversion_factor="1000")])
 		rows, _, _ = self.allocate(
@@ -249,6 +321,26 @@ class MealProcurementTests(unittest.TestCase):
 		self.assertEqual(filters["docstatus"], 1)
 		self.assertEqual(filters["name"], ["!=", self.week.name])
 
+	def test_prior_week_releases_commitment_only_after_strong_kitchen_revalidation(self):
+		self.frappe.get_all.return_value = [
+			Record(
+				name="PREVIOUS-WEEK",
+				procurement_snapshot=json.dumps({"rows": [{"allocated_stock_qty": "100"}]}),
+			)
+		]
+		kitchen = types.ModuleType("ione_core.meal_kitchen")
+		kitchen.verify_week_kitchen_reconciled = Mock(return_value={"reconciled": True})
+		with patch.dict(sys.modules, {"ione_core.meal_kitchen": kitchen}):
+			self.assertEqual(self.module._other_stock_commitments(self.week), [])
+			kitchen.verify_week_kitchen_reconciled.assert_called_once_with("PREVIOUS-WEEK")
+
+	def test_adjustment_preparation_explicitly_includes_same_week_draft_commitments(self):
+		computed = ({}, [], {"basis_hash": "basis"}, {"warnings": [], "blockers": [], "excluded_supply": []})
+		with patch.object(self.module, "_compute", return_value=computed) as compute:
+			result = self.module.prepare_adjustment_procurement(self.week)
+			compute.assert_called_once_with(self.week, include_draft_requests=True)
+		self.assertEqual(result["plans"], {})
+
 	def test_nonfinite_quantities_are_rejected(self):
 		for value in ("NaN", "Infinity", "-Infinity"):
 			with self.subTest(value=value), self.assertRaisesRegex(ValueError, "finite"):
@@ -266,7 +358,7 @@ class MealProcurementTests(unittest.TestCase):
 			material_request_type="Purchase",
 			items=[Record(production_plan="PP-1", material_request_plan_item="SOURCE-1", item_code="rice")],
 		)
-		self.frappe.get_doc.side_effect = [self.week, plan, request]
+		self.frappe.get_doc.side_effect = [self.week, self.week, plan, request]
 		result = self.module.create_material_request(self.week.name)
 		self.assertEqual(result, {"material_request": request.name, "name": request.name, "created": False})
 		self.frappe.new_doc.assert_not_called()
@@ -282,6 +374,102 @@ class MealProcurementTests(unittest.TestCase):
 		plan = Record(check_permission=Mock())
 		self.module._check_create_permission(self.week, [plan])
 		plan.check_permission.assert_called_once_with("write")
+
+	def test_narrow_operator_only_needs_source_read_to_create_a_controlled_request(self):
+		self.frappe.get_roles.return_value = ["膳食业务经办员"]
+		plan = Record(check_permission=Mock())
+		self.module._check_create_permission(self.week, [plan])
+		plan.check_permission.assert_called_once_with("read")
+
+	def test_adjustment_reads_current_stock_orders_and_draft_commitments_after_lock(self):
+		item = self.item()
+		self.frappe.get_doc.return_value = item
+		self.frappe.db.get_single_value.return_value = None
+		self.frappe.get_all.return_value = [Record(name="g", must_be_whole_number=0)]
+		order = Record(
+			name="POI",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			qty=5,
+			received_qty=0,
+			conversion_factor=1,
+			purchase_order="PO",
+			source_plan_parent="PP-1",
+			source_item_code="rice",
+			source_warehouse="Stores",
+		)
+		request = Record(
+			name="MRI",
+			item_code="rice",
+			warehouse="Stores",
+			schedule_date="2026-10-26",
+			stock_qty=35,
+			ordered_qty=0,
+			received_qty=0,
+			docstatus=0,
+			material_request="MR",
+			source_plan_parent="PP-1",
+			source_item_code="rice",
+			source_warehouse="Stores",
+		)
+
+		def current_rows(query, *args, **kwargs):
+			if "FOR UPDATE" not in query:
+				return []
+			if "SELECT name FROM `tabProduction Plan`" in query:
+				return [Record(name="PP-1")]
+			if "FROM `tabBin`" in query:
+				return [Record(item_code="rice", warehouse="Stores", actual_qty=10)]
+			if "JOIN `tabPurchase Order` p" in query:
+				return [order]
+			if "JOIN `tabMaterial Request` m" in query:
+				return [request]
+			return []
+
+		self.frappe.db.sql.side_effect = current_rows
+		purchasing = types.ModuleType("ione_core.meal_purchasing")
+		purchasing.is_verified_superseded_request = Mock(return_value=False)
+		with patch.dict(sys.modules, {purchasing.__name__: purchasing}):
+			context = self.module._load_context(self.week, [self.demand("50")], include_draft_requests=True)
+			rows, _warnings, blockers = self.module._allocate(self.week, [self.demand("50")], context)
+		self.assertEqual(rows[0]["public"]["purchase_qty"], "0")
+		self.assertEqual(blockers, [])
+		self.assertTrue(context["for_update"])
+		self.assertTrue(all("FOR UPDATE" in call.args[0] for call in self.frappe.db.sql.call_args_list))
+		self.frappe.get_doc.assert_any_call("Item", "rice", for_update=True)
+
+	def test_all_suspended_meals_produce_no_purchase_demand(self):
+		native = types.ModuleType("erpnext.manufacturing.doctype.production_plan.services.material_request")
+		native.get_items_for_material_requests = Mock()
+		self.week.meals = [
+			Record(
+				meal_date="2026-10-26",
+				meal_type="午餐",
+				idx=1,
+				planned_headcount=0,
+				service_suspended=1,
+				suspension_reason="临时停供",
+			)
+		]
+		with patch.dict(sys.modules, {native.__name__: native}):
+			plans, demands, blockers = self.module._native_demands(self.week)
+		self.assertEqual((plans, demands, blockers), ({}, [], []))
+		native.get_items_for_material_requests.assert_not_called()
+
+	def test_zero_headcount_without_explicit_suspension_is_rejected(self):
+		native = types.ModuleType("erpnext.manufacturing.doctype.production_plan.services.material_request")
+		native.get_items_for_material_requests = Mock()
+		self.week.meals = [
+			Record(
+				meal_date="2026-10-26", meal_type="午餐", idx=1, planned_headcount=0, service_suspended="0"
+			)
+		]
+		with (
+			patch.dict(sys.modules, {native.__name__: native}),
+			self.assertRaisesRegex(ValueError, "positive whole"),
+		):
+			self.module._native_demands(self.week)
 
 	def test_a_forged_link_to_another_weeks_request_is_rejected(self):
 		plan = Record(mr_items=[Record(name="SOURCE-1", item_code="rice")])

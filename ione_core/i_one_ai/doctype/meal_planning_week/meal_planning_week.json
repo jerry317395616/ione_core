@@ -9,6 +9,7 @@
   "title",
   "company",
   "raw_material_warehouse",
+  "kitchen_warehouse",
   "week_start",
   "week_end",
   "planning_column",
@@ -26,10 +27,16 @@
   "meals_section",
   "meals",
   "procurement_section",
+  "requirement_weight_basis",
+  "requirement_weight_snapshot",
   "stock_reviewed",
   "material_request",
   "procurement_snapshot",
   "procurement_html",
+  "kitchen_section",
+  "kitchen_reconciled",
+  "kitchen_reconciled_at",
+  "kitchen_reconciliation_snapshot",
   "notes_section",
   "notes",
   "amended_from"
@@ -220,6 +227,60 @@
    "read_only": 1,
    "hidden": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "kitchen_warehouse",
+   "fieldtype": "Link",
+   "label": "厨房仓库",
+   "options": "Warehouse",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "由受控配置操作选择本园所厨房仓，不得与原料仓库相同。"
+  },
+  {
+   "fieldname": "requirement_weight_basis",
+   "fieldtype": "Select",
+   "label": "食材带量重量口径",
+   "options": "待确认\n采购毛重",
+   "default": "待确认",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "采购毛重指清洗去皮前重量；按原表带量计算，不另加损耗系数。"
+  },
+  {
+   "fieldname": "kitchen_section",
+   "fieldtype": "Section Break",
+   "label": "厨房执行与周核销"
+  },
+  {
+   "fieldname": "kitchen_reconciled",
+   "fieldtype": "Check",
+   "label": "厨房本周已核销",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "kitchen_reconciled_at",
+   "fieldtype": "Datetime",
+   "label": "厨房核销时间",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "kitchen_reconciliation_snapshot",
+   "fieldtype": "Long Text",
+   "label": "厨房核销依据",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "requirement_weight_snapshot",
+   "fieldtype": "Long Text",
+   "label": "重量口径确认依据",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
   }
  ],
  "index_web_pages_for_search": 0,
@@ -272,6 +333,20 @@
   },
   {
    "role": "Stock Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Stock User",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "膳食业务经办员",
    "read": 1,
    "report": 1,
    "export": 1,
