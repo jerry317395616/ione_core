@@ -1,0 +1,135 @@
+--- a/ione_core/ione_core/hooks.py
++++ b/ione_core/ione_core/hooks.py
+@@ -8,12 +8,9 @@
+ app_home = "/desk/i-one-ai"
+ app_logo_url = "/assets/ione_core/images/ione-logo.svg"
+ 
+-app_include_js = [
+-	"/assets/ione_core/js/workspace_dock_i18n.js?v=20261009-hierarchy-v1",
+-	"/assets/ione_core/js/disable_sidebar_selector.js?v=20261011-v1",
+-]
++app_include_js = []
+ 
+-app_include_css = ["/assets/ione_core/css/disable_sidebar_selector.css?v=20261011-v2"]
++app_include_css = []
+ 
+ doctype_list_js = {
+ 	"Role": "public/js/role_list.js",
+@@ -26,11 +23,9 @@
+ 	"Student": "public/js/student.js",
+ }
+ 
+-boot_session = "ione_core.desktop_i18n.localize_app_titles"
++boot_session = []
+ 
+-before_request = [
+-	"ione_core.setup.unified_navigation.redirect_desk_landing",
+-]
++before_request = []
+ 
+ after_request = [
+ 	"ione_core.web_injection.ensure_utf8_private_file_response",
+--- a/ione_core/ione_core/setup/install.py
++++ b/ione_core/ione_core/setup/install.py
+@@ -73,9 +73,7 @@
+ 	ensure_video_integration()
+ 	sync_translation_overrides()
+ 	install_translation_bundle()
+-	ensure_desktop_app_labels()
+ 	ensure_dingtalk_employee_field()
+-	ensure_unified_navigation()
+ 
+ 
+ def after_migrate():
+@@ -91,9 +89,7 @@
+ 	ensure_runtime_config()
+ 	sync_translation_overrides()
+ 	install_translation_bundle()
+-	ensure_desktop_app_labels()
+ 	ensure_dingtalk_employee_field()
+-	ensure_unified_navigation()
+ 
+ 
+ def ensure_unified_navigation():
+--- a/ione_core/ione_core/setup/education_workspace.py
++++ b/ione_core/ione_core/setup/education_workspace.py
+@@ -1,7 +1,7 @@
+ import json
+ 
+ WORKSPACE_NAME = "Education"
+-WORKSPACE_TITLE = "教育管理"
++WORKSPACE_TITLE = "Education"
+ 
+ NUMBER_CARD_SPECS = (
+ 	{
+--- a/ione_core/ione_core/translation_overrides.py
++++ b/ione_core/ione_core/translation_overrides.py
+@@ -7,6 +7,57 @@
+ from typing import Any
+ 
+ TranslationKey = tuple[str, str]
++
++
++OFFICIAL_UI_TRANSLATIONS = {
++	("Accounting", ""): "会计",
++	("Accounts", ""): "会计",
++	("Apps", ""): "应用",
++	("Assets", ""): "资产",
++	("Automation", ""): "自动化",
++	("Build", ""): "构建",
++	("Buying", ""): "采购",
++	("CRM", ""): "客户关系",
++	("Contacts", ""): "联系人",
++	("Data", ""): "数据",
++	("Desk", ""): "工作台",
++	("Desktop", ""): "桌面",
++	("ERPNext", ""): "ERPNext",
++	("Education", ""): "教育培训",
++	("Email", ""): "邮件",
++	("Expenses", ""): "费用",
++	("Framework", ""): "Framework",
++	("Frappe", ""): "Frappe",
++	("Frappe Framework", ""): "Frappe Framework",
++	("Frappe HR", ""): "Frappe HR系统",
++	("Geo", ""): "Geo",
++	("HR Setup", ""): "HR Setup",
++	("Home", ""): "主页",
++	("Integrations", ""): "集成",
++	("Leaves", ""): "假期列表",
++	("Manufacturing", ""): "生产",
++	("Payroll", ""): "薪资",
++	("Performance", ""): "绩效",
++	("Printing", ""): "正在打印",
++	("Projects", ""): "项目",
++	("Quality", ""): "质量",
++	("Recruitment", ""): "招聘",
++	("Selling", ""): "销售",
++	("Setup", ""): "设置",
++	("Shift & Attendance", ""): "班次与考勤",
++	("Shift and Attendance", ""): "Shift and Attendance",
++	("Stock", ""): "库存",
++	("Support", ""): "售后支持",
++	("System", ""): "系统",
++	("Tax & Benefits", ""): "税务与福利",
++	("Tax and Benefits", ""): "Tax and Benefits",
++	("Tenure", ""): "Tenure",
++	("Users", ""): "用户",
++	("Website", ""): "网站",
++	("Workflow", ""): "工作流",
++	("Workspace", ""): "工作区",
++	("Workspaces", ""): "工作区",
++}
+ 
+ 
+ def read_translation_catalog(path: str | Path | None = None) -> dict[TranslationKey, str]:
+@@ -26,7 +77,9 @@
+ 				raise ValueError(
+ 					f"invalid translation row {line_number}: source and translation are required"
+ 				)
+-			catalog[(source, context)] = translated
++			catalog[(source, context)] = OFFICIAL_UI_TRANSLATIONS.get(
++				(source, context), translated
++			)
+ 	return catalog
+ 
+ 

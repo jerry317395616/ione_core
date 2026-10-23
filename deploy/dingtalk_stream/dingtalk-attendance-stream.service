@@ -1,0 +1,22 @@
+[Unit]
+Description=Durable DingTalk attendance Stream collector
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+# Use the bench's operating-system account; adjust these names at deployment.
+User=frappe
+Group=frappe
+EnvironmentFile=/etc/dingtalk-attendance-stream/service.env
+Environment=TZ=Asia/Shanghai
+ExecStart=/opt/dingtalk-attendance-stream/venv/bin/python /opt/dingtalk-attendance-stream/dingtalk_stream_service.py --credentials ${CREDENTIALS_PATH} --state-dir ${STATE_DIR} --bench ${BENCH_PATH} --site ${SITE_NAME} --import-control ${IMPORT_CONTROL_PATH}
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=300
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
