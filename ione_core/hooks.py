@@ -17,6 +17,7 @@ doctype_list_js = {
 }
 
 doctype_js = {
+	"Production Plan": "public/js/meal_production_plan.js",
 	"Role": "public/js/role.js",
 	"User": "public/js/user.js",
 	"Student": "public/js/student.js",
@@ -81,6 +82,12 @@ has_permission = {
 }
 
 doc_events = {
+	"Production Plan": {
+		"validate": "ione_core.meal_planning.validate_production_plan",
+		"before_submit": "ione_core.meal_planning.validate_production_plan",
+		"before_cancel": "ione_core.meal_planning.validate_production_plan",
+		"before_update_after_submit": "ione_core.meal_planning.validate_production_plan",
+	},
 	"Flow Run": {
 		"on_update": "ione_core.ai.sync_task_from_flow_run",
 	},
