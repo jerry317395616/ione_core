@@ -96,7 +96,13 @@ class MealPlanningTests(unittest.TestCase):
 		self.utils.getdate = getdate
 		self.utils.cint = lambda value: int(value or 0)
 		self.utils.now_datetime = lambda: dt.datetime(2026, 10, 23, 12, 0)
-		self.modules = patch.dict(sys.modules, {"frappe": self.frappe, "frappe.utils": self.utils})
+		self.claims = types.ModuleType("ione_core.meal_stock_claims")
+		self.claims.lock_claim_scope = Mock()
+		self.modules = patch.dict(sys.modules, {
+			"frappe": self.frappe,
+			"frappe.utils": self.utils,
+			"ione_core.meal_stock_claims": self.claims,
+		})
 		self.modules.start()
 		spec = importlib.util.spec_from_file_location("synthetic_meal_planning", Path(__file__).parents[1] / "meal_planning.py")
 		self.module = importlib.util.module_from_spec(spec)
@@ -405,6 +411,7 @@ class MealPlanningTests(unittest.TestCase):
 			with self.assertRaises(ValidationFailed):
 				self.module.submit_week(self.week)
 			population.assert_not_called()
+		self.claims.lock_claim_scope.assert_called_once_with(self.week.company)
 
 	def test_existing_week_owner_cannot_be_reassigned_even_by_managed_update(self):
 		self.previous()

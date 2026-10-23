@@ -83,6 +83,11 @@ has_permission = {
 }
 
 doc_events = {
+	"Purchase Receipt": {
+		"before_submit": "ione_core.meal_stock_claims.before_submit_purchase_receipt",
+		"before_cancel": "ione_core.meal_stock_claims.before_cancel_purchase_receipt",
+		"before_update_after_submit": "ione_core.meal_stock_claims.validate_purchase_receipt",
+	},
 	"Supplier Quotation": {
 		"validate": "ione_core.meal_purchasing.validate_supplier_quotation",
 		"before_submit": "ione_core.meal_purchasing.validate_supplier_quotation",

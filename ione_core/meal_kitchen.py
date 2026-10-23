@@ -33,6 +33,8 @@ _DAY_PROTECTED = (
 	"approved_by",
 	"approved_at",
 	"execution_snapshot",
+	"carry_confirmed",
+	"carry_confirmation_snapshot",
 	"owner",
 )
 
@@ -57,14 +59,14 @@ def _date(value):
 		return value
 	try:
 		return date.fromisoformat(str(value))
-	except (TypeError, ValueError):
+	except TypeError, ValueError:
 		_fail("请填写有效的厨房业务日期。")
 
 
 def _decimal(value):
 	try:
 		result = Decimal(str(value if value is not None and value != "" else 0))
-	except (TypeError, ValueError, InvalidOperation):
+	except TypeError, ValueError, InvalidOperation:
 		_fail("厨房数量必须是有效数字。")
 	if not result.is_finite():
 		_fail("厨房数量必须为有限数字。")
@@ -84,7 +86,7 @@ def _json(value):
 		return {}
 	try:
 		result = json.loads(value) if isinstance(value, str) else value
-	except (TypeError, ValueError):
+	except TypeError, ValueError:
 		_fail("厨房核销依据格式无效，请核对记录。")
 	if not isinstance(result, dict):
 		_fail("厨房核销依据格式无效，请核对记录。")
@@ -117,6 +119,13 @@ def _week(value, lock=False):
 		_fail("请选择有效的食谱周。")
 	if lock and not isinstance(value, str):
 		value = value.name
+	if lock:
+		from ione_core.meal_stock_claims import lock_claim_scope
+
+		company = frappe.db.get_value("Meal Planning Week", value, "company")
+		if not company:
+			_fail("请选择有效的食谱周。")
+		lock_claim_scope(company)
 	doc = frappe.get_doc("Meal Planning Week", value, for_update=lock) if isinstance(value, str) else value
 	doc.check_permission("read")
 	if doc.docstatus != 1:
@@ -152,6 +161,8 @@ def _refresh_day_plan(doc, week):
 		_fail("食谱已变化；厨房已有库存单据或已日结，请先处理原单据，不能沿用旧菜单。")
 	with _managed():
 		doc.set("items", items)
+		doc.carry_confirmed = 0
+		doc.carry_confirmation_snapshot = None
 		doc.set(
 			"meals",
 			[
@@ -324,6 +335,9 @@ def validate_day(doc, method=None):
 			if not str(row.reason or "").strip():
 				_fail("停供或实际人数与计划不一致时必须填写原因。")
 		row.actual_headcount = int(actual)
+	if old and (_day_business_signature(doc) != _day_business_signature(old)):
+		doc.carry_confirmed = 0
+		doc.carry_confirmation_snapshot = None
 	doc.status = "已取消" if doc.docstatus == 2 else ("已日结" if doc.docstatus == 1 else "执行草稿")
 
 
@@ -426,18 +440,30 @@ def _entry_qty(row):
 	return qty
 
 
-def _entry_facts(day, entries, exclude=None):
+def _entry_facts(day, entries, exclude=None, opening=None):
 	"""Pure balance reconstruction from submitted entries; no draft is consumed."""
-	allowed = _item_signature(day.items)
+	planned = _item_signature(day.items)
+	allowed = dict(planned)
 	issues = {}
+	for source in opening or []:
+		ref, code = source.get("issue_detail"), source.get("item_code")
+		qty = _decimal(source.get("qty"))
+		if not ref or ref in issues or qty <= ZERO or not source.get("stock_uom"):
+			_fail("厨房期初领用来源不唯一或数量无效。")
+		if code in allowed and allowed[code][0] != source["stock_uom"]:
+			_fail("厨房期初食材单位与当前计划不一致。")
+		allowed.setdefault(code, (source["stock_uom"], ZERO))
+		issues[ref] = {**source, "item_code": code, "qty": qty, "entry": source["origin_entry"]}
 	uses = defaultdict(lambda: ZERO)
 	totals = {
 		code: {
+			"opening_qty": sum((row["qty"] for row in issues.values() if row["item_code"] == code), ZERO),
 			"issued_qty": ZERO,
 			"returned_qty": ZERO,
 			"consumed_qty": ZERO,
 			"loss_qty": ZERO,
 			"balance_qty": ZERO,
+			"carry_out_qty": ZERO,
 		}
 		for code in allowed
 	}
@@ -462,19 +488,28 @@ def _entry_facts(day, entries, exclude=None):
 			code = row.item_code
 			if code not in allowed or row.stock_uom != allowed[code][0] or row.uom != allowed[code][0]:
 				_fail("库存食材或计量单位不属于本日有效食谱。")
+			if action in ("领用", "耗用") and code not in planned:
+				_fail("领用或耗用食材必须属于本日有效菜单。")
 			qty = _entry_qty(row)
 			source = day.source_warehouse if action == "领用" else day.kitchen_warehouse
-			target = (
-				day.kitchen_warehouse
-				if action == "领用"
-				else (day.source_warehouse if action == "退料" else None)
-			)
-			if row.s_warehouse != source or (row.t_warehouse or None) != target:
+			if row.s_warehouse != source or (action == "领用" and row.t_warehouse != day.kitchen_warehouse):
 				_fail("厨房库存行的源仓或目标仓不一致。")
 			if action == "领用":
 				if not row.name or row.name in issues or row.get("custom_meal_issue_detail"):
 					_fail("厨房领用来源行不唯一或错误引用其他领用。")
-				issues[row.name] = {"item_code": code, "qty": qty, "entry": entry.name}
+				issues[row.name] = {
+					"item_code": code,
+					"qty": qty,
+					"entry": entry.name,
+					"origin_entry": entry.name,
+					"origin_week": day.meal_week,
+					"origin_date": str(_date(entry.posting_date)),
+					"origin_order": str(entry.get("creation") or entry.name),
+					"original_qty": _text(qty),
+					"source_warehouse": day.source_warehouse,
+					"kitchen_warehouse": day.kitchen_warehouse,
+					"stock_uom": row.stock_uom,
+				}
 				totals[code]["issued_qty"] += qty
 	for entry in active:
 		action = entry.custom_meal_action
@@ -483,7 +518,10 @@ def _entry_facts(day, entries, exclude=None):
 		for row in entry.get("items"):
 			ref = row.get("custom_meal_issue_detail")
 			if ref not in issues or issues[ref]["item_code"] != row.item_code:
-				_fail("退料、耗用或损耗必须引用本日同食材的已提交领用行。")
+				_fail("退料、耗用或损耗必须引用有效期初或本日同食材的已提交领用行。")
+			target = issues[ref]["source_warehouse"] if action == "退料" else None
+			if (row.t_warehouse or None) != target:
+				_fail("退料必须返回原领用源仓，耗用和损耗不能指定目标仓。")
 			qty = _entry_qty(row)
 			uses[ref] += qty
 			if uses[ref] > issues[ref]["qty"]:
@@ -492,9 +530,184 @@ def _entry_facts(day, entries, exclude=None):
 			totals[row.item_code][key] += qty
 	for values in totals.values():
 		values["balance_qty"] = (
-			values["issued_qty"] - values["returned_qty"] - values["consumed_qty"] - values["loss_qty"]
+			values["opening_qty"]
+			+ values["issued_qty"]
+			- values["returned_qty"]
+			- values["consumed_qty"]
+			- values["loss_qty"]
 		)
-	return {"totals": totals, "issues": issues, "uses": uses, "entries": active}
+		values["carry_out_qty"] = values["balance_qty"]
+	return {
+		"totals": totals,
+		"issues": issues,
+		"uses": uses,
+		"entries": active,
+		"opening_sources": list(opening or []),
+		"allowed_items": allowed,
+	}
+
+
+def _carry_sources(facts, owner_week):
+	return [
+		{
+			"issue_detail": ref,
+			"item_code": source["item_code"],
+			"stock_uom": source["stock_uom"],
+			"source_warehouse": source["source_warehouse"],
+			"kitchen_warehouse": source["kitchen_warehouse"],
+			"origin_entry": source["entry"],
+			"origin_week": source["origin_week"],
+			"origin_date": source.get("origin_date"),
+			"origin_order": source.get("origin_order"),
+			"original_qty": source["original_qty"],
+			"qty": _text(source["qty"] - facts["uses"].get(ref, ZERO)),
+			"owner_week": owner_week,
+		}
+		for ref, source in sorted(
+			facts["issues"].items(),
+			key=lambda pair: (pair[1].get("origin_date") or "", pair[1].get("origin_order") or "", pair[0]),
+		)
+		if source["qty"] - facts["uses"].get(ref, ZERO) > ZERO
+	]
+
+
+def _opening_sources(day, lock=False):
+	rows = frappe.db.sql(
+		"SELECT name FROM `tabMeal Kitchen Day` WHERE company=%s AND kitchen_warehouse=%s "
+		"AND meal_date<%s AND docstatus=1 ORDER BY meal_date DESC,name DESC LIMIT 1"
+		+ (" FOR UPDATE" if lock else ""),
+		(day.company, day.kitchen_warehouse, day.meal_date),
+		as_dict=True,
+	)
+	if not rows:
+		return [], None
+	previous = frappe.get_doc("Meal Kitchen Day", rows[0].name, for_update=lock)
+	_verified_day(previous, lock=lock)
+	proof = _json(previous.execution_snapshot)
+	return proof.get("carry_out_sources", []), {
+		"day_name": previous.name,
+		"ledger_hash": proof["ledger_hash"],
+	}
+
+
+def _check_execution_order(day):
+	rows = frappe.db.sql(
+		"SELECT d.name,d.meal_date,d.docstatus FROM `tabMeal Kitchen Day` d WHERE d.company=%s "
+		"AND d.kitchen_warehouse=%s AND d.name<>%s AND d.docstatus<2 AND "
+		"(d.docstatus=1 OR EXISTS(SELECT s.name FROM `tabStock Entry` s "
+		"WHERE s.custom_meal_kitchen_day=d.name AND s.docstatus=1)) "
+		"ORDER BY d.meal_date,d.name FOR UPDATE",
+		(day.company, day.kitchen_warehouse, day.name),
+		as_dict=True,
+	)
+	if any(_date(row.meal_date) > _date(day.meal_date) for row in rows):
+		_fail("厨房后日已有实际业务，不能回填或取消前日来源。")
+	if any(_date(row.meal_date) < _date(day.meal_date) and row.docstatus != 1 for row in rows):
+		_fail("请先完成前一厨房执行日的真实日结，再使用留存。")
+
+
+def _assert_actual_kitchen_stock(day, facts):
+	rows = frappe.db.sql(
+		"SELECT item_code,actual_qty FROM `tabBin` WHERE warehouse=%s ORDER BY item_code FOR UPDATE",
+		(day.kitchen_warehouse,),
+		as_dict=True,
+	)
+	actual = {row.item_code: _decimal(row.actual_qty) for row in rows}
+	expected = {code: row["balance_qty"] for code, row in facts["totals"].items()}
+	if any(
+		not _same(actual.get(code, ZERO), expected.get(code, ZERO)) for code in set(actual) | set(expected)
+	):
+		_fail("厨房实际库存与可追溯领用余额不一致，请先核对真实库存更正。")
+
+
+def _assert_global_source_balance(day, candidate):
+	if candidate.custom_meal_action == "领用":
+		return
+	needed = defaultdict(lambda: ZERO)
+	for row in candidate.items:
+		needed[row.custom_meal_issue_detail] += _entry_qty(row)
+	refs = sorted(needed)
+	rows = frappe.db.sql(
+		"SELECT d.name,d.parent,d.item_code,d.stock_uom,d.uom,d.qty,d.transfer_qty,d.conversion_factor,"
+		"d.s_warehouse,d.t_warehouse,s.company,s.docstatus,s.custom_meal_action,s.posting_date "
+		"FROM `tabStock Entry Detail` d JOIN `tabStock Entry` s ON s.name=d.parent "
+		"WHERE d.name IN %(refs)s ORDER BY d.name FOR UPDATE",
+		{"refs": refs},
+		as_dict=True,
+	)
+	if {row.name for row in rows} != set(refs):
+		_fail("厨房原始领用来源不存在或不完整。")
+	for row in rows:
+		if (
+			row.docstatus != 1
+			or row.company != day.company
+			or row.custom_meal_action != "领用"
+			or row.t_warehouse != day.kitchen_warehouse
+			or _date(row.posting_date) > _date(day.meal_date)
+		):
+			_fail("厨房原始领用的公司、仓库、日期或状态不一致。")
+		frappe.get_doc("Stock Entry", row.parent, for_update=True).check_permission("read")
+	uses = frappe.db.sql(
+		"SELECT d.custom_meal_issue_detail,d.qty,d.transfer_qty,d.conversion_factor,d.item_code,d.stock_uom,"
+		"d.uom,d.s_warehouse,d.t_warehouse,s.company,s.custom_meal_action,s.posting_date "
+		"FROM `tabStock Entry Detail` d JOIN `tabStock Entry` s ON s.name=d.parent "
+		"WHERE d.custom_meal_issue_detail IN %(refs)s AND s.docstatus=1 AND s.name<>%(excluded)s "
+		"ORDER BY d.custom_meal_issue_detail,s.name,d.name FOR UPDATE",
+		{"refs": refs, "excluded": candidate.name or ""},
+		as_dict=True,
+	)
+	originals = {row.name: row for row in rows}
+	spent = defaultdict(lambda: ZERO)
+	for row in uses:
+		source = originals[row.custom_meal_issue_detail]
+		if (
+			row.company != day.company
+			or row.item_code != source.item_code
+			or row.stock_uom != source.stock_uom
+			or row.uom != source.stock_uom
+			or row.s_warehouse != day.kitchen_warehouse
+			or row.custom_meal_action not in ("耗用", "退料", "损耗")
+			or (row.t_warehouse or None) != (source.s_warehouse if row.custom_meal_action == "退料" else None)
+		):
+			_fail("厨房跨日来源存在不一致的实际使用记录。")
+		spent[source.name] += _entry_qty(row)
+	if any(spent[ref] + qty - _entry_qty(originals[ref]) > EPSILON for ref, qty in needed.items()):
+		_fail("厨房原始领用已被其他日期使用，本次合计不能超过原量。")
+
+
+def get_kitchen_carry_available(company, kitchen_warehouse, as_of=None, lock=False):
+	"""Internal source balance evidence; kitchen stock is never raw shared stock."""
+	if lock:
+		from ione_core.meal_stock_claims import lock_claim_scope
+
+		lock_claim_scope(company)
+	rows = frappe.db.sql(
+		"SELECT d.name FROM `tabMeal Kitchen Day` d WHERE d.company=%s AND d.kitchen_warehouse=%s "
+		"AND d.docstatus<2 AND d.meal_date<=%s AND (d.docstatus=1 OR EXISTS(SELECT s.name "
+		"FROM `tabStock Entry` s WHERE s.custom_meal_kitchen_day=d.name AND s.docstatus=1)) "
+		"ORDER BY d.meal_date DESC,d.name DESC LIMIT 1" + (" FOR UPDATE" if lock else ""),
+		(company, kitchen_warehouse, as_of or today()),
+		as_dict=True,
+	)
+	if not rows:
+		return {
+			"company": company,
+			"kitchen_warehouse": kitchen_warehouse,
+			"sources": [],
+			"totals": {},
+			"owner_day": None,
+		}
+	day = frappe.get_doc("Meal Kitchen Day", rows[0].name, for_update=lock)
+	day.check_permission("read")
+	facts = _ledger(day, lock=lock, verify_sle=True)
+	return {
+		"company": company,
+		"kitchen_warehouse": kitchen_warehouse,
+		"owner_day": day.name,
+		"current_owner_week": day.meal_week,
+		"sources": _carry_sources(facts, day.meal_week),
+		"totals": {code: _text(row["balance_qty"]) for code, row in facts["totals"].items()},
+	}
 
 
 def _verify_sle(day, facts, lock=False):
@@ -537,11 +750,107 @@ def _verify_sle(day, facts, lock=False):
 
 def _ledger(day, lock=False, verify_sle=False, exclude=None):
 	entries = _read_entries(day.name, lock)
-	facts = _entry_facts(day, entries, exclude)
+	opening, previous = _opening_sources(day, lock=lock)
+	facts = _entry_facts(day, entries, exclude, opening=opening)
+	facts["opening_day"] = previous
 	if verify_sle:
 		facts["stock_ledger"] = _verify_sle(day, facts, lock)
 	facts["drafts"] = [entry for entry in entries if entry.name != exclude and entry.docstatus == 0]
 	return facts
+
+
+def _carry_basis(day, facts):
+	return _hash(
+		{
+			"day": day.name,
+			"company": day.company,
+			"kitchen": day.kitchen_warehouse,
+			"actual": _day_business_signature(day),
+			"notes": str(day.get("carry_notes") or "").strip(),
+			"opening_day": facts.get("opening_day"),
+			"opening_sources": facts.get("opening_sources", []),
+			"sources": _carry_sources(facts, day.meal_week),
+			"stock_ledger": facts.get("stock_ledger", []),
+			"stock_entries": [entry.name for entry in facts["entries"]],
+		}
+	)
+
+
+def _carry_confirmation(day, facts):
+	basis = _carry_basis(day, facts)
+	positive = {
+		code: _text(row["balance_qty"]) for code, row in facts["totals"].items() if row["balance_qty"] > ZERO
+	}
+	proof = _json(day.get("carry_confirmation_snapshot"))
+	current = bool(
+		day.get("carry_confirmed")
+		and proof.get("basis_hash") == basis
+		and proof.get("physical_counts") == positive
+		and proof.get("confirmed_by")
+		and proof.get("confirmed_at")
+	)
+	return positive, basis, current, proof
+
+
+def _invalidate_carry(day):
+	if day.get("carry_confirmed") or day.get("carry_confirmation_snapshot"):
+		day.db_set({"carry_confirmed": 0, "carry_confirmation_snapshot": None}, update_modified=False)
+
+
+@frappe.whitelist(methods=["POST"])
+def confirm_kitchen_carry(day_name, physical_counts, notes=None):
+	"""Record an operator's explicit physical count; never infer it from Bin."""
+	_role()
+	day = _day(day_name, lock=True)
+	day.check_permission("write")
+	if day.docstatus != 0 or _date(day.meal_date) > _date(today()):
+		_fail("只能清点当前或过去尚未日结的厨房余料。")
+	_check_execution_order(day)
+	facts = _ledger(day, lock=True, verify_sle=True)
+	if facts["drafts"]:
+		_fail("请先处理厨房库存草稿，再确认实际留存。")
+	_assert_actual_kitchen_stock(day, facts)
+	if isinstance(physical_counts, str):
+		try:
+			physical_counts = json.loads(physical_counts)
+		except TypeError, ValueError:
+			_fail("请逐食材输入真实盘点数量。")
+	if not isinstance(physical_counts, list):
+		_fail("请逐食材输入真实盘点数量。")
+	expected = {
+		code: row["balance_qty"] for code, row in facts["totals"].items() if row["balance_qty"] > ZERO
+	}
+	observed = {}
+	for row in physical_counts:
+		if not isinstance(row, dict) or set(row) != {"item_code", "qty"}:
+			_fail("实物清点仅接受食材和实际数量。")
+		code = row["item_code"]
+		if not isinstance(code, str) or code in observed or row["qty"] in (None, ""):
+			_fail("请逐食材输入真实盘点数量，不能留空或重复。")
+		observed[code] = _decimal(row["qty"])
+	if set(observed) != set(expected) or any(observed[code] != qty for code, qty in expected.items()):
+		_fail("实物清点与系统留存不一致，请先核对并按真实业务更正。")
+	carry_notes = str(notes if notes is not None else day.get("carry_notes") or "").strip()
+	if expected and not carry_notes:
+		_fail("有真实余料留厨时必须填写留存说明。")
+	day.carry_notes = carry_notes
+	_, basis, _, _ = _carry_confirmation(day, facts)
+	proof = {
+		"basis_hash": basis,
+		"physical_counts": {code: _text(qty) for code, qty in sorted(observed.items())},
+		"confirmed_by": frappe.session.user,
+		"confirmed_at": str(now_datetime()),
+		"notes": carry_notes,
+	}
+	day.db_set(
+		{
+			"carry_notes": carry_notes,
+			"carry_confirmed": 1,
+			"carry_confirmation_snapshot": frappe.as_json(proof),
+		},
+		update_modified=False,
+	)
+	return {"name": day.name, "carry_confirmed": True, "basis_hash": basis}
 
 
 @frappe.whitelist()
@@ -553,8 +862,9 @@ def get_kitchen_ledger(day_name):
 		blockers.append("未来日期不能日结。")
 	if facts["drafts"]:
 		blockers.append("仍有未提交库存草稿，请核实后提交或删除。")
-	if any(values["balance_qty"] != ZERO for values in facts["totals"].values()):
-		blockers.append("仍有未耗用、退回或登记损耗的领用余额。")
+	positive, basis, confirmed, _ = _carry_confirmation(day, facts)
+	if positive and not confirmed:
+		blockers.append("厨房正余料尚未按当前流水逐项实盘确认留存。")
 	if not all(row.actual_confirmed for row in day.meals):
 		blockers.append("五餐实际供餐人数尚未全部确认。")
 	positive_meals = any(_decimal(row.actual_headcount) > ZERO for row in day.meals)
@@ -564,14 +874,20 @@ def get_kitchen_ledger(day_name):
 	if not positive_meals and consumed:
 		blockers.append("五餐均停供却存在供餐耗用，请先核对。")
 	rows = []
-	for row in day.items:
-		values = facts["totals"][row.item_code]
+	planned = _item_signature(day.items)
+	for code, values in sorted(facts["totals"].items()):
+		uom, planned_qty = facts["allowed_items"][code]
+		actions = ["领用", "耗用"] if code in planned else []
+		if values["balance_qty"] > ZERO:
+			actions += ["退料", "损耗"]
 		rows.append(
 			{
-				"item_code": row.item_code,
-				"item_name": frappe.db.get_value("Item", row.item_code, "item_name"),
-				"stock_uom": row.stock_uom,
-				"planned_qty": _text(row.planned_qty),
+				"item_code": code,
+				"item_name": frappe.db.get_value("Item", code, "item_name"),
+				"stock_uom": uom,
+				"planned_qty": _text(planned_qty),
+				"allowed_actions": actions,
+				"can_issue": code in planned,
 				**{key: _text(value) for key, value in values.items()},
 			}
 		)
@@ -591,18 +907,25 @@ def get_kitchen_ledger(day_name):
 		"has_drafts": bool(facts["drafts"]),
 		"can_close": not blockers,
 		"blockers": blockers,
+		"carry_required": bool(positive),
+		"carry_confirmation_current": confirmed,
+		"basis_hash": basis,
+		"opening_day": facts.get("opening_day"),
 	}
 
 
-def _input_items(day, items):
+def _input_items(day, items, action=None, opening=None):
 	if isinstance(items, str):
 		try:
 			items = json.loads(items)
-		except (TypeError, ValueError):
+		except TypeError, ValueError:
 			_fail("库存数量列表格式无效。")
 	if not isinstance(items, list) or not items or len(items) > 200:
 		_fail("请填写本次实际操作的食材和数量。")
 	allowed = _item_signature(day.items)
+	if action in ("退料", "损耗"):
+		for source in opening or []:
+			allowed.setdefault(source["item_code"], (source["stock_uom"], ZERO))
 	result = {}
 	for row in items:
 		if not isinstance(row, dict) or set(row) - {"item_code", "qty"}:
@@ -651,10 +974,10 @@ def create_kitchen_stock_entry(day_name, action, items, reason=None):
 	if not frappe.has_permission("Stock Entry", "create"):
 		_fail("没有创建原生库存单据的权限。", permission=True)
 	_verify_effective_source(day, week, lock=True)
-	quantities = _input_items(day, items)
+	facts = _ledger(day, lock=True, verify_sle=True)
+	quantities = _input_items(day, items, action=action, opening=facts.get("opening_sources", []))
 	if action == "损耗" and not str(reason or "").strip():
 		_fail("登记损耗必须填写实际原因。")
-	facts = _ledger(day, lock=True, verify_sle=True)
 	matching = [entry for entry in facts["drafts"] if entry.custom_meal_action == action]
 	if matching:
 		if len(matching) == 1:
@@ -670,7 +993,11 @@ def create_kitchen_stock_entry(day_name, action, items, reason=None):
 	if (
 		action == "领用"
 		and any(
-			facts["totals"][code]["issued_qty"] + qty - planned[code][1] > EPSILON
+			facts["totals"][code].get("opening_qty", ZERO)
+			+ facts["totals"][code]["issued_qty"]
+			+ qty
+			- planned[code][1]
+			> EPSILON
 			for code, qty in quantities.items()
 		)
 		and not str(reason or "").strip()
@@ -703,13 +1030,13 @@ def create_kitchen_stock_entry(day_name, action, items, reason=None):
 				"item_code": code,
 				"qty": float(qty),
 				"transfer_qty": float(qty),
-				"uom": planned[code][0],
-				"stock_uom": planned[code][0],
+				"uom": facts["allowed_items"][code][0],
+				"stock_uom": facts["allowed_items"][code][0],
 				"conversion_factor": 1,
 				"s_warehouse": day.source_warehouse if action == "领用" else day.kitchen_warehouse,
 				"t_warehouse": day.kitchen_warehouse
 				if action == "领用"
-				else (day.source_warehouse if action == "退料" else None),
+				else (facts["issues"][ref]["source_warehouse"] if action == "退料" else None),
 				"custom_meal_issue_detail": ref,
 			},
 		)
@@ -734,6 +1061,12 @@ def validate_stock_entry(doc, method=None):
 	for field in ("custom_meal_week", "custom_meal_kitchen_day", "custom_meal_action"):
 		if old and doc.get(field) != old.get(field):
 			_fail("厨房库存来源和动作不能清除或更换。")
+	if doc.get("custom_meal_raw_claim_snapshot") != (
+		old.get("custom_meal_raw_claim_snapshot") if old else None
+	):
+		_fail("厨房原料归属依据由提交审核维护，不能手工更改。")
+	if old and old.docstatus == 1 and _stock_business_signature(doc) != _stock_business_signature(old):
+		_fail("已提交厨房单据的数量和仓库已冻结。")
 	if old and doc.owner != old.owner:
 		_fail("厨房库存单据经办人不能更换。")
 	if doc.docstatus == 1 and doc.owner == frappe.session.user:
@@ -756,11 +1089,30 @@ def validate_stock_entry(doc, method=None):
 	candidate = frappe._dict(doc.as_dict())
 	candidate.docstatus = 1
 	candidate["items"] = [frappe._dict(row.as_dict()) for row in doc.items]
-	combined = _entry_facts(day, facts["entries"] + [candidate])
+	combined = _entry_facts(day, facts["entries"] + [candidate], opening=facts.get("opening_sources", []))
+	if doc.docstatus == 1 and (not old or old.docstatus != 1):
+		_check_execution_order(day)
+		_assert_actual_kitchen_stock(day, facts)
+		_assert_global_source_balance(day, doc)
+		if doc.custom_meal_action == "领用":
+			from ione_core.meal_stock_claims import assert_week_raw_stock_available
+
+			doc.custom_meal_raw_claim_snapshot = frappe.as_json(
+				assert_week_raw_stock_available(
+					week,
+					{
+						code: sum((_entry_qty(row) for row in doc.items if row.item_code == code), ZERO)
+						for code in {row.item_code for row in doc.items}
+					},
+					exclude_entry=doc.name,
+				)
+			)
 	if doc.custom_meal_action == "领用" and not str(doc.remarks or "").strip():
 		planned = _item_signature(day.items)
 		if any(
-			values["issued_qty"] - planned[code][1] > EPSILON for code, values in combined["totals"].items()
+			values["opening_qty"] + values["issued_qty"] - planned[code][1] > EPSILON
+			for code, values in combined["totals"].items()
+			if code in planned
 		):
 			_fail("超过计划食材量的领用必须填写实际原因。")
 	_input_items(
@@ -772,7 +1124,10 @@ def validate_stock_entry(doc, method=None):
 			}
 			for code in sorted({row.item_code for row in doc.items})
 		],
+		action=doc.custom_meal_action,
+		opening=facts.get("opening_sources", []),
 	)
+	_invalidate_carry(day)
 
 
 def before_cancel_stock_entry(doc, method=None):
@@ -784,7 +1139,13 @@ def before_cancel_stock_entry(doc, method=None):
 		return
 	if not doc.get("custom_meal_kitchen_day") or any(
 		old and doc.get(field) != old.get(field)
-		for field in ("custom_meal_week", "custom_meal_kitchen_day", "custom_meal_action", "owner")
+		for field in (
+			"custom_meal_week",
+			"custom_meal_kitchen_day",
+			"custom_meal_action",
+			"owner",
+			"custom_meal_raw_claim_snapshot",
+		)
 	):
 		_fail("取消厨房库存单据时不能清除或更换原业务来源。")
 	if old and _stock_business_signature(doc) != _stock_business_signature(old):
@@ -796,6 +1157,13 @@ def before_cancel_stock_entry(doc, method=None):
 	entries = _read_entries(day.name, lock=True)
 	if doc.custom_meal_action == "领用":
 		refs = {row.name for row in doc.items}
+		if frappe.db.sql(
+			"SELECT d.name FROM `tabStock Entry Detail` d JOIN `tabStock Entry` s ON s.name=d.parent "
+			"WHERE d.custom_meal_issue_detail IN %(refs)s AND s.docstatus<2 AND s.name<>%(name)s "
+			"LIMIT 1 FOR UPDATE",
+			{"refs": sorted(refs), "name": doc.name},
+		):
+			_fail("原领用已有跨日使用或草稿引用，不能取消。")
 		if any(
 			row.get("custom_meal_issue_detail") in refs
 			for entry in entries
@@ -803,7 +1171,10 @@ def before_cancel_stock_entry(doc, method=None):
 			for row in entry.get("items")
 		):
 			_fail("该领用已有退料、耗用或损耗来源，请先处理后续单据及草稿。")
-	_entry_facts(day, entries, exclude=doc.name)
+	_check_execution_order(day)
+	opening, _ = _opening_sources(day, lock=True)
+	_entry_facts(day, entries, exclude=doc.name, opening=opening)
+	_invalidate_carry(day)
 
 
 def _stock_business_signature(doc):
@@ -1000,8 +1371,11 @@ def _day_execution(day, lock=False):
 	facts = _ledger(day, lock, verify_sle=True)
 	if facts["drafts"]:
 		_fail("仍有未提交厨房库存草稿，请核实后提交或删除。")
-	if any(row["balance_qty"] != ZERO for row in facts["totals"].values()):
-		_fail("厨房领用尚有余额，须按真实数量耗用、退料或登记损耗后日结。")
+	positive, _, carry_confirmed, carry_proof = _carry_confirmation(day, facts)
+	if positive and not carry_confirmed:
+		_fail("厨房正余料须逐项实盘确认留存，不能假耗用或假退库。")
+	if positive and day.get("approved_by") and day.approved_by == carry_proof.get("confirmed_by"):
+		_fail("留存实盘确认人与日结审核人必须不同。", permission=True)
 	if any(row["actual_headcount"] > 0 for row in actuals) and not any(
 		row["consumed_qty"] > ZERO for row in facts["totals"].values()
 	):
@@ -1011,6 +1385,7 @@ def _day_execution(day, lock=False):
 	):
 		_fail("五餐均停供却存在供餐耗用，请先核对人数或库存业务原因。")
 	proof = {
+		"version": 2,
 		"day_name": day.name,
 		"meal_week": day.meal_week,
 		"meal_date": str(_date(day.meal_date)),
@@ -1026,6 +1401,10 @@ def _day_execution(day, lock=False):
 			code: {key: _text(value) for key, value in row.items()} for code, row in facts["totals"].items()
 		},
 		"stock_ledger": facts["stock_ledger"],
+		"opening_day": facts.get("opening_day"),
+		"opening_sources": facts.get("opening_sources", []),
+		"carry_out_sources": _carry_sources(facts, day.meal_week),
+		"carry_confirmation": carry_proof if positive else None,
 		"stock_entries": [
 			{
 				"name": entry.name,
@@ -1045,6 +1424,12 @@ def before_submit_day(doc, method=None):
 		_fail("厨房日结必须由其他授权审核人批准，经办人不能自行日结。", permission=True)
 	week = _week(doc.meal_week, lock=True)
 	frappe.db.sql("SELECT name FROM `tabMeal Kitchen Day` WHERE name=%s FOR UPDATE", (doc.name,))
+	_check_execution_order(doc)
+	facts = _ledger(doc, lock=True, verify_sle=True)
+	_assert_actual_kitchen_stock(doc, facts)
+	positive, _, _, carry_proof = _carry_confirmation(doc, facts)
+	if positive and carry_proof.get("confirmed_by") == frappe.session.user:
+		_fail("留存实盘确认人与日结审核人必须不同。", permission=True)
 	_day_execution(doc, lock=True)
 	for plan in _day_plans(week, doc.meal_date, lock=True):
 		plan.check_permission("write")
@@ -1074,6 +1459,16 @@ def before_cancel_day(doc, method=None):
 			_fail("取消日结时不能改写已批准的实际人数或食材计划。")
 	if _week(doc.meal_week, lock=True).get("kitchen_reconciled"):
 		_fail("该日已纳入有效周结，须先按正式周结更正流程处理。")
+	_check_execution_order(doc)
+	if frappe.db.sql(
+		"SELECT u.name FROM `tabStock Entry Detail` u JOIN `tabStock Entry` s ON s.name=u.parent "
+		"JOIN `tabStock Entry Detail` original ON original.name=u.custom_meal_issue_detail "
+		"JOIN `tabStock Entry` source ON source.name=original.parent "
+		"WHERE source.custom_meal_kitchen_day=%s AND s.custom_meal_kitchen_day<>%s "
+		"AND s.docstatus<2 LIMIT 1 FOR UPDATE",
+		(doc.name, doc.name),
+	):
+		_fail("本日领用已有后日使用或草稿引用，不能取消日结。")
 	doc.active_day_key = None
 	doc.status = "已取消"
 	# Do not reopen native plans or reverse stock automatically. Native stock
@@ -1099,6 +1494,7 @@ def _day_business_signature(doc):
 			key=lambda row: row["meal_type"],
 		),
 		"items": _item_signature(doc.items),
+		"carry_notes": str(doc.get("carry_notes") or "").strip(),
 	}
 
 
@@ -1160,13 +1556,19 @@ def _week_execution(week, lock=False):
 	plans = _day_plans(week, lock=lock)
 	if any(plan.status not in ("Closed", "Completed") for plan in plans):
 		_fail("本周仍有未关闭的原餐次或调整替换生产计划。")
-	return {"week_name": week.name, "days": proofs, "closed_plans": sorted(plan.name for plan in plans)}
+	last_day = max(days, key=lambda day: _date(day.meal_date))
+	return {
+		"week_name": week.name,
+		"days": proofs,
+		"closed_plans": sorted(plan.name for plan in plans),
+		"carry_out_sources": _json(last_day.execution_snapshot).get("carry_out_sources", []),
+	}
 
 
-def _procurement_proof(week):
+def _procurement_proof(week, lock=True):
 	from ione_core.meal_purchasing import verify_week_procurement_settled
 
-	proof = verify_week_procurement_settled(week)
+	proof = verify_week_procurement_settled(week, lock=lock)
 	if not isinstance(proof, dict) or not proof.get("settled"):
 		_fail("本周采购来源仍未结清，不能释放跨周库存承诺。")
 	return {key: value for key, value in proof.items() if key != "checked_at"}
@@ -1193,13 +1595,13 @@ def reconcile_kitchen_week(week_name):
 	return {"reconciled": True, **proof}
 
 
-def verify_week_kitchen_reconciled(week):
+def verify_week_kitchen_reconciled(week, lock=True):
 	"""Revalidate real evidence before another week can reuse stock; no writes."""
-	week = _week(week, lock=True)
+	week = _week(week, lock=lock)
 	if not week.get("kitchen_reconciled") or not week.get("kitchen_reconciled_at"):
 		_fail("本周尚未完成有实际执行依据的厨房周结。")
-	proof = _week_execution(week, lock=True)
-	proof["procurement"] = _procurement_proof(week)
+	proof = _week_execution(week, lock=lock)
+	proof["procurement"] = _procurement_proof(week, lock=lock)
 	proof["basis_hash"] = _hash(proof)
 	if _json(week.get("kitchen_reconciliation_snapshot")) != proof:
 		_fail("周结冻结依据与实际日结、库存或采购来源不一致。")

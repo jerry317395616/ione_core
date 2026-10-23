@@ -4,6 +4,7 @@ The module allocates stock once across a week, freezes the calculation before
 Production Plans are submitted, and creates one draft purchase request. It never
 orders goods, records a receipt, changes stock, or commits a transaction.
 """
+# ruff: noqa: RUF001
 
 from __future__ import annotations
 
@@ -370,6 +371,9 @@ def _load_context(week, demands, include_draft_requests=False, *, for_update=Fal
 			"UOM", filters={"name": ["in", uoms]}, fields=["name", "must_be_whole_number"]
 		)
 	}
+	from ione_core.meal_stock_claims import build_claim_context
+
+	claims = build_claim_context(week, codes, warehouses, for_update=for_update)
 	return {
 		"items": items,
 		"bins": bins,
@@ -382,6 +386,7 @@ def _load_context(week, demands, include_draft_requests=False, *, for_update=Fal
 		"owned_plan_names": set(owned_plan_names),
 		"excluded_supply": [],
 		"for_update": for_update,
+		"claims": claims,
 	}
 
 
@@ -426,7 +431,19 @@ def _record_excluded_supply(row, context, doctype, quantity, reason, warnings):
 
 def _prepare_supply(context, as_of, warnings, exclude_request=None):
 	stock = {}
+	claims = context.get("claims")
+	if claims is not None:
+		from ione_core.meal_stock_claims import physical_pools
+
+		own, free, public = physical_pools(claims, context["bins"])
+		context["own_stock_remaining"] = dict(own)
+		context["stock_claims_public"] = public
+		stock = {key: own.get(key, ZERO) + free.get(key, ZERO) for key in set(own) | set(free)}
+		if claims["advance"]:
+			_add_message(warnings, _("提前采购不预支旧周余量，可能多备，请采购人员核对。"))
 	for key, row in context["bins"].items():
+		if claims is not None:
+			continue
 		other_plan_reserved = max(
 			ZERO,
 			_decimal(row.get("reserved_qty_for_production_plan"))
@@ -589,13 +606,21 @@ def _allocate(week, demands, context, blockers=None):
 				blockers,
 				_("Ingredient {0} needs its minimum order allocation confirmed.").format(item.item_name),
 			)
-		stock_used = order_used = requested_used = surplus_used = purchase_qty = ZERO
+		stock_used = own_stock_used = new_claim = order_used = requested_used = surplus_used = (
+			purchase_qty
+		) = ZERO
 		key = (item.name, native["warehouse"])
 		meal_date = _date(demand["meal_date"])
 		if status == "purchase":
 			remaining = required
 			stock_used = min(remaining, stock.get(key, ZERO))
 			stock[key] = stock.get(key, ZERO) - stock_used
+			if context.get("claims") is not None:
+				own_stock_used = min(stock_used, context["own_stock_remaining"].get(key, ZERO))
+				context["own_stock_remaining"][key] = (
+					context["own_stock_remaining"].get(key, ZERO) - own_stock_used
+				)
+				new_claim = stock_used - own_stock_used
 			remaining -= stock_used
 			order_used = _take(orders[key], remaining, meal_date)
 			remaining -= order_used
@@ -628,6 +653,10 @@ def _allocate(week, demands, context, blockers=None):
 			purchase_stock_qty=_text(purchase_qty * factor) if factor is not None else "0",
 			price_status=price_status,
 		)
+		if context.get("claims") is not None:
+			public.update(
+				allocated_owned_stock_qty=_text(own_stock_used), new_physical_claim_qty=_text(new_claim)
+			)
 		rows.append({"public": public, "native": native})
 	if any(
 		row["public"]["price_status"] == "unquoted" and row["public"]["status"] == "purchase" for row in rows
@@ -643,14 +672,11 @@ def _allocate(week, demands, context, blockers=None):
 
 def _compute(week, include_draft_requests=False, *, for_update=False):
 	for_update = bool(for_update or include_draft_requests)
+	if for_update:
+		from ione_core.meal_stock_claims import lock_claim_scope
+
+		lock_claim_scope(week.company)
 	plans, demands, blockers = _native_demands(week, for_update=for_update)
-	for other in _other_stock_commitments(week, for_update=for_update) if demands else []:
-		_add_message(
-			blockers,
-			_(
-				"Meal week {0} has an unreconciled stock commitment. Reconcile it before requesting procurement for another week."
-			).format(other),
-		)
 	context = _load_context(
 		week, demands, include_draft_requests=include_draft_requests, for_update=for_update
 	)
@@ -666,7 +692,7 @@ def _compute(week, include_draft_requests=False, *, for_update=False):
 	# No document status / child names / requested_qty fields: native submission
 	# may update these without changing the frozen procurement calculation.
 	basis = {
-		"version": 1,
+		"version": 2 if context.get("claims") is not None else 1,
 		"company": week.company,
 		"week_start": str(week.week_start),
 		"week_end": str(week.week_end),
@@ -699,7 +725,20 @@ def _compute(week, include_draft_requests=False, *, for_update=False):
 		"warnings": warnings,
 		"blockers": blockers,
 		"excluded_supply": context.get("excluded_supply", []),
+		"advance_purchase_mode": bool((context.get("claims") or {}).get("advance")),
+		"advance_purchase_note": _("提前采购不预支旧周余量，可能多备，请采购人员核对。")
+		if (context.get("claims") or {}).get("advance")
+		else "",
+		"stock_claims": context.get("stock_claims_public", []),
 		"totals": {
+			"advance_purchase_mode": bool((context.get("claims") or {}).get("advance")),
+			"new_claim_item_count": len(
+				{
+					row["item_code"]
+					for row in public_rows
+					if _decimal(row.get("new_physical_claim_qty")) > ZERO
+				}
+			),
 			"ingredient_count": len({row["item_code"] for row in public_rows}),
 			"need_quote_count": len(
 				{
@@ -713,6 +752,30 @@ def _compute(week, include_draft_requests=False, *, for_update=False):
 		},
 	}
 	return plans, rows, snapshot, preview
+
+
+def _same_procurement_business_basis(frozen, current):
+	"""A submitted week's own claim reclassifies free stock without buying it twice."""
+	if frozen.get("version") not in (1, 2) or current.get("version") != 2:
+		return False
+
+	def business(snapshot):
+		return {
+			"company": snapshot.get("company"),
+			"week_start": snapshot.get("week_start"),
+			"week_end": snapshot.get("week_end"),
+			"bom_sources": snapshot.get("bom_sources"),
+			"rows": [
+				{
+					key: value
+					for key, value in row.items()
+					if key not in {"new_physical_claim_qty", "allocated_owned_stock_qty"}
+				}
+				for row in snapshot.get("rows", [])
+			],
+		}
+
+	return business(frozen) == business(current)
 
 
 def _other_stock_commitments(week, *, for_update=False):
@@ -862,6 +925,9 @@ def create_material_request(week_name):
 	"""Create one native draft request, atomically linked to a frozen meal week."""
 	week = _load_week(week_name)
 	_check_create_permission(week, [])
+	from ione_core.meal_stock_claims import lock_claim_scope
+
+	lock_claim_scope(week.company)
 	# Lock is transaction scoped. Frappe commits the successful POST together
 	# with the native draft and link; any exception rolls the entire action back.
 	frappe.db.sql("SELECT name FROM `tabMeal Planning Week` WHERE name=%s FOR UPDATE", (week.name,))
@@ -896,7 +962,9 @@ def create_material_request(week_name):
 		frozen = json.loads(week.get("procurement_snapshot") or "{}")
 	except (TypeError, ValueError):
 		frozen = {}
-	if frozen.get("basis_hash") != snapshot["basis_hash"]:
+	if frozen.get("basis_hash") != snapshot["basis_hash"] and not _same_procurement_business_basis(
+		frozen, snapshot
+	):
 		frappe.throw(
 			_(
 				"Stock, incoming supply, recipe, or procurement settings changed after review. Revise and review the meal week."

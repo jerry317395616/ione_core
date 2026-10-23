@@ -34,6 +34,12 @@ class MealProcurementTests(unittest.TestCase):
 		self.modules = patch.dict(sys.modules, {"frappe": self.frappe})
 		self.modules.start()
 		self.addCleanup(self.modules.stop)
+		claims = types.ModuleType("ione_core.meal_stock_claims")
+		claims.lock_claim_scope = Mock()
+		claims.build_claim_context = Mock(return_value=None)
+		self.claims_stub = patch.dict(sys.modules, {"ione_core.meal_stock_claims": claims})
+		self.claims_stub.start()
+		self.addCleanup(self.claims_stub.stop)
 		spec = importlib.util.spec_from_file_location(
 			"tested_meal_procurement", Path(__file__).parents[1] / "meal_procurement.py"
 		)
@@ -380,6 +386,63 @@ class MealProcurementTests(unittest.TestCase):
 		plan = Record(check_permission=Mock())
 		self.module._check_create_permission(self.week, [plan])
 		plan.check_permission.assert_called_once_with("read")
+
+	def test_v2_submit_reclassification_preserves_every_procurement_business_field(self):
+		row = {
+			"production_plan": "PP",
+			"item_code": "rice",
+			"warehouse": "Stores",
+			"required_qty": "100",
+			"allocated_stock_qty": "80",
+			"purchase_qty": "20",
+			"allocated_owned_stock_qty": "0",
+			"new_physical_claim_qty": "80",
+		}
+		frozen = {
+			"version": 2,
+			"company": "Garden",
+			"week_start": "2026-10-26",
+			"week_end": "2026-10-30",
+			"rows": [row],
+			"bom_sources": [
+				{
+					"production_plan": "PP",
+					"items": [{"item_code": "dish", "bom_no": "BOM", "planned_qty": "100"}],
+				}
+			],
+		}
+		current = json.loads(json.dumps(frozen))
+		current["rows"][0].update(allocated_owned_stock_qty="80", new_physical_claim_qty="0")
+		self.assertTrue(self.module._same_procurement_business_basis(frozen, current))
+		current["rows"][0]["purchase_qty"] = "21"
+		self.assertFalse(self.module._same_procurement_business_basis(frozen, current))
+		current["rows"][0]["purchase_qty"] = "20"
+		current["bom_sources"][0]["items"][0]["planned_qty"] = "101"
+		self.assertFalse(self.module._same_procurement_business_basis(frozen, current))
+		self.assertEqual(frozen["rows"][0]["new_physical_claim_qty"], "80")
+
+	def test_v1_basis_compatibility_only_ignores_v2_own_free_splits(self):
+		frozen = {
+			"version": 1,
+			"company": "Garden",
+			"week_start": "2026-10-26",
+			"week_end": "2026-10-30",
+			"rows": [
+				{
+					"item_code": "rice",
+					"allocated_stock_qty": "80",
+					"purchase_qty": "20",
+					"conversion_factor": "1",
+				}
+			],
+			"bom_sources": [],
+		}
+		current = json.loads(json.dumps(frozen))
+		current["version"] = 2
+		current["rows"][0].update(allocated_owned_stock_qty="80", new_physical_claim_qty="0")
+		self.assertTrue(self.module._same_procurement_business_basis(frozen, current))
+		current["rows"][0]["conversion_factor"] = "1000"
+		self.assertFalse(self.module._same_procurement_business_basis(frozen, current))
 
 	def test_adjustment_reads_current_stock_orders_and_draft_commitments_after_lock(self):
 		item = self.item()

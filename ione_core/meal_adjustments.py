@@ -35,6 +35,9 @@ def _week(value, lock=False):
 	doc = load(value) if isinstance(value, str) else value
 	doc.check_permission("read")
 	if lock:
+		from ione_core.meal_stock_claims import lock_claim_scope
+
+		lock_claim_scope(doc.company)
 		doc = frappe.get_doc("Meal Planning Week", doc.name, for_update=True)
 		doc.check_permission("read")
 	return doc
@@ -238,6 +241,9 @@ def validate_adjustment(doc, lock=False):
 def before_submit_adjustment(doc):
 	if not {"System Manager", "食谱审核员"}.intersection(frappe.get_roles()):
 		_fail("需要食谱审核权限。", permission=True)
+	from ione_core.meal_stock_claims import lock_claim_scope
+
+	lock_claim_scope(_week(doc.meal_week).company)
 	original_owner = frappe.db.get_value("Meal Plan Adjustment", doc.name, "owner", for_update=True)
 	if not original_owner or doc.owner != original_owner:
 		_fail("单餐变更经办人与原始创建记录不一致，不能审核。", permission=True)

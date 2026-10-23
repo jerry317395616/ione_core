@@ -73,6 +73,8 @@
 		const totals = preview?.totals || {};
 		const warnings = Array.isArray(preview?.warnings) ? preview.warnings : [];
 		const blockers = Array.isArray(preview?.blockers) ? preview.blockers : [];
+		const stockClaims = Array.isArray(preview?.stock_claims) ? preview.stock_claims : [];
+		const advanceMode = preview?.advance_purchase_mode === true || totals.advance_purchase_mode === true;
 		const notes = (values, indicator) => values.length
 			? `<div class="alert alert-${indicator}"><ul style="margin-bottom:0">${values
 				.map((value) => `<li>${escape(value)}</li>`).join("")}</ul></div>`
@@ -86,24 +88,36 @@
 				? `<a href="/desk/production-plan/${encodeURIComponent(row.production_plan)}">${escape(row.production_plan)}</a>`
 				: "—";
 			return `<tr>${field(row.meal_date)}${field(row.meal_type)}${field(row.item_name || row.item_code)}
-				${quantity(row.required_qty)}${quantity(row.allocated_stock_qty)}${quantity(row.expected_receipt_qty)}
+				${quantity(row.required_qty)}${quantity(row.allocated_stock_qty)}${quantity(row.allocated_owned_stock_qty)}${quantity(row.new_physical_claim_qty)}${quantity(row.expected_receipt_qty)}
 				${quantity(row.already_requested_qty)}${field(row.stock_uom)}${quantity(row.purchase_qty)}
 				${field(row.purchase_uom)}${field(status)}${field(price)}<td>${plan}</td></tr>`;
+		}).join("");
+		const claimBody = stockClaims.map((claim) => {
+			const demand = rows.find((row) => row.item_code === claim.item_code && row.warehouse === claim.warehouse) || {};
+			return `<tr>${field(demand.item_name || claim.item_code)}${field(claim.warehouse)}${field(demand.stock_uom || "库存单位待核对")}
+				${quantity(claim.physical_qty)}${quantity(claim.own_claim_qty)}${quantity(claim.other_week_claim_qty)}
+				${quantity(claim.free_qty)}${quantity(claim.available_free_qty)}</tr>`;
 		}).join("");
 		wrapper.html(`<div class="meal-procurement-preview">
 			<p><strong>本周采购需求预览</strong> · 食材 ${escape(totals.ingredient_count ?? "—")} 种，
 			需采购 ${escape(totals.purchase_row_count ?? "—")} 行，待询价 ${escape(totals.need_quote_count ?? "—")} 项。</p>
 			<p class="text-muted">需求、库存、待到货和已申请数量使用库存单位；本次申请量使用采购单位。
 			厨房用水不采购，骨汤按采购食材处理。价格未确认时仅核算数量。</p>
+			${advanceMode ? `<div class="alert alert-warning"><strong>${escape("提前采购")}</strong>：${escape(preview?.advance_purchase_note || "不预支未核销周的库存余量，可能多备，请采购人员核对。")}</div>` : ""}
 			${notes(warnings, "warning")}${notes(blockers, "danger")}
-			<div style="overflow-x:auto"><table class="table table-bordered table-condensed" style="min-width:1400px">
+			<div style="overflow-x:auto"><table class="table table-bordered table-condensed" style="min-width:1600px">
 			<thead><tr><th>使用日期</th><th>餐次</th><th>食材</th><th>需求量</th><th>分配库存</th>
+			<th>其中本周已有归属</th><th>其中本次认领现货</th>
 			<th>分配待到货</th><th>已申请量</th><th>库存单位</th><th>本次申请量</th><th>采购单位</th>
 			<th>处理状态</th><th>价格</th><th>生产计划</th></tr></thead>
-			<tbody>${body || '<tr><td colspan="13">暂无食材需求。请先完成本周餐次编排和人数核算。</td></tr>'}</tbody>
+			<tbody>${body || '<tr><td colspan="15">暂无食材需求。请先完成本周餐次编排和人数核算。</td></tr>'}</tbody>
 			</table></div>
+			<p class="text-muted small">分配库存包含本周已有归属及本次从无归属现货认领的数量；同一现货不会重复安排给不同周。本次新增归属涉及 ${escape(totals.new_claim_item_count ?? "—")} 种食材。</p>
+			${stockClaims.length ? `<details><summary>${escape("查看原料仓库存安排")}</summary>
+			<p class="text-muted small">${escape("以下均为对应食材的库存单位，仅列原料仓现货；厨房留存见每日执行。提前采购时，尚未释放的共享现货不预支给新周。")}</p>
+			<div style="overflow-x:auto"><table class="table table-bordered table-condensed"><thead><tr><th>食材</th><th>仓库</th><th>单位</th><th>现货实存</th><th>本周已安排</th><th>其他周已安排</th><th>尚无归属</th><th>本次可用无归属</th></tr></thead><tbody>${claimBody}</tbody></table></div></details>` : ""}
 			<p class="text-muted small">账面库存${preview?.stock_reviewed ? "已核对" : "尚未核对"}；
-			此处预览不会提交采购、收货或库存单据。</p></div>`);
+			此处预览不会提交采购、收货或库存单据。已被后续日期引用的货源，取消前须按关联业务处理；不能手工清除库存安排。</p></div>`);
 		frm.__meal_procurement_preview = preview;
 	}
 
@@ -297,7 +311,7 @@
 				frappe.set_route("query-report", reportName, { week_name: frm.doc.name });
 			});
 			if (frm.doc.docstatus === 2) return;
-			if (hasRole("System Manager", "Stock Manager")) {
+			if (frm.doc.docstatus === 1 && hasRole("System Manager", "Stock Manager")) {
 				const button = frm.add_custom_button(__("配置厨房仓库"), () => configureKitchen(frm, button), __("厨房执行"));
 			}
 			if ((frm.doc.meals || []).length === 25 && frm.doc.requirement_weight_basis !== "采购毛重" && hasRole("System Manager", "Purchase Manager")) {
@@ -325,7 +339,7 @@
 				}
 				if (hasRole("System Manager", "Stock Manager") && !frm.doc.kitchen_reconciled) {
 					const button = frm.add_custom_button(__("审核厨房周核销"), () => {
-						frappe.confirm(__("请核对五日实际供餐、领退耗损流水、采购收货及未结单据。通过后将释放本周库存占用，供后续周采购使用。"), () => runAction(frm, button,
+						frappe.confirm(__("请核对五日实际供餐、领退耗损流水、厨房余料清点及采购未结单据。核销保留真实留存及其来源，不自动退料或清空库存。"), () => runAction(frm, button,
 							"ione_core.meal_kitchen.reconcile_kitchen_week", { week_name: frm.doc.name }, async () => { await frm.reload_doc(); }));
 					}, __("厨房执行"));
 				}

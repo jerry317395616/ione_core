@@ -29,6 +29,10 @@
   "items",
   "ledger_section",
   "ledger_html",
+  "carry_section",
+  "carry_confirmed",
+  "carry_notes",
+  "carry_confirmation_snapshot",
   "notes_section",
   "notes",
   "execution_snapshot",
@@ -145,8 +149,8 @@
   {
    "fieldname": "ledger_section",
    "fieldtype": "Section Break",
-   "label": "原生库存流水与核销",
-   "description": "领用、退料、耗用、损耗分别生成原生库存单草稿；仅已提交的库存单计入实际余额。"
+   "label": "本日库存流水与食材留存",
+   "description": "期初留存加本日已提交领用，减去耗用、退料和损耗，为期末留厨食材；留存本身不生成库存移动。"
   },
   {
    "fieldname": "ledger_html",
@@ -188,6 +192,35 @@
    "hidden": 1,
    "read_only": 1,
    "allow_on_submit": 1
+  },
+  {
+   "fieldname": "carry_section",
+   "fieldtype": "Section Break",
+   "label": "食材余料实盘确认"
+  },
+  {
+   "fieldname": "carry_confirmed",
+   "fieldtype": "Check",
+   "label": "余料已实盘确认",
+   "default": "0",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "由清点操作生成；库存流水、实际人数或留存说明改变后须重新确认。"
+  },
+  {
+   "fieldname": "carry_notes",
+   "fieldtype": "Small Text",
+   "label": "食材留厨说明",
+   "no_copy": 1,
+   "description": "有食材余料留厨时填写说明；更改说明后须重新清点确认。"
+  },
+  {
+   "fieldname": "carry_confirmation_snapshot",
+   "fieldtype": "Long Text",
+   "label": "余料实盘确认依据",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "permissions": [

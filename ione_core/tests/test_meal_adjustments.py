@@ -99,8 +99,11 @@ class MealAdjustmentTests(unittest.TestCase):
 		self.planning._week = Mock(return_value=self.week)
 		self.weights = types.ModuleType("ione_core.meal_weights")
 		self.weights.verify_purchase_weight_basis = Mock(return_value={"confirmed": True})
+		self.claims = types.ModuleType("ione_core.meal_stock_claims")
+		self.claims.lock_claim_scope = Mock()
 		self.modules = patch.dict(sys.modules, {"frappe": self.frappe, "frappe.utils": self.utils,
-			"ione_core.meal_planning": self.planning, "ione_core.meal_weights": self.weights})
+			"ione_core.meal_planning": self.planning, "ione_core.meal_weights": self.weights,
+			"ione_core.meal_stock_claims": self.claims})
 		self.modules.start()
 		spec = importlib.util.spec_from_file_location("synthetic_meal_adjustments", Path(__file__).parents[1] / "meal_adjustments.py")
 		self.module = importlib.util.module_from_spec(spec)

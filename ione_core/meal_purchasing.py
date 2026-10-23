@@ -109,6 +109,11 @@ def validate_supplier_quotation(doc, method=None):
 
 
 def _week(value, *, for_update=False):
+	if for_update:
+		from ione_core.meal_stock_claims import lock_claim_scope
+
+		initial = frappe.get_doc("Meal Planning Week", value) if isinstance(value, str) else value
+		lock_claim_scope(initial.company)
 	doc = (
 		frappe.get_doc("Meal Planning Week", value if isinstance(value, str) else value.name, for_update=True)
 		if for_update
@@ -481,7 +486,7 @@ def _draft_order(po_name, review=False):
 	po.check_permission("write")
 	if po.docstatus != 0:
 		frappe.throw(_("Only a saved draft purchase order can be reviewed."))
-	week, sources = _scope(po)
+	week, sources = _scope(po, for_update=True)
 	if not week:
 		frappe.throw(_("This order is not associated with a controlled meal week."))
 	return po, week, sources
@@ -495,6 +500,9 @@ def create_purchase_order_draft(week_name, supplier, material_request_items=None
 		frappe.throw(_("The meal week needs a submitted procurement request first."))
 	if not frappe.has_permission("Purchase Order", "create"):
 		frappe.throw(_("You do not have permission to create purchase orders."), frappe.PermissionError)
+	from ione_core.meal_stock_claims import lock_claim_scope
+
+	lock_claim_scope(week.company)
 	frappe.db.sql("SELECT name FROM `tabMeal Planning Week` WHERE name=%s FOR UPDATE", (week.name,))
 	week = _week(week.name, for_update=True)
 	mr = frappe.get_doc("Material Request", material_request or week.material_request, for_update=True)
@@ -713,7 +721,7 @@ def _request_signature(doc):
 	)
 
 
-def is_verified_superseded_request(doc, pending_new=None, seen=None):
+def is_verified_superseded_request(doc, pending_new=None, seen=None, *, lock=True):
 	"""A readonly marker excludes stock commitments only with a real matching chain."""
 	name = doc.get("custom_meal_superseded_by")
 	if not name:
@@ -725,7 +733,7 @@ def is_verified_superseded_request(doc, pending_new=None, seen=None):
 	if pending_new is not None and pending_new.name == name:
 		new = pending_new
 	else:
-		new = frappe.get_doc("Material Request", name, for_update=True)
+		new = frappe.get_doc("Material Request", name, for_update=lock)
 	if (
 		doc.docstatus != 0
 		or new.docstatus == 2
@@ -738,7 +746,7 @@ def is_verified_superseded_request(doc, pending_new=None, seen=None):
 	):
 		frappe.throw(_("The superseded meal request has no verified identical replacement."))
 	if new.get("custom_meal_superseded_by"):
-		is_verified_superseded_request(new, pending_new=pending_new, seen=seen)
+		is_verified_superseded_request(new, pending_new=pending_new, seen=seen, lock=lock)
 	return True
 
 
@@ -890,6 +898,9 @@ def reissue_material_request_draft(week_name):
 	week = _week(week_name)
 	if week.docstatus != 1 or not week.get("material_request"):
 		frappe.throw(_("The submitted week has no material request draft to reissue."))
+	from ione_core.meal_stock_claims import lock_claim_scope
+
+	lock_claim_scope(week.company)
 	frappe.db.sql("SELECT name FROM `tabMeal Planning Week` WHERE name=%s FOR UPDATE", (week.name,))
 	week = _week(week.name, for_update=True)
 	old = frappe.get_doc("Material Request", week.material_request, for_update=True)
@@ -934,10 +945,11 @@ def reissue_material_request_draft(week_name):
 	return {"material_request": new.name, "name": new.name, "replaces": old.name, "created": True}
 
 
-def verify_week_procurement_settled(week):
+def verify_week_procurement_settled(week, *, lock=True):
 	"""Read-only proof for kitchen reconciliation; unresolved native documents raise."""
-	week = _week(week, for_update=True)
-	plans = _plan_names(week, for_update=True)
+	week = _week(week, for_update=lock)
+	plans = _plan_names(week, for_update=lock)
+	locking = " FOR UPDATE" if lock else ""
 	if not plans:
 		frappe.throw(_("The meal week has no native production sources to reconcile."))
 	request_rows = frappe.db.sql(
@@ -947,7 +959,8 @@ def verify_week_procurement_settled(week):
 		src.item_code AS source_item_code,src.warehouse AS source_warehouse
 		FROM `tabMaterial Request` m JOIN `tabMaterial Request Item` i ON i.parent=m.name
 		LEFT JOIN `tabMaterial Request Plan Item` src ON src.name=i.material_request_plan_item AND src.parent=i.production_plan
-		WHERE i.production_plan IN %(plans)s OR m.name=%(main_request)s ORDER BY m.name,i.idx FOR UPDATE""",
+		WHERE i.production_plan IN %(plans)s OR m.name=%(main_request)s ORDER BY m.name,i.idx"""
+		+ locking,
 		{"plans": sorted(plans), "main_request": week.get("material_request") or ""},
 		as_dict=True,
 	)
@@ -961,8 +974,8 @@ def verify_week_procurement_settled(week):
 		if row.docstatus == 2:
 			continue
 		if row.docstatus == 0:
-			original = frappe.get_doc("Material Request", row.name, for_update=True)
-			if is_verified_superseded_request(original):
+			original = frappe.get_doc("Material Request", row.name, for_update=lock)
+			if is_verified_superseded_request(original, lock=lock):
 				requests.append(
 					{
 						"name": row.name,
@@ -1012,7 +1025,8 @@ def verify_week_procurement_settled(week):
 			"""SELECT p.name,p.company,p.docstatus,p.status,i.name AS source_item,i.item_code,i.warehouse,
 			i.qty,i.received_qty,i.conversion_factor,i.material_request,i.material_request_item,i.closed
 			FROM `tabPurchase Order` p JOIN `tabPurchase Order Item` i ON i.parent=p.name
-			WHERE i.material_request IN %(requests)s ORDER BY p.name,i.idx FOR UPDATE""",
+			WHERE i.material_request IN %(requests)s ORDER BY p.name,i.idx"""
+			+ locking,
 			{"requests": sorted(request_names)},
 			as_dict=True,
 		)
@@ -1064,7 +1078,8 @@ def verify_week_procurement_settled(week):
 				"""SELECT r.name,r.docstatus,r.is_return,r.return_against,i.name AS source_item,
 				i.purchase_order,i.purchase_order_item,i.item_code,i.warehouse,i.stock_qty
 				FROM `tabPurchase Receipt` r JOIN `tabPurchase Receipt Item` i ON i.parent=r.name
-				WHERE i.purchase_order IN %(orders)s ORDER BY r.name,i.idx FOR UPDATE""",
+				WHERE i.purchase_order IN %(orders)s ORDER BY r.name,i.idx"""
+				+ locking,
 				{"orders": sorted(order_names)},
 				as_dict=True,
 			)

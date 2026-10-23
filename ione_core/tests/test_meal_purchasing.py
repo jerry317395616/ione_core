@@ -58,6 +58,11 @@ class MealPurchasingTests(unittest.TestCase):
 		self.modules = patch.dict(sys.modules, {"frappe": self.frappe})
 		self.modules.start()
 		self.addCleanup(self.modules.stop)
+		claims = types.ModuleType("ione_core.meal_stock_claims")
+		claims.lock_claim_scope = Mock()
+		self.claims_stub = patch.dict(sys.modules, {"ione_core.meal_stock_claims": claims})
+		self.claims_stub.start()
+		self.addCleanup(self.claims_stub.stop)
 		folder = Path(__file__).parents[1]
 		spec = importlib.util.spec_from_file_location(
 			"ione_core.meal_procurement", folder / "meal_procurement.py"
@@ -627,6 +632,17 @@ class MealPurchasingTests(unittest.TestCase):
 		self.assertEqual(len(proof["manually_closed_sources"]), 2)
 		self.assertEqual(proof["purchase_orders"][0]["remaining_stock_qty"], "50")
 		self.assertTrue(all("FOR UPDATE" in call.args[0] for call in self.frappe.db.sql.call_args_list))
+
+	def test_readonly_settlement_verifies_the_same_native_proof_without_locks(self):
+		self.frappe.db.sql.side_effect = [
+			[self.mr_fact(status="Stopped", ordered_qty=0)],
+			[self.po_fact(status="Closed", received_qty=0)],
+			[],
+		]
+		proof = self.module.verify_week_procurement_settled(self.week, lock=False)
+		self.assertTrue(proof["settled"])
+		self.assertEqual(len(proof["manually_closed_sources"]), 2)
+		self.assertTrue(all("FOR UPDATE" not in call.args[0] for call in self.frappe.db.sql.call_args_list))
 
 
 if __name__ == "__main__":

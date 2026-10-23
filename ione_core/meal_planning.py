@@ -617,6 +617,9 @@ def confirm_stock_review(name):
 
 
 def submit_week(doc):
+	from ione_core.meal_stock_claims import lock_claim_scope
+
+	lock_claim_scope(doc.company)
 	original_owner = frappe.db.get_value("Meal Planning Week", doc.name, "owner", for_update=True)
 	if not original_owner or doc.owner != original_owner:
 		frappe.throw(_("周食谱经办人与原始创建记录不一致，不能审核。"), frappe.PermissionError)

@@ -86,12 +86,16 @@ class KitchenTests(unittest.TestCase):
 		self.utils.now_datetime = lambda: "2026-10-30 18:00:00"
 		self.reservations = types.ModuleType("ione_core.meal_native_reservations")
 		self.reservations.ensure_current_native_reservation_inputs = Mock()
+		self.claims = types.ModuleType("ione_core.meal_stock_claims")
+		self.claims.lock_claim_scope = Mock()
+		self.claims.assert_week_raw_stock_available = Mock(return_value={"proof": "source"})
 		self.modules = patch.dict(
 			sys.modules,
 			{
 				"frappe": self.frappe,
 				"frappe.utils": self.utils,
 				"ione_core.meal_native_reservations": self.reservations,
+				"ione_core.meal_stock_claims": self.claims,
 			},
 		)
 		self.modules.start()
@@ -191,7 +195,9 @@ class KitchenTests(unittest.TestCase):
 	def execution(self, facts=None):
 		facts = facts or self.facts()
 		facts["drafts"] = []
-		facts["stock_ledger"] = [{"entry": "consume", "actual_qty": "-7"}] if facts["entries"] else []
+		facts.setdefault(
+			"stock_ledger", [{"entry": "consume", "actual_qty": "-7"}] if facts["entries"] else []
+		)
 		with (
 			patch.object(self.module, "_week", return_value=self.week),
 			patch.object(self.module, "_warehouses"),
@@ -209,11 +215,13 @@ class KitchenTests(unittest.TestCase):
 		self.assertEqual(
 			result,
 			{
+				"opening_qty": Decimal(0),
 				"issued_qty": Decimal(10),
 				"consumed_qty": Decimal(7),
 				"loss_qty": Decimal(1),
 				"returned_qty": Decimal(2),
 				"balance_qty": Decimal(0),
+				"carry_out_qty": Decimal(0),
 			},
 		)
 
@@ -875,6 +883,274 @@ class KitchenTests(unittest.TestCase):
 		self.assertEqual(len(proof["days"]), 5)
 		self.assertEqual(proof["closed_plans"], [plan.name])
 		self.frappe.get_all.assert_not_called()
+
+	def carry_facts(self):
+		facts = self.facts([self.entry("issue", "领用", 10), self.entry("consume", "耗用", 6, "issue-row")])
+		facts["drafts"] = []
+		facts["stock_ledger"] = [{"entry": "consume", "actual_qty": "-6"}]
+		return facts
+
+	def confirmed_carry(self, facts):
+		self.day.carry_notes = "原料余料实际留厨"
+		self.day.carry_confirmed = 1
+		self.day.carry_confirmation_snapshot = json.dumps(
+			{
+				"basis_hash": self.module._carry_basis(self.day, facts),
+				"physical_counts": {"rice": "4"},
+				"confirmed_by": self.day.owner,
+				"confirmed_at": "2026-10-26 18:00:00",
+			}
+		)
+
+	def later_day(self):
+		return Doc(
+			**{**self.day.as_dict(), "name": "next-day", "meal_week": "next-week", "meal_date": "2026-11-02"}
+		)
+
+	def on_day(self, entry, day):
+		entry.custom_meal_week = day.meal_week
+		entry.custom_meal_kitchen_day = day.name
+		entry.posting_date = day.meal_date
+		return entry
+
+	def test_original_issue_is_carried_without_a_fictitious_transfer_and_used_next_week(self):
+		first = self.carry_facts()
+		opening = self.module._carry_sources(first, self.week.name)
+		self.assertEqual(opening[0]["issue_detail"], "issue-row")
+		self.assertEqual(opening[0]["qty"], "4")
+		day = self.later_day()
+		entries = [
+			self.on_day(row, day)
+			for row in (
+				self.entry("new-issue", "领用", 3),
+				self.entry("old-use", "耗用", 4, "issue-row"),
+				self.entry("new-use", "耗用", 1, "new-issue-row"),
+				self.entry("return", "退料", 1, "new-issue-row"),
+				self.entry("loss", "损耗", 1, "new-issue-row"),
+			)
+		]
+		facts = self.module._entry_facts(day, entries, opening=opening)
+		self.assertEqual(
+			facts["totals"]["rice"],
+			{
+				"opening_qty": Decimal(4),
+				"issued_qty": Decimal(3),
+				"consumed_qty": Decimal(5),
+				"returned_qty": Decimal(1),
+				"loss_qty": Decimal(1),
+				"balance_qty": Decimal(0),
+				"carry_out_qty": Decimal(0),
+			},
+		)
+		self.assertEqual(self.module._carry_sources(facts, day.meal_week), [])
+		self.frappe.new_doc.assert_not_called()
+
+	def test_old_ingredient_outside_menu_can_be_returned_or_lost_but_not_issued_or_consumed(self):
+		opening = self.module._carry_sources(self.carry_facts(), self.week.name)
+		day = self.later_day()
+		day.items = []
+		returned = self.on_day(self.entry("return", "退料", 4, "issue-row"), day)
+		facts = self.module._entry_facts(day, [returned], opening=opening)
+		self.assertEqual(facts["totals"]["rice"]["balance_qty"], 0)
+		self.assertEqual(
+			self.module._input_items(day, [{"item_code": "rice", "qty": 4}], action="退料", opening=opening),
+			{"rice": Decimal(4)},
+		)
+		for action in ("领用", "耗用"):
+			entry = self.on_day(
+				self.entry("forbidden", action, 1, "issue-row" if action == "耗用" else None), day
+			)
+			with self.assertRaises(ValidationFailed):
+				self.module._entry_facts(day, [entry], opening=opening)
+
+	def test_carry_return_uses_original_raw_warehouse_even_when_current_week_warehouse_differs(self):
+		opening = self.module._carry_sources(self.carry_facts(), self.week.name)
+		day = self.later_day()
+		day.source_warehouse = "Raw B"
+		entry = self.on_day(self.entry("return", "退料", 4, "issue-row"), day)
+		self.module._entry_facts(day, [entry], opening=opening)
+		entry["items"][0].t_warehouse = "Raw B"
+		with self.assertRaises(ValidationFailed):
+			self.module._entry_facts(day, [entry], opening=opening)
+
+	def test_carry_confirmation_requires_explicit_complete_and_exact_physical_counts(self):
+		facts = self.carry_facts()
+		self.frappe.session.user = self.day.owner
+		with (
+			patch.object(self.module, "_day", return_value=self.day),
+			patch.object(self.module, "_ledger", return_value=facts),
+			patch.object(self.module, "_check_execution_order"),
+			patch.object(self.module, "_assert_actual_kitchen_stock"),
+		):
+			for values in (
+				[],
+				[{"item_code": "rice", "qty": None}],
+				[{"item_code": "rice", "qty": 3}],
+				[{"item_code": "rice", "qty": "4.0000000001"}],
+			):
+				with self.assertRaises(ValidationFailed):
+					self.module.confirm_kitchen_carry(self.day.name, values, "实盘留厨")
+			self.day.db_set.assert_not_called()
+			result = self.module.confirm_kitchen_carry(
+				self.day.name, [{"item_code": "rice", "qty": "4"}], "实盘留厨"
+			)
+		self.assertTrue(result["carry_confirmed"])
+		stored = json.loads(self.day.db_set.call_args.args[0]["carry_confirmation_snapshot"])
+		self.assertEqual(stored["physical_counts"], {"rice": "4"})
+		self.assertEqual(stored["confirmed_by"], self.day.owner)
+		self.frappe.new_doc.assert_not_called()
+
+	def test_positive_carry_closes_only_after_valid_count_and_a_different_reviewer(self):
+		facts = self.carry_facts()
+		with self.assertRaises(ValidationFailed):
+			self.execution(facts)
+		self.confirmed_carry(facts)
+		self.day.approved_by = self.frappe.session.user
+		proof = self.execution(facts)
+		self.assertEqual(proof["carry_out_sources"][0]["qty"], "4")
+		self.day.approved_by = self.day.owner
+		with self.assertRaises(PermissionDenied):
+			self.execution(facts)
+
+	def test_count_confirmation_expires_after_actuals_notes_or_stock_change(self):
+		facts = self.carry_facts()
+		self.confirmed_carry(facts)
+		self.assertTrue(self.module._carry_confirmation(self.day, facts)[2])
+		self.day.meals[0].actual_headcount = 19
+		self.assertFalse(self.module._carry_confirmation(self.day, facts)[2])
+		self.day.meals[0].actual_headcount = 20
+		self.day.carry_notes = "变更说明"
+		self.assertFalse(self.module._carry_confirmation(self.day, facts)[2])
+		self.day.carry_notes = "原料余料实际留厨"
+		facts["stock_ledger"].append({"entry": "later-use", "actual_qty": "-1"})
+		self.assertFalse(self.module._carry_confirmation(self.day, facts)[2])
+
+	def test_future_legitimate_consumption_does_not_change_the_original_historical_proof(self):
+		facts = self.carry_facts()
+		self.confirmed_carry(facts)
+		before = self.execution(facts)
+		day = self.later_day()
+		future = self.module._entry_facts(
+			day,
+			[self.on_day(self.entry("future-use", "耗用", 4, "issue-row"), day)],
+			opening=self.module._carry_sources(facts, self.week.name),
+		)
+		self.assertEqual(future["totals"]["rice"]["balance_qty"], 0)
+		self.assertEqual(self.execution(facts), before)
+		self.assertEqual(before["carry_out_sources"][0]["qty"], "4")
+
+	def test_global_cross_day_usage_prevents_spending_the_same_issue_twice(self):
+		source = Row(
+			self.entry("issue", "领用", 10)["items"][0],
+			parent="issue",
+			company=self.day.company,
+			docstatus=1,
+			custom_meal_action="领用",
+			posting_date=self.day.meal_date,
+		)
+		used = Row(
+			self.entry("previous-use", "耗用", 6, "issue-row")["items"][0],
+			company=self.day.company,
+			custom_meal_action="耗用",
+			posting_date=self.day.meal_date,
+		)
+		self.frappe.db.sql.side_effect = lambda query, values, **kwargs: (
+			[source] if "WHERE d.name IN" in query else [used]
+		)
+		day = self.later_day()
+		candidate = Doc(**dict(self.on_day(self.entry("candidate", "退料", 5, "issue-row"), day)))
+		with self.assertRaises(ValidationFailed):
+			self.module._assert_global_source_balance(day, candidate)
+		candidate.items[0].qty = candidate.items[0].transfer_qty = 4
+		self.module._assert_global_source_balance(day, candidate)
+		self.assertTrue(all("FOR UPDATE" in call.args[0] for call in self.frappe.db.sql.call_args_list))
+
+	def test_later_real_activity_and_unclosed_previous_activity_block_backdated_execution(self):
+		for row in (
+			Row(name="future", meal_date="2026-10-27", docstatus=1),
+			Row(name="previous", meal_date="2026-10-25", docstatus=0),
+		):
+			self.frappe.db.sql.return_value = [row]
+			with self.assertRaises(ValidationFailed):
+				self.module._check_execution_order(self.day)
+
+	def test_unknown_kitchen_stock_cannot_be_invented_as_opening_carry(self):
+		facts = self.carry_facts()
+		self.frappe.db.sql.return_value = [
+			Row(item_code="rice", actual_qty=4),
+			Row(item_code="unknown", actual_qty=1),
+		]
+		with self.assertRaises(ValidationFailed):
+			self.module._assert_actual_kitchen_stock(self.day, facts)
+
+	def test_day_with_a_future_draft_reference_cannot_be_cancelled(self):
+		self.frappe.db.sql.return_value = [("future-draft-row",)]
+		with (
+			patch.object(self.module, "_week", return_value=self.week),
+			patch.object(self.module, "_check_execution_order"),
+		):
+			with self.assertRaises(ValidationFailed):
+				self.module.before_cancel_day(self.day)
+
+	def test_raw_claim_snapshot_cannot_be_forged_on_an_existing_stock_draft(self):
+		doc = Doc(**dict(self.entry("draft", "领用", 1, status=0)))
+		doc.owner = self.day.owner
+		doc.previous = Doc(**doc.as_dict())
+		doc.custom_meal_raw_claim_snapshot = '{"forged":true}'
+		with patch.object(self.module, "_day") as load_day:
+			with self.assertRaises(ValidationFailed):
+				self.module.validate_stock_entry(doc)
+			load_day.assert_not_called()
+
+	def test_real_issue_submission_saves_the_raw_claim_proof_from_the_owning_week(self):
+		doc = Doc(**dict(self.entry("candidate", "领用", 2)))
+		doc.owner = self.day.owner
+		doc.items = [Doc(**dict(row)) for row in doc.items]
+		doc.previous = Doc(**{**doc.as_dict(), "docstatus": 0})
+		facts = self.facts([])
+		facts.update(drafts=[], stock_ledger=[])
+		with (
+			patch.object(self.module, "_day", return_value=self.day),
+			patch.object(self.module, "_week", return_value=self.week),
+			patch.object(self.module, "_warehouses"),
+			patch.object(self.module, "_verify_effective_source"),
+			patch.object(self.module, "_ledger", return_value=facts),
+			patch.object(self.module, "_check_execution_order"),
+			patch.object(self.module, "_assert_actual_kitchen_stock"),
+		):
+			self.module.validate_stock_entry(doc)
+		self.claims.assert_week_raw_stock_available.assert_called_once_with(
+			self.week, {"rice": Decimal(2)}, exclude_entry=doc.name
+		)
+		self.assertEqual(json.loads(doc.custom_meal_raw_claim_snapshot), {"proof": "source"})
+
+	def test_company_claim_scope_is_locked_before_the_week_header(self):
+		events = []
+		self.frappe.db.get_value.return_value = self.week.company
+		self.claims.lock_claim_scope.side_effect = lambda company: events.append(("company", company))
+		self.frappe.get_doc.side_effect = lambda *args, **kwargs: (
+			events.append(("week", kwargs.get("for_update"))) or self.week
+		)
+		self.module._week(self.week.name, lock=True)
+		self.assertEqual(events, [("company", self.week.company), ("week", True)])
+
+	def test_readonly_week_proof_can_replay_historical_carry_without_locking_or_raw_claim_recursion(self):
+		self.week.kitchen_reconciled = 1
+		self.week.kitchen_reconciled_at = "2026-10-30 18:00:00"
+		body = {"week_name": self.week.name, "days": [], "closed_plans": [], "carry_out_sources": []}
+		proof = {**body, "procurement": {"settled": True}}
+		proof["basis_hash"] = self.module._hash(proof)
+		self.week.kitchen_reconciliation_snapshot = json.dumps(proof)
+		with (
+			patch.object(self.module, "_week", return_value=self.week) as week,
+			patch.object(self.module, "_week_execution", return_value=body) as execution,
+			patch.object(self.module, "_procurement_proof", return_value={"settled": True}) as procurement,
+		):
+			self.assertTrue(self.module.verify_week_kitchen_reconciled(self.week, lock=False)["reconciled"])
+			week.assert_called_once_with(self.week, lock=False)
+			execution.assert_called_once_with(self.week, lock=False)
+			procurement.assert_called_once_with(self.week, lock=False)
+		self.claims.assert_week_raw_stock_available.assert_not_called()
 
 
 if __name__ == "__main__":

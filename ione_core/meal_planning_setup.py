@@ -109,6 +109,16 @@ def install_meal_planning():
 			"no_copy": 1,
 		},
 		{
+			"dt": "Stock Entry",
+			"fieldname": "custom_meal_raw_claim_snapshot",
+			"label": "膳食原料库存份额依据",
+			"fieldtype": "Long Text",
+			"insert_after": "custom_meal_action",
+			"read_only": 1,
+			"hidden": 1,
+			"no_copy": 1,
+		},
+		{
 			"dt": "Purchase Order",
 			"fieldname": "custom_meal_week",
 			"label": "食谱周计划",
