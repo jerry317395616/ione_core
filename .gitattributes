@@ -1,1 +1,5 @@
 ione_core/translations/zh.csv -whitespace
+deploy/dingtalk_stream/** text eol=lf
+ione_core/hrms_compat/*.py text eol=lf
+# Unified diff context deliberately contains leading spaces and blank lines.
+deploy/official_ui_restore_20261022/*.patch text eol=lf -whitespace

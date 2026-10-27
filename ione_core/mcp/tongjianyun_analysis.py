@@ -15,6 +15,10 @@ def generate_tongjianyun_recipe_analysis(
 
 	if "tongjianyun" not in frappe.get_installed_apps():
 		raise ValueError("Tongjianyun is not installed on this site")
+	import tongjianyun
+
+	if getattr(tongjianyun, "REPORTS_ONLY", False):
+		raise ValueError("童健云现仅提供只读报表。请从周食谱表进入食谱分析并下载。")
 	ensure_doctype_permission("Tongjianyun Recipe", "read")
 	name = str(recipe_name or "").strip()
 	if not name:

@@ -28374,3 +28374,142 @@ working days,工作天数
 {0} recorded outside shift hours. It will not be considered for attendance.,{0} 的记录发生在班次时间之外，不会计入考勤。
 {0} successful,{0} 成功
 {0} was assigned {1},已为 {0} 分配 {1}
+A Production Plan cannot be assigned to more than one meal.,同一生产计划不能分配给多个餐次。
+A Production Plan source row has already been requested outside this meal week.,生产计划的来源明细已被此周食谱以外的物料请求占用。
+A different authorized purchaser must approve the material request; administrators cannot self-approve.,物料请求必须由另一位有权限的采购审核人审批；管理员也不能审批自己创建的请求。
+A different authorized purchaser must review the creator's quotation; administrators cannot self-approve.,报价必须由创建人以外的另一位有权限的采购审核人核对；管理员也不能自行审批。
+A formal meal purchase order must have a positive total amount.,正式膳食采购订单的总金额必须大于零。
+A meal Production Plan has an invalid company or is cancelled.,餐次生产计划的公司无效，或该计划已取消。
+A meal date and meal type cannot occur twice.,同一日期的同一餐次不能重复。
+A meal date is outside the selected week.,餐次日期超出所选周的范围。
+A meal material request cannot mix different weeks.,同一份膳食物料请求不能包含不同周的需求。
+A meal order cannot have a zero or negative effective unit price after discounts.,膳食采购订单折扣后的实际单价必须大于零。
+A meal purchase order cannot be detached from its native source week.,膳食采购订单不能解除与原始来源周食谱的关联。
+A meal purchase order must contain only approved native sources from its own week.,膳食采购订单只能包含本周已审批的原生单据来源。
+"A meal raw material warehouse is disabled, a group, or belongs to another company.",膳食原料仓库已停用、属于分组仓库，或属于其他公司。
+A meal request label alone is not a native meal procurement source.,仅填写膳食请求标记不能作为原生采购来源。
+A meal request must contain only verified native sources from its own week.,膳食物料请求只能包含本周已核实的原生单据来源。
+"A meal request's frozen source, item, warehouse, date and units cannot be edited.",膳食物料请求已冻结的来源、物料、仓库、日期和单位不能修改。
+A meal week label alone is not a valid procurement source.,仅填写周食谱标记不能作为有效采购来源。
+A native material source row is missing. Revise and review the meal week.,缺少原生物料来源明细行，请修订并重新核对周食谱。
+A second purchaser must confirm the current quotation before the meal order can be submitted.,膳食采购订单须由另一位采购审核人确认当前报价后才能提交。
+A superseded meal material request cannot be submitted.,已被替代的膳食物料请求不能提交。
+A supplier quotation source row is missing.,缺少供应商报价的来源明细行。
+A suspended meal needs zero headcount and an explicit suspension reason.,停供餐次的人数必须为零，并填写明确的停供原因。
+Adjustment procurement must evaluate all of the week's existing request commitments.,食谱调整的补充采购必须核对本周现有物料请求的全部占用量。
+All draft and submitted requests together exceed frozen procurement quantity for source {0}.,所有草稿和已提交请求的合计数量超过来源 {0} 已冻结的可申请采购量。
+All meal Production Plans must be submitted before requesting procurement.,申请采购前，必须先提交全部供餐餐次的生产计划。
+All selected material request quantities have already been ordered.,所选物料请求的数量均已下单。
+Amend and re-review the meal order before changing its confirmed purchase details.,如需修改已确认的采购明细，请先修订膳食采购订单并重新审核。
+An existing meal request cannot be detached from its native week.,现有膳食物料请求不能解除与原始来源周食谱的关联。
+BOM expansion returned an invalid ingredient quantity.,物料清单展开后得到无效的食材数量。
+Confirm the recipe's purchase weight basis before reviewing or submitting an order.,审核或提交订单前，请先确认食谱的采购重量口径。
+Draft and submitted meal orders together exceed the approved material request quantity.,草稿和已提交膳食采购订单的合计数量超过已审批物料请求的数量。
+Draft material request {0} is still pending.,物料请求草稿 {0} 尚未处理。
+Draft purchase order {0} is still pending.,采购订单草稿 {0} 尚未处理。
+Draft purchase receipt {0} is still pending.,采购收货草稿 {0} 尚未处理。
+Every meal Production Plan must use the week's raw material warehouse.,每个餐次的生产计划都必须使用周食谱指定的原料仓库。
+Every meal must have a positive whole student headcount.,每个供餐餐次的学生人数都必须为正整数。
+Every meal must reference a Production Plan.,每个餐次都必须关联生产计划。
+Every meal order line must have a confirmed positive price; zero or free prices cannot be submitted.,膳食采购订单每行都必须有已确认且大于零的价格；零价或免费行不能提交。
+Every meal order line must reference an actual submitted Supplier Quotation.,膳食采购订单每行都必须关联真实且已提交的供应商报价。
+Frozen Production Plan quantities differ from the procurement calculation. Revise the meal week.,已冻结的生产计划数量与采购计算不一致，请修订周食谱。
+Incoming orders and requests for other purposes or without verified meal sources do not reduce this week's procurement.,其他用途或未核实膳食来源的在途订单和物料请求，不抵扣本周采购需求。
+Ingredient {0} has no verified purchase unit conversion.,食材 {0} 尚未核实采购单位换算。
+Ingredient {0} is disabled.,食材 {0} 已停用。
+Ingredient {0} is not enabled for purchase.,食材 {0} 未启用采购。
+Ingredient {0} needs an explicit procurement policy.,请为食材 {0} 明确设置采购策略。
+Ingredient {0} needs its kitchen-made recipe confirmed.,请先确认食材 {0} 的厨房自制配方。
+Ingredient {0} needs its minimum order allocation confirmed.,请先确认食材 {0} 的最小起订量分配方式。
+Ingredient {0} needs usable batch or serial stock verified before automated allocation.,自动分配前，请先核实食材 {0} 可用的批次或序列号库存。
+Invalid meal quantity: {0},膳食数量无效：{0}
+Item {0} needs a verified purchase unit conversion.,请先核实物料 {0} 的采购单位换算。
+Material request {0} still has unordered quantities.,物料请求 {0} 仍有尚未下单的数量。
+Meal business operators may only maintain verified meal material requests.,膳食业务经办员只能维护来源已核实的膳食物料请求。
+Meal business operators may only maintain verified meal purchase orders.,膳食业务经办员只能维护来源已核实的膳食采购订单。
+Meal material request quantities must be positive.,膳食物料请求的数量必须大于零。
+Meal procurement currently requires stock reservation to be disabled.,当前膳食采购要求关闭库存预留功能。
+Meal procurement requires a submitted week and a purchase request in the same company.,膳食采购需要已提交的周食谱，以及同一公司的采购类型物料请求。
+Meal procurement {0} - {1},膳食采购 {0} - {1}
+Meal purchase draft actions require an authorized meal purchaser.,只有已授权的膳食采购经办人才能操作采购草稿。
+Meal purchase orders require a submitted week in the same company.,膳食采购订单必须关联同一公司已提交的周食谱。
+Meal purchase source and quotation confirmation are maintained through the controlled actions.,膳食采购来源和报价确认只能通过专用操作维护。
+Meal purchasing requires a Purchase Manager or System Manager.,膳食采购审核需要采购经理或系统管理员权限。
+Meal quantities must be finite numbers.,膳食数量必须为有限数值。
+Meal request replacement links can only be set through the controlled reissue action.,膳食物料请求的替代关联只能通过专用重制操作设置。
+Meal week {0} has an unreconciled stock commitment. Reconcile it before requesting procurement for another week.,周食谱 {0} 仍有未核销的库存占用，请完成核销后再申请其他周的采购。
+"New meal procurement cannot use a draft, closed or completed production plan.",新增膳食采购不能使用草稿、已关闭或已完成的生产计划。
+One meal purchase order cannot mix different meal weeks.,同一份膳食采购订单不能包含不同周食谱的需求。
+Only a System Manager or Purchase Manager may create meal purchase requests.,只有系统管理员或采购经理可以创建膳食采购物料请求。
+Only a saved draft purchase order can be reviewed.,只能审核已保存的采购订单草稿。
+Only another creator's active draft request can be reissued.,只能重制由其他人员创建且仍有效的物料请求草稿。
+Order {0} has a company mismatch.,订单 {0} 的公司不一致。
+Order {0} has an invalid native meal request source.,订单 {0} 的原生膳食物料请求来源无效。
+Overdue or undated material requests need review and do not reduce this request.,逾期或未注明日期的物料请求须先核对，不抵扣本次申请量。
+Overdue or undated purchase orders are shown as unconfirmed and do not reduce this request.,逾期或未注明日期的采购订单显示为待确认，不抵扣本次申请量。
+Please select a meal planning week.,请选择周食谱。
+Production Plan {0} does not match the meal's student headcount.,生产计划 {0} 与该餐次的学生人数不一致。
+Production Plan {0} needs a raw material warehouse.,请为生产计划 {0} 设置原料仓库。
+Purchase order {0} still has unreceived quantities.,采购订单 {0} 仍有尚未收货的数量。
+"Purchase quantity, stock unit or unit conversion is not valid for {0}.",物料 {0} 的采购数量、库存单位或单位换算无效。
+Purchase requests cannot use past meal requirement dates. Create a future meal week.,采购物料请求不能使用已过期的餐次需求日期，请创建未来的周食谱。
+Receipt {0} has an invalid native meal order source.,收货单 {0} 的原生膳食采购订单来源无效。
+Reissued unchanged as {0} by the current meal purchaser; the original creator is preserved.,当前膳食采购经办人已按原内容重制为 {0}；原创建人记录予以保留。
+Request {0} has an unverified meal source.,物料请求 {0} 的膳食来源尚未核实。
+Sales-order-reserved supplies cannot be reassigned to meal purchasing.,已为销售订单预留的供应量不能改用于膳食采购。
+Select material request source row names.,请选择物料请求的来源明细行。
+Select the actual supplier before quotation review.,核对报价前，请先选择实际供应商。
+Selected request rows already belong to draft order {0}; review it before creating another order.,所选请求明细已关联采购订单草稿 {0}；请先处理该订单，再创建其他订单。
+Some ingredients have no valid buying price. The request specifies quantity only; obtain quotations before placing orders.,部分食材没有有效采购价格。物料请求仅申请数量，请取得报价后再下单。
+Some selected rows do not belong to this material request.,部分所选明细不属于此物料请求。
+Stock is based on the ledger and has not been represented as a physical stock count.,库存数据以账面记录为依据，此次核对不代表已完成实物盘点。
+"Stock, incoming supply, recipe, or procurement settings changed after review. Revise and review the meal week.",核对后库存、在途供应、配方或采购设置已变化，请修订并重新核对周食谱。
+Submit the meal week with its ledger stock review before creating a purchase request.,请先核对账面库存并提交周食谱，再创建采购物料请求。
+The effective purchase price after discounts differs from the supplier quotation.,折扣后的实际采购单价与供应商报价不一致。
+The linked purchase request does not belong to this meal week's native source plans.,关联的采购物料请求不属于此周食谱的原生生产计划来源。
+The linked purchase request is cancelled. Revise the meal week before requesting again.,关联的采购物料请求已取消，请修订周食谱后再申请。
+The material request adjustment must match its native Production Plan.,物料请求的食谱调整来源必须与其原生生产计划一致。
+The material request must be an active submitted purchase request in this company.,物料请求必须属于本公司，类型为采购，且已提交并仍有效。
+The material request stock quantity does not match its purchase quantity.,物料请求的库存单位数量与采购数量不匹配。
+The material request unit conversion is not the verified frozen conversion.,物料请求的单位换算与已核实并冻结的换算不一致。
+The material request's meal week disagrees with its native sources.,物料请求关联的周食谱与其原生来源不一致。
+The meal material request date differs from its frozen requirement date.,膳食物料请求的日期与已冻结的需求日期不一致。
+The meal purchase quotation confirmation is invalid.,膳食采购报价确认无效。
+The meal request replacement chain is cyclic or invalid.,膳食物料请求的替代关联存在循环或无效记录。
+The meal week end cannot precede its start.,周食谱的结束日期不能早于开始日期。
+The meal week has no meal plans.,此周食谱没有餐次计划。
+The meal week has no native production sources to reconcile.,此周食谱没有可核销的原生生产计划来源。
+The meal week needs a submitted procurement request first.,请先提交此周食谱的采购物料请求。
+The native material request plan source row is missing.,缺少物料请求对应的原生生产计划来源明细行。
+The order cannot precede its supplier quotation.,订单日期不能早于其供应商报价日期。
+The order must still be a draft owned by a different purchaser at confirmation time.,确认时订单必须仍为草稿，且创建人必须是另一位采购经办人。
+The order needs a valid currency and exchange rate.,订单必须设置有效的币种和汇率。
+The original request already has downstream purchase documents and cannot be reissued.,原物料请求已有后续采购单据，不能重制。
+The purchase order does not match its native Production Plan material source.,采购订单与其原生生产计划的物料来源不一致。
+The purchase order has an invalid material request source.,采购订单的物料请求来源无效。
+The purchase order's meal week does not match its native sources.,采购订单关联的周食谱与其原生来源不一致。
+The purchase price differs from the approved supplier quotation.,采购单价与已审批的供应商报价不一致。
+"The quotation must be submitted and match the order's supplier, company and currency.",报价必须已提交，且供应商、公司和币种均与订单一致。
+The quotation must contain one unambiguous row for each order item and purchase unit.,订单的每种物料及采购单位组合，都必须在报价中有唯一对应的明细行。
+The quotation needs positive prices and the item's verified unit conversion.,报价单价必须大于零，且使用物料已核实的单位换算。
+The quotation reviewer is no longer an active authorized purchaser.,报价审核人已停用或不再具备采购审核权限。
+The quotation reviewer must be different from the purchase order creator.,报价审核人不能与采购订单创建人为同一人。
+The quotation's item or unit conversion does not match the purchase order.,报价中的物料或单位换算与采购订单不一致。
+The reissued meal request has an invalid original source.,重制的膳食物料请求关联的原请求无效。
+The request contains a source outside this meal week.,物料请求包含不属于此周食谱的来源。
+The request does not belong to this meal week.,此物料请求不属于该周食谱。
+"The request item, warehouse or purchase unit differs from its frozen source.",物料请求的物料、仓库或采购单位与已冻结的来源不一致。
+The request's adjustment reference disagrees with its native Production Plan.,物料请求的食谱调整关联与其原生生产计划不一致。
+The selected supplier is disabled.,所选供应商已停用。
+The submitted week has no material request draft to reissue.,已提交的周食谱没有可重制的物料请求草稿。
+The superseded meal request has no verified identical replacement.,已被替代的膳食物料请求没有经核实且内容相同的替代请求。
+The supplier is disabled.,供应商已停用。
+"The supplier quotation needs an explicit, unexpired validity date.",供应商报价必须设置明确且尚未到期的有效截止日期。
+This is an identical reissue of draft {0}; its original creator and record remain preserved.,此请求按草稿 {0} 的原内容重制；原创建人和原记录均予以保留。
+This meal planning week is cancelled.,此周食谱已取消。
+This meal request is superseded; use its replacement instead.,此膳食物料请求已被替代，请使用替代请求。
+This meal week already has linked Work Orders. Reconcile their stock reservations before using weekly procurement.,此周食谱已关联工单，请先核销工单的库存预留，再使用周采购功能。
+This order is not associated with a controlled meal week.,此订单未关联受控周食谱。
+You do not have permission to create material requests.,您没有创建物料请求的权限。
+You do not have permission to create purchase material requests.,您没有创建采购类型物料请求的权限。
+You do not have permission to create purchase orders.,您没有创建采购订单的权限。

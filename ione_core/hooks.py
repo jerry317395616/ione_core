@@ -11,11 +11,15 @@ app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260827-asset-query-fix"]
 
 doctype_list_js = {
+	"Production Plan": "public/js/meal_production_plan_list.js",
 	"Role": "public/js/role_list.js",
 	"Data Import": "public/js/data_import_list.js",
+	"Employee Checkin": "public/js/dingtalk_employee_checkin_list.js",
 }
 
 doctype_js = {
+	"Purchase Order": "public/js/meal_purchase_order.js",
+	"Production Plan": "public/js/meal_production_plan.js",
 	"Role": "public/js/role.js",
 	"User": "public/js/user.js",
 	"Student": "public/js/student.js",
@@ -48,6 +52,10 @@ fixtures = [
 ]
 
 permission_query_conditions = {
+	"Student": "ione_core.education_teacher_privacy.query_condition",
+	"Student Group": "ione_core.education_teacher_privacy.query_condition",
+	"Student Attendance": "ione_core.education_teacher_privacy.query_condition",
+	"Student Leave Application": "ione_core.education_teacher_privacy.query_condition",
 	"I-ONE Smart Record": "ione_core.permissions.owner_query",
 	"I-ONE AI Task": "ione_core.permissions.owner_query",
 	"I-ONE AI Run Log": "ione_core.permissions.owner_query",
@@ -64,6 +72,10 @@ permission_query_conditions = {
 }
 
 has_permission = {
+	"Student": "ione_core.education_teacher_privacy.document_permission",
+	"Student Group": "ione_core.education_teacher_privacy.document_permission",
+	"Student Attendance": "ione_core.education_teacher_privacy.document_permission",
+	"Student Leave Application": "ione_core.education_teacher_privacy.document_permission",
 	"I-ONE Smart Record": "ione_core.permissions.owner_permission",
 	"I-ONE AI Task": "ione_core.permissions.owner_permission",
 	"I-ONE AI Run Log": "ione_core.permissions.owner_permission",
@@ -80,6 +92,43 @@ has_permission = {
 }
 
 doc_events = {
+	"Purchase Invoice": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
+	},
+	"Purchase Receipt": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
+		"before_submit": "ione_core.meal_stock_claims.before_submit_purchase_receipt",
+		"before_cancel": "ione_core.meal_stock_claims.before_cancel_purchase_receipt",
+		"before_update_after_submit": "ione_core.meal_stock_claims.validate_purchase_receipt",
+	},
+	"Supplier Quotation": {
+		"validate": "ione_core.meal_purchasing.validate_supplier_quotation",
+		"before_submit": "ione_core.meal_purchasing.validate_supplier_quotation",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_supplier_quotation",
+	},
+	"Stock Entry": {
+		"validate": "ione_core.meal_kitchen.validate_stock_entry",
+		"before_update_after_submit": "ione_core.meal_kitchen.validate_stock_entry",
+		"before_cancel": "ione_core.meal_kitchen.before_cancel_stock_entry",
+	},
+	"Material Request": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
+		"validate": "ione_core.meal_purchasing.validate_material_request",
+		"before_submit": "ione_core.meal_purchasing.before_submit_material_request",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_material_request",
+	},
+	"Purchase Order": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
+		"validate": "ione_core.meal_purchasing.validate_purchase_order",
+		"before_submit": "ione_core.meal_purchasing.before_submit_purchase_order",
+		"before_update_after_submit": "ione_core.meal_purchasing.validate_purchase_order",
+	},
+	"Production Plan": {
+		"validate": "ione_core.meal_planning.validate_production_plan",
+		"before_submit": "ione_core.meal_planning.validate_production_plan",
+		"before_cancel": "ione_core.meal_planning.validate_production_plan",
+		"before_update_after_submit": "ione_core.meal_planning.validate_production_plan",
+	},
 	"Flow Run": {
 		"on_update": "ione_core.ai.sync_task_from_flow_run",
 	},
@@ -93,4 +142,16 @@ override_whitelisted_methods = {
 
 scheduler_events = {
 	"hourly": ["ione_core.ai.expire_pending_approvals"],
+	"cron": {
+		"0 18 * * *": ["ione_core.dingtalk_schedule.run_daily"],
+		"5-59/10 * * * *": ["ione_core.dingtalk_schedule.run_catchup"],
+	},
+}
+
+extend_doctype_class = {
+	"Purchase Receipt": ["ione_core.native_asset_history.PreserveAssetHistory"],
+	"Purchase Invoice": ["ione_core.native_asset_history.PreserveAssetHistory"],
+	"Shift Schedule Assignment": [
+		"ione_core.hrms_compat.shift_schedule_assignment.PreserveShiftCycleBoundaryMixin"
+	]
 }

@@ -1,0 +1,42 @@
+{
+  "archive_kind": "deployed-pilot-permission-policy",
+  "automatic_application": false,
+  "contains_user_bindings": false,
+  "contains_record_grants": false,
+  "sample_role": {
+    "role_name": "ERP食谱样例查看",
+    "desk_access": 1,
+    "production_plan_permissions": {
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "export": 1,
+      "write": 0,
+      "create": 0,
+      "delete": 0,
+      "submit": 0,
+      "cancel": 0,
+      "amend": 0,
+      "share": 0,
+      "print": 0,
+      "email": 0
+    }
+  },
+  "report_roles": [
+    "System Manager",
+    "Manufacturing Manager",
+    "Manufacturing User",
+    "ERP食谱样例查看"
+  ],
+  "record_scope_policy": {
+    "production_plan": "样例查看角色的账号另以明确的 Production Plan User Permission 限定试点计划；此归档不包含这些记录或账号绑定。",
+    "linked_records": "试点计划及其关联 BOM、菜品和食材物料另以只读 DocShare 授权；不授予编辑、提交或再共享。此归档不包含记录名称及授权名单。",
+    "existing_permissions": "保留站点既有标准权限；不能通过归档配置删除或恢复整个 DocType 的 Custom DocPerm。",
+    "query_report_boundary": "两份 SQL 固定筛选 MEAL-DEMO-20261012，访问由报告角色控制。SQL 不自动继承逐记录 User Permission 条件，不构成通用多园所或逐用户隔离。"
+  },
+  "manual_review_required_before_reuse": [
+    "核对目标站点、报告角色及现有权限，避免为其他账号扩大访问范围。",
+    "逐项核对所需计划及关联 BOM、Item 的读取范围。",
+    "不得把本策略文件直接当作可导入的 Role、Custom DocPerm、DocShare 或 User Permission 数据。"
+  ]
+}

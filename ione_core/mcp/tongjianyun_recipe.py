@@ -125,6 +125,10 @@ def upsert_tongjianyun_recipe(
 
 	if "tongjianyun" not in frappe.get_installed_apps():
 		raise ValueError("Tongjianyun is not installed on this site")
+	import tongjianyun
+
+	if getattr(tongjianyun, "REPORTS_ONLY", False):
+		raise ValueError("童健云旧食谱编辑已停用。请使用 ERP 原生生产计划编排食谱。")
 	validated = validate_recipe_payload(recipe, days)
 	recipe_id = str(validated["recipe"]["recipeId"]).strip()
 	existing = frappe.db.exists(RECIPE_DOCTYPE, {"recipe_id": recipe_id})
