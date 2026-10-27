@@ -1,4 +1,4 @@
-"""Permission-checked, read-only per-child views of unbound meal plan drafts."""
+"""Permission-checked, read-only per-child views of unbound meal plans."""
 # ruff: noqa: RUF001
 
 from datetime import timedelta
@@ -28,8 +28,8 @@ def _positive(value):
 def plan_details(plan):
 	"""Read only the selected plan's recipe; its basis quantity is not attendance."""
 	plan.check_permission("read")
-	if plan.docstatus != 0 or not plan.get("custom_is_meal_plan") or plan.get("custom_meal_week"):
-		_fail("请选择未关联正式周计划的食谱草稿；已编排餐次请通过周计划查看。")
+	if plan.docstatus not in (0, 1) or not plan.get("custom_is_meal_plan") or plan.get("custom_meal_week"):
+		_fail("请选择未关联正式周计划的有效食谱；已编排餐次请通过周计划查看。")
 	if plan.custom_meal_type not in SLOTS or not plan.po_items:
 		_fail("历史生产计划缺少有效餐次或配方。")
 	data = []
@@ -73,8 +73,36 @@ def plan_details(plan):
 	return data
 
 
+def resolve_report_filters(filters):
+	"""Resolve a date-only report link without guessing among visible schedules."""
+	filters = frappe._dict(filters or {})
+	if filters.get("week_name") or filters.get("plan_batch") or not filters.get("week_start"):
+		return filters
+	if frappe.session.user == "Guest":
+		frappe.throw(_("请先登录。"), frappe.AuthenticationError)
+	start = getdate(filters.week_start)
+	if start.weekday() != 0:
+		_fail("请选择星期一作为周开始日期。")
+	weeks = frappe.get_list(
+		"Meal Planning Week", filters={"week_start": start, "docstatus": ["<", 2]},
+		pluck="name", limit_page_length=2,
+	)
+	plans = frappe.get_list(
+		"Production Plan", filters={"custom_meal_date": start, "custom_is_meal_plan": 1, "docstatus": ["<", 2]},
+		fields=["custom_meal_batch", "custom_meal_week"], limit_page_length=26,
+	)
+	batches = {row.custom_meal_batch for row in plans if row.custom_meal_batch and not row.custom_meal_week}
+	choices = [{"week_name": name} for name in weeks] + [{"plan_batch": batch} for batch in sorted(batches)]
+	if not choices:
+		_fail("所选周暂无可查看的食谱，请核对日期及查看权限。")
+	if len(choices) != 1:
+		_fail("所选周有多个可查看的食谱，请明确选择周食谱或生产计划批次。")
+	filters.update(choices[0])
+	return filters
+
+
 def report_context(filters):
-	"""A batch must contain one complete, readable five-day draft schedule."""
+	"""A batch must contain one complete, readable five-day schedule."""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("请先登录。"), frappe.AuthenticationError)
 	filters = frappe._dict(filters or {})
@@ -87,19 +115,19 @@ def report_context(filters):
 		_fail("请选择周计划或生产计划批次中的一种。")
 	visible = frappe.get_list(
 		"Production Plan",
-		filters={"custom_meal_batch": batch, "custom_is_meal_plan": 1, "docstatus": 0},
+		filters={"custom_meal_batch": batch, "custom_is_meal_plan": 1, "docstatus": ["<", 2]},
 		pluck="name",
 		order_by="custom_meal_date asc, name asc",
 		limit_page_length=26,
 	)
 	if not visible:
-		frappe.throw(_("该批次没有可查看的历史生产计划草稿。"), frappe.PermissionError)
+		frappe.throw(_("该批次没有可查看的历史生产计划。"), frappe.PermissionError)
 	if len(visible) != 25:
-		_fail("完整周表需要五天五餐，共25张可读取的生产计划草稿。")
+		_fail("完整周表需要五天五餐，共25张可读取的有效生产计划。")
 	plans = [frappe.get_doc("Production Plan", name) for name in visible]
 	for plan in plans:
 		plan.check_permission("read")
-		if plan.get("custom_meal_week") or plan.docstatus != 0 or plan.custom_meal_batch != batch:
+		if plan.get("custom_meal_week") or plan.docstatus not in (0, 1) or plan.custom_meal_batch != batch:
 			_fail("历史报表不能代替正式周计划或读取不同批次的餐次。")
 	if len({plan.company for plan in plans}) != 1:
 		_fail("同一周表不能混合不同园所。")

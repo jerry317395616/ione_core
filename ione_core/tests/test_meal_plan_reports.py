@@ -89,7 +89,7 @@ class HistoricalMealReportTests(unittest.TestCase):
 			self.assertIsNone(row["total_qty"])
 			self.assertEqual(row["per_child_qty"], 125)
 		self.frappe.get_list.assert_called_once_with("Production Plan",
-			filters={"custom_meal_batch": "HIST-A", "custom_is_meal_plan": 1, "docstatus": 0},
+			filters={"custom_meal_batch": "HIST-A", "custom_is_meal_plan": 1, "docstatus": ["<", 2]},
 			pluck="name", order_by="custom_meal_date asc, name asc", limit_page_length=26)
 
 	def test_reference_quantity_is_never_interpreted_as_headcount(self):
@@ -149,14 +149,21 @@ class HistoricalMealReportTests(unittest.TestCase):
 		with self.assertRaises(Denied):
 			self.context()
 
-	def test_managed_or_submitted_plan_cannot_bypass_week_snapshot_validation(self):
+	def test_managed_or_cancelled_plan_cannot_bypass_week_snapshot_validation(self):
 		self.plans[0].custom_meal_week = "WEEK-A"
 		with self.assertRaises(Invalid):
 			self.context()
 		self.plans[0].custom_meal_week = None
-		self.plans[0].docstatus = 1
+		self.plans[0].docstatus = 2
 		with self.assertRaises(Invalid):
 			self.context()
+
+	def test_unbound_submitted_plan_remains_readable_without_changing_its_status(self):
+		self.plans[0].docstatus = 1
+		result = self.context()
+		self.assertEqual(len(result["rows"]), 10)
+		self.assertIsNone(result["details"][0]["headcount"])
+		self.assertEqual(self.plans[0].docstatus, 1)
 
 	def test_companies_and_week_dates_cannot_be_mixed(self):
 		self.plans[0].company = "School B"
@@ -200,6 +207,43 @@ class HistoricalMealReportTests(unittest.TestCase):
 	def test_single_form_does_not_enumerate_unrelated_plans(self):
 		rows = self.module.plan_details(self.plans[0])
 		self.assertEqual(len(rows), 1)
+		self.frappe.get_list.assert_not_called()
+
+	def test_date_only_link_resolves_visible_historical_batch(self):
+		self.frappe.get_list.side_effect = [[], [Record(custom_meal_batch="HIST-A", custom_meal_week=None)] * 5]
+		result = self.module.resolve_report_filters({"week_start": "2026-06-22"})
+		self.assertEqual(result.plan_batch, "HIST-A")
+		self.assertEqual(result.week_start, "2026-06-22")
+		self.assertEqual(self.frappe.get_list.call_args_list[0].kwargs["limit_page_length"], 2)
+
+	def test_date_only_formal_week_does_not_reopen_managed_plans_as_history(self):
+		self.frappe.get_list.side_effect = [["WEEK-A"], [Record(custom_meal_batch="WEEK-A", custom_meal_week="WEEK-A")]]
+		result = self.module.resolve_report_filters({"week_start": "2026-06-22"})
+		self.assertEqual(result.week_name, "WEEK-A")
+		self.assertFalse(result.get("plan_batch"))
+
+	def test_date_with_no_accessible_source_is_rejected(self):
+		self.frappe.get_list.side_effect = [[], [Record(custom_meal_batch="HIDDEN-WEEK", custom_meal_week="HIDDEN-WEEK")]]
+		with self.assertRaises(Invalid):
+			self.module.resolve_report_filters({"week_start": "2026-06-22"})
+
+	def test_date_does_not_guess_between_multiple_weeks_or_batches(self):
+		for weeks, batches in ((["WEEK-A", "WEEK-B"], []), ([], ["HIST-A", "HIST-B"]), (["WEEK-A"], ["HIST-A"])):
+			self.frappe.get_list.side_effect = [weeks, [Record(custom_meal_batch=x, custom_meal_week=None) for x in batches]]
+			with self.subTest(weeks=weeks, batches=batches), self.assertRaises(Invalid):
+				self.module.resolve_report_filters({"week_start": "2026-06-22"})
+
+	def test_explicit_source_does_not_trigger_date_discovery(self):
+		for filters in ({"week_name": "WEEK-A", "week_start": "2026-06-22"}, {"plan_batch": "HIST-A"}, {}):
+			self.assertEqual(self.module.resolve_report_filters(filters), filters)
+		self.frappe.get_list.assert_not_called()
+
+	def test_guest_or_non_monday_date_does_not_discover_schedules(self):
+		with self.assertRaises(Invalid):
+			self.module.resolve_report_filters({"week_start": "2026-06-23"})
+		self.frappe.session.user = "Guest"
+		with self.assertRaises(Denied):
+			self.module.resolve_report_filters({"week_start": "2026-06-22"})
 		self.frappe.get_list.assert_not_called()
 
 

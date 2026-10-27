@@ -3,6 +3,7 @@
 	const detailReport = "Meal Ingredient Requirements";
 	const slots = ["早餐", "早点", "午餐", "午点", "晚餐"];
 	const colors = ["#996900", "#26764a", "#295ca4", "#7950a6", "#a24d26"];
+	const isWeeklyReport = (report) => report.report_name === reportName || report.report_doc?.reference_report === reportName;
 	const escape = (value) => frappe.utils.escape_html(String(value ?? ""));
 	const selectedWeek = (report) => !report.get_filter_value("plan_batch") && (report.get_filter_value("week_name") || report.data?.[0]?.week_name);
 	const selectedBatch = (report) => !report.get_filter_value("week_name") && (report.get_filter_value("plan_batch") || report.data?.[0]?.plan_batch);
@@ -14,8 +15,9 @@
 		if (report._no_refresh || report.__meal_switching_source) return;
 		report.__meal_switching_source = true;
 		try {
-			if (report.get_filter_value("week_name") && report.get_filter_value("plan_batch")) {
-				await report.set_filter_value(field === "week_name" ? { plan_batch: "", week_start: "" } : { week_name: "" });
+			if (report.get_filter_value(field)) {
+				const other = ["week_name", "plan_batch", "week_start"].filter((key) => key !== field && report.get_filter_value(key));
+				if (other.length) await report.set_filter_value(Object.fromEntries(other.map((key) => [key, ""])));
 			}
 		} finally {
 			report.__meal_switching_source = false;
@@ -75,7 +77,7 @@
 				? `<th rowspan="2" scope="rowgroup" style="color:${colors[slot]}">${escape(meal)}</th>` : ""}
 				<th scope="row">${escape(kind)}</th>${cells}</tr>`;
 		}).join("")).join("");
-		return `<div class="meal-live-week-heading"><strong>${historical ? "生产计划草稿（每名幼儿带量）" : "每名幼儿带量食谱"}</strong>
+		return `<div class="meal-live-week-heading"><strong>${historical ? "历史生产计划（每名幼儿带量）" : "每名幼儿带量食谱"}</strong>
 			<span>${historical ? "历史供餐人数未确认；仅展示人均配方，不把计算基准1作为供餐人数。" : `${escape(week)} · 带量为每人用量，同餐相同食材已合并；人数为保存的计划供餐人数，不代表实际出勤。`}</span></div>
 			<div style="overflow-x:auto"><table class="meal-live-week-table">
 			<colgroup><col style="width:65px"><col style="width:60px">${"<col>".repeat(5)}</colgroup>
@@ -89,7 +91,8 @@
 				on_change(report) { return changeSource(report, "week_name"); } },
 			{ fieldname: "plan_batch", label: __("生产计划批次"), fieldtype: "Data",
 				on_change(report) { return changeSource(report, "plan_batch"); } },
-			{ fieldname: "week_start", label: __("周开始日期"), fieldtype: "Date" },
+			{ fieldname: "week_start", label: __("周开始日期"), fieldtype: "Date",
+				on_change(report) { return changeSource(report, "week_start"); } },
 		],
 		async onload(report) {
 			report.page.set_title(__("周食谱（每名幼儿带量）"));
@@ -98,13 +101,13 @@
 				if (!selectedWeek(report) && !selectedBatch(report)) return frappe.msgprint(__("请先选择可查看的周食谱。"));
 				frappe.set_route("query-report", detailReport, sourceFilters(report));
 			});
-			if (report.get_filter_value("week_name") || selectedBatch(report)) return;
+			if (report.get_filter_value("week_name") || selectedBatch(report) || report.get_filter_value("week_start")) return;
 			try {
 				const weeks = await frappe.db.get_list("Meal Planning Week", {
 					fields: ["name"], filters: { docstatus: ["<", 2] },
 					order_by: "week_start desc, modified desc", limit: 1,
 				});
-				if (weeks[0]?.name && !report.get_filter_value("week_name") && !selectedBatch(report)) {
+				if (weeks[0]?.name && !report.get_filter_value("week_name") && !selectedBatch(report) && !report.get_filter_value("week_start")) {
 					await report.set_filter_value("week_name", weeks[0].name);
 				}
 			} catch (error) {
@@ -117,7 +120,7 @@
 		},
 		after_datatable_render(datatable) {
 			const report = frappe.query_report;
-			if (report.report_name !== reportName || report.datatable !== datatable) return;
+			if (!isWeeklyReport(report) || report.datatable !== datatable) return;
 			const wrapper = $(datatable.wrapper);
 			wrapper.children(".meal-live-week-preview").remove();
 			if (!report.data?.length) {

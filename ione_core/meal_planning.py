@@ -801,8 +801,9 @@ def _details(doc):
 
 
 def ingredient_report_data(filters=None):
-	from ione_core.meal_plan_reports import report_context
+	from ione_core.meal_plan_reports import report_context, resolve_report_filters
 
+	filters = resolve_report_filters(filters)
 	historical = report_context(filters)
 	doc = None if historical else _report_week(filters)
 	columns = [
@@ -824,8 +825,9 @@ def ingredient_report_data(filters=None):
 
 
 def weekly_report_data(filters=None):
-	from ione_core.meal_plan_reports import report_context
+	from ione_core.meal_plan_reports import report_context, resolve_report_filters
 
+	filters = resolve_report_filters(filters)
 	historical = report_context(filters)
 	doc = None if historical else _report_week(filters)
 	columns = [
