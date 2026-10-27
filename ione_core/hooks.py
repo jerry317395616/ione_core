@@ -11,6 +11,7 @@ app_logo_url = "/assets/ione_core/images/ione-logo.svg"
 app_include_js = ["/assets/ione_core/js/workspace_dock_i18n.js?v=20260827-asset-query-fix"]
 
 doctype_list_js = {
+	"Production Plan": "public/js/meal_production_plan_list.js",
 	"Role": "public/js/role_list.js",
 	"Data Import": "public/js/data_import_list.js",
 	"Employee Checkin": "public/js/dingtalk_employee_checkin_list.js",

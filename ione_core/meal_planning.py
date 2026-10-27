@@ -801,7 +801,10 @@ def _details(doc):
 
 
 def ingredient_report_data(filters=None):
-	doc = _report_week(filters)
+	from ione_core.meal_plan_reports import report_context
+
+	historical = report_context(filters)
+	doc = None if historical else _report_week(filters)
 	columns = [
 		{"fieldname": f, "label": label, "fieldtype": kind, "width": width, **extra}
 		for f, label, kind, width, extra in [
@@ -817,11 +820,14 @@ def ingredient_report_data(filters=None):
 			("bom_no", "菜品配方", "Link", 230, {"options": "BOM"}),
 		]
 	]
-	return columns, _details(doc) if doc else []
+	return columns, historical["details"] if historical else (_details(doc) if doc else [])
 
 
 def weekly_report_data(filters=None):
-	doc = _report_week(filters)
+	from ione_core.meal_plan_reports import report_context
+
+	historical = report_context(filters)
+	doc = None if historical else _report_week(filters)
 	columns = [
 		{"fieldname": "meal_type", "label": "餐次", "fieldtype": "Data", "width": 80},
 		{"fieldname": "row_kind", "label": "内容", "fieldtype": "Data", "width": 80},
@@ -830,6 +836,10 @@ def weekly_report_data(filters=None):
 		{"fieldname": f"day_{i}", "label": f"星期{'一二三四五'[i]}", "fieldtype": "Data", "width": 230}
 		for i in range(5)
 	]
+	if historical:
+		for i, day in enumerate(historical["dates"]):
+			columns[i + 2]["label"] = f"星期{'一二三四五'[i]} {day}"
+		return columns, historical["rows"]
 	if not doc:
 		return columns, []
 	for i, day in enumerate(_dates(doc)):
@@ -876,6 +886,20 @@ def get_meal_ingredients(plan_name):
 	_login()
 	plan = frappe.get_doc("Production Plan", plan_name)
 	plan.check_permission("read")
+	if not plan.get("custom_meal_week"):
+		from ione_core.meal_plan_reports import plan_details
+
+		quantities = {}
+		for row in plan_details(plan):
+			key = (row["ingredient_code"], row["ingredient_name"], row["uom"])
+			quantities[key] = quantities.get(key, Decimal(0)) + Decimal(str(row["per_child_qty"]))
+		return {
+			"rows": [
+				{"ingredient_name": name, "uom": uom, "per_child_qty": format(value.normalize(), "f"), "total_qty": None}
+				for (_code, name, uom), value in quantities.items()
+			],
+			"headcount_confirmed": False,
+		}
 	doc = _week(plan.get("custom_meal_week"))
 	quantities = {}
 	for row in _details(doc):
