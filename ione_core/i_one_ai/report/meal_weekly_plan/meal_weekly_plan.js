@@ -96,6 +96,14 @@
 		],
 		async onload(report) {
 			report.page.set_title(__("周食谱（每名幼儿带量）"));
+			if (report.report_doc?.module === "Tongjianyun") {
+				report.page.add_inner_button(__("食谱分析"), () => {
+					const source = selectedWeek(report) || selectedBatch(report)
+						? sourceFilters(report) : { week_start: report.get_filter_value("week_start") };
+					if (!source.week_name && !source.plan_batch && !source.week_start) return frappe.msgprint(__("请先选择可查看的周食谱。"));
+					frappe.set_route("query-report", "Weekly Recipe Nutrition Analysis", source);
+				});
+			}
 			report.page.add_inner_button(__("查看计划"), () => openWeek(report));
 			report.page.add_inner_button(__("食材需求明细"), () => {
 				if (!selectedWeek(report) && !selectedBatch(report)) return frappe.msgprint(__("请先选择可查看的周食谱。"));

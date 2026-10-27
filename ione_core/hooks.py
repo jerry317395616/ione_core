@@ -52,6 +52,10 @@ fixtures = [
 ]
 
 permission_query_conditions = {
+	"Student": "ione_core.education_teacher_privacy.query_condition",
+	"Student Group": "ione_core.education_teacher_privacy.query_condition",
+	"Student Attendance": "ione_core.education_teacher_privacy.query_condition",
+	"Student Leave Application": "ione_core.education_teacher_privacy.query_condition",
 	"I-ONE Smart Record": "ione_core.permissions.owner_query",
 	"I-ONE AI Task": "ione_core.permissions.owner_query",
 	"I-ONE AI Run Log": "ione_core.permissions.owner_query",
@@ -68,6 +72,10 @@ permission_query_conditions = {
 }
 
 has_permission = {
+	"Student": "ione_core.education_teacher_privacy.document_permission",
+	"Student Group": "ione_core.education_teacher_privacy.document_permission",
+	"Student Attendance": "ione_core.education_teacher_privacy.document_permission",
+	"Student Leave Application": "ione_core.education_teacher_privacy.document_permission",
 	"I-ONE Smart Record": "ione_core.permissions.owner_permission",
 	"I-ONE AI Task": "ione_core.permissions.owner_permission",
 	"I-ONE AI Run Log": "ione_core.permissions.owner_permission",
@@ -84,7 +92,11 @@ has_permission = {
 }
 
 doc_events = {
+	"Purchase Invoice": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
+	},
 	"Purchase Receipt": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
 		"before_submit": "ione_core.meal_stock_claims.before_submit_purchase_receipt",
 		"before_cancel": "ione_core.meal_stock_claims.before_cancel_purchase_receipt",
 		"before_update_after_submit": "ione_core.meal_stock_claims.validate_purchase_receipt",
@@ -100,11 +112,13 @@ doc_events = {
 		"before_cancel": "ione_core.meal_kitchen.before_cancel_stock_entry",
 	},
 	"Material Request": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
 		"validate": "ione_core.meal_purchasing.validate_material_request",
 		"before_submit": "ione_core.meal_purchasing.before_submit_material_request",
 		"before_update_after_submit": "ione_core.meal_purchasing.validate_material_request",
 	},
 	"Purchase Order": {
+		"before_validate": "ione_core.legacy_meal_precision.before_validate",
 		"validate": "ione_core.meal_purchasing.validate_purchase_order",
 		"before_submit": "ione_core.meal_purchasing.before_submit_purchase_order",
 		"before_update_after_submit": "ione_core.meal_purchasing.validate_purchase_order",
@@ -135,6 +149,8 @@ scheduler_events = {
 }
 
 extend_doctype_class = {
+	"Purchase Receipt": ["ione_core.native_asset_history.PreserveAssetHistory"],
+	"Purchase Invoice": ["ione_core.native_asset_history.PreserveAssetHistory"],
 	"Shift Schedule Assignment": [
 		"ione_core.hrms_compat.shift_schedule_assignment.PreserveShiftCycleBoundaryMixin"
 	]
