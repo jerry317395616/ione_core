@@ -51,6 +51,7 @@ class TestNavigation(TestCase):
 		self.module_utils.get_module_placement = self.frappe.get_module_app
 		self.sidebar_module = ModuleType("frappe.desk.doctype.sidebar.sidebar")
 		self.sidebar_module.shell_slug = lambda name: name.lower().replace(" ", "-")
+		self.sidebar_module.get_module_landing_route = Mock(return_value="/desk/user")
 		self.owners = {"User": "Core", "Account": "Accounts", "Patient": "Healthcare", "ledger": "Accounts"}
 		self.documents = {}
 		self.staff = Record(enabled=1, user_type="System User")
@@ -294,6 +295,19 @@ class TestNavigation(TestCase):
 		sidebars = {"Companion": sidebar("companion", "Companion", link("Account"))}
 		apps = self.api.registered_apps(self.api.NavigationPolicy(), sidebars)
 		self.assertEqual([app["name"] for app in apps], ["erpnext"])
+
+	def test_landing_uses_native_entity_route_instead_of_guessing_from_module_name(self):
+		rows = [link("User")]
+		apps = self.api.registered_apps(
+			self.api.NavigationPolicy(), {"Users": sidebar("frappe", "Users", *rows)}
+		)
+		self.assertEqual(apps[0]["route"], "/desk/user")
+		self.sidebar_module.get_module_landing_route.assert_called_once_with(rows)
+		self.sidebar_module.get_module_landing_route.return_value = None
+		apps = self.api.registered_apps(
+			self.api.NavigationPolicy(), {"Users": sidebar("frappe", "Users", *rows)}
+		)
+		self.assertEqual(apps[0]["route"], "/desk")
 
 	def test_unlisted_app_is_denied_even_when_requested_directly(self):
 		with patch.object(self.api, "projection", return_value=(self.api.NavigationPolicy(), {})):

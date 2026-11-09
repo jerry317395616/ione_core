@@ -202,7 +202,7 @@ def registered_apps(policy, sidebars):
 			):
 				continue
 			if not policy.administrator and route.startswith("/desk"):
-				from frappe.desk.doctype.sidebar.sidebar import shell_slug
+				from frappe.desk.doctype.sidebar.sidebar import get_module_landing_route
 
 				# The registered landing may be a setup module this user cannot open.
 				shell = next(
@@ -214,7 +214,7 @@ def registered_apps(policy, sidebars):
 					None,
 				)
 				if shell:
-					route = "/desk/" + shell_slug(shell)
+					route = get_module_landing_route(sidebars[shell]["items"]) or "/desk"
 			result.append(
 				{
 					"name": app,
