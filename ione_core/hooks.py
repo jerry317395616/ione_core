@@ -21,9 +21,10 @@ doctype_js = {
 	"Student": "public/js/student.js",
 }
 
-boot_session = "ione_core.desktop_i18n.localize_app_titles"
+boot_session = ["ione_core.desktop_i18n.localize_app_titles", "ione_core.navigation.filter_boot"]
 
 after_request = [
+	"ione_core.navigation.filter_navigation_response",
 	"ione_core.web_injection.ensure_utf8_private_file_response",
 	"ione_core.web_injection.inject_crm_i18n",
 ]
@@ -86,6 +87,9 @@ doc_events = {
 }
 
 override_whitelisted_methods = {
+	"frappe.apps.get_apps": "ione_core.navigation.get_apps",
+	"rehab.frontend_auth.get_apps": "ione_core.navigation.get_apps",
+	"rehab.frontend_auth.get_application": "ione_core.navigation.get_application",
 	"flow.api.start_run": "ione_core.flow_policy.start_run",
 	"flow.api.api.start_run": "ione_core.flow_policy.start_run",
 	"frappe.desk.doctype.dashboard_chart.dashboard_chart.get": "ione_core.dashboard.get_dashboard_chart",
