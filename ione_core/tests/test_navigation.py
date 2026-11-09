@@ -313,3 +313,14 @@ class TestNavigation(TestCase):
 		with patch.object(self.api, "projection", return_value=(self.api.NavigationPolicy(), {})):
 			with self.assertRaises(self.frappe.PermissionError):
 				self.api.get_application("erpnext")
+
+	def test_console_target_identifies_the_document_independently_of_its_display_label(self):
+		source = {"Users": sidebar("frappe", "Users", link("User", label="Localized account label"))}
+		with (
+			patch.object(self.api, "projection", return_value=(self.api.NavigationPolicy(), source)),
+			patch.object(
+				self.api, "registered_apps", return_value=[{"name": "frappe", "title": "Framework"}]
+			),
+		):
+			item = self.api.get_application("frappe")["modules"][0]["items"][0]
+		self.assertEqual(item["target"], {"type": "DocType", "name": "User"})

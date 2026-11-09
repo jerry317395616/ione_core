@@ -303,7 +303,15 @@ def get_application(app_name):
 				item_id = sha256(row["key"].encode()).hexdigest()
 				if item_id not in seen:
 					module["items"].append(
-						{"id": item_id, "title": row.get("label") or row.get("link_to") or frappe._("Link")}
+						{
+							"id": item_id,
+							"title": row.get("label") or row.get("link_to") or frappe._("Link"),
+							**(
+								{"target": {"type": row["link_type"], "name": row["link_to"]}}
+								if row.get("link_type") and row.get("link_to")
+								else {}
+							),
+						}
 					)
 					seen.add(item_id)
 	return {
