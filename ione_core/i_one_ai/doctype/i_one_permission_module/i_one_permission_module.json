@@ -1,0 +1,15 @@
+{
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "I ONE AI",
+ "name": "I-ONE Permission Module",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": ["module"],
+ "fields": [
+  {"fieldname": "module", "fieldtype": "Link", "label": "业务模块", "options": "Module Def", "reqd": 1, "in_list_view": 1}
+ ],
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC"
+}

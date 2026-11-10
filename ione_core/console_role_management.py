@@ -87,8 +87,12 @@ def domains():
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def get_options():
+	from ione_core.console_permission_policy import capabilities
+
 	permissions = access()
-	return no_store({**permissions, "domains": domains()})
+	return no_store(
+		{**permissions, "domains": domains(), "can_configure_permissions": capabilities()["can_view"]}
+	)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
