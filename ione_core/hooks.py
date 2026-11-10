@@ -23,6 +23,9 @@ doctype_js = {
 
 boot_session = ["ione_core.desktop_i18n.localize_app_titles", "ione_core.navigation.filter_boot"]
 
+before_request = ["ione_core.permission_cache.ensure_current"]
+persistent_cache_keys = ["ione_permission_revision"]
+
 after_request = [
 	"ione_core.navigation.filter_navigation_response",
 	"ione_core.web_injection.ensure_utf8_private_file_response",
@@ -81,6 +84,19 @@ has_permission = {
 }
 
 doc_events = {
+	"Custom DocPerm": {
+		"on_update": "ione_core.permission_cache.schedule_refresh",
+		"after_delete": "ione_core.permission_cache.schedule_refresh",
+	},
+	"Role": {
+		"on_update": "ione_core.permission_cache.schedule_refresh",
+		"after_delete": "ione_core.permission_cache.schedule_refresh",
+	},
+	"User": {"on_update": "ione_core.permission_cache.schedule_refresh"},
+	"User Permission": {
+		"on_update": "ione_core.permission_cache.schedule_refresh",
+		"after_delete": "ione_core.permission_cache.schedule_refresh",
+	},
 	"Flow Run": {
 		"on_update": "ione_core.ai.sync_task_from_flow_run",
 	},

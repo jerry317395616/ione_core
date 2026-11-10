@@ -361,5 +361,8 @@ def save_permissions(data):
 
 	clear()
 	frappe.db.after_commit.add(clear)
+	from ione_core.permission_cache import schedule_refresh
+
+	schedule_refresh()
 	frappe.cache.delete_value(key)
 	return no_store({"saved": len(changes), "role": role.name})

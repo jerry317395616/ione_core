@@ -283,40 +283,40 @@ def get_application(app_name):
 	app = next((app for app in registered_apps(policy, sidebars) if app["name"] == app_name), None)
 	if not app:
 		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from frappe.boot import get_app_rail_host_map
+
+	# Native companion apps can share the host app's rail (for example Healthcare).
+	owners = {app_name, *(child for child, host in get_app_rail_host_map().items() if host == app_name)}
 	modules = {}
-	# Business application contents remain outside the current console implementation.
-	if app_name == "frappe":
-		for shell, sidebar in sidebars.items():
-			if sidebar.get("app") != app_name:
+	for shell, sidebar in sidebars.items():
+		if sidebar.get("app") not in owners:
+			continue
+		name = sidebar["module"]
+		module = modules.setdefault(
+			name, {"name": name, "title": frappe._(name), "items": [], "navigation": []}
+		)
+		module["navigation"].extend(sidebar_navigation(sidebar["items"], shell))
+		seen = {item["id"] for item in module["items"]}
+		for row in sidebar["items"]:
+			if row.get("type") in ("Section Break", "Spacer") or not (row.get("link_to") or row.get("url")):
 				continue
-			name = sidebar["module"]
-			module = modules.setdefault(
-				name, {"name": name, "title": frappe._(name), "items": [], "navigation": []}
-			)
-			module["navigation"].extend(sidebar_navigation(sidebar["items"], shell))
-			seen = {item["id"] for item in module["items"]}
-			for row in sidebar["items"]:
-				if row.get("type") in ("Section Break", "Spacer") or not (
-					row.get("link_to") or row.get("url")
-				):
-					continue
-				item_id = sha256(row["key"].encode()).hexdigest()
-				if item_id not in seen:
-					module["items"].append(
-						{
-							"id": item_id,
-							"title": row.get("label") or row.get("link_to") or frappe._("Link"),
-							**(
-								{"target": {"type": row["link_type"], "name": row["link_to"]}}
-								if row.get("link_type") and row.get("link_to")
-								else {}
-							),
-						}
-					)
-					seen.add(item_id)
+			item_id = sha256(row["key"].encode()).hexdigest()
+			if item_id not in seen:
+				module["items"].append(
+					{
+						"id": item_id,
+						"title": row.get("label") or row.get("link_to") or frappe._("Link"),
+						**(
+							{"target": {"type": row["link_type"], "name": row["link_to"]}}
+							if row.get("link_type") and row.get("link_to")
+							else {}
+						),
+					}
+				)
+				seen.add(item_id)
 	return {
 		"app": {key: app.get(key) for key in ("name", "title", "logo")},
-		"supported": app_name == "frappe",
+		"supported": bool(modules),
 		"modules": list(modules.values()),
 	}
 

@@ -20,7 +20,12 @@ class TestConsoleRolePermissions(TestCase):
 		self.frappe.throw = lambda message, kind: self.raise_error(message, kind)
 		self.frappe._ = lambda value: value
 		self.frappe.session = SimpleNamespace(user="manager@example.test", sid="session")
-		self.frappe.db = SimpleNamespace(get_value=Mock(), after_commit=SimpleNamespace(add=Mock()))
+		self.frappe.flags = Row()
+		self.frappe.db = SimpleNamespace(
+			get_value=Mock(),
+			after_commit=SimpleNamespace(add=Mock()),
+			after_rollback=SimpleNamespace(add=Mock()),
+		)
 		self.frappe.cache = SimpleNamespace(get_value=Mock(), set_value=Mock(), delete_value=Mock())
 		self.frappe.get_all = Mock(return_value=[])
 		self.frappe.delete_doc = Mock()
@@ -251,5 +256,5 @@ class TestConsoleRolePermissions(TestCase):
 			self.assertEqual(self.api.save_permissions({})["saved"], 1)
 			persist.assert_called_once()
 		self.native.clear_permissions_cache.assert_called_once_with("Patient")
-		self.frappe.db.after_commit.add.assert_called_once()
+		self.assertEqual(self.frappe.db.after_commit.add.call_count, 2)
 		self.frappe.cache.delete_value.assert_called_once()

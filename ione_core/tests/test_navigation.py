@@ -324,3 +324,32 @@ class TestNavigation(TestCase):
 		):
 			item = self.api.get_application("frappe")["modules"][0]["items"][0]
 		self.assertEqual(item["target"], {"type": "DocType", "name": "User"})
+
+	def test_business_apps_project_native_modules_and_targets(self):
+		source = {
+			"Accounts": sidebar("erpnext", "Accounts", link("Company", label="Company")),
+			"Setup": sidebar("erpnext", "Setup", link("Company")),
+			"Users": sidebar("frappe", "Core", link("User")),
+		}
+		with (
+			patch.object(self.api, "projection", return_value=(self.api.NavigationPolicy(), source)),
+			patch.object(self.api, "registered_apps", return_value=[{"name": "erpnext", "title": "ERPNext"}]),
+		):
+			result = self.api.get_application("erpnext")
+		self.assertTrue(result["supported"])
+		self.assertEqual([module["name"] for module in result["modules"]], ["Accounts", "Setup"])
+		self.assertEqual(result["modules"][0]["items"][0]["target"], {"type": "DocType", "name": "Company"})
+
+	def test_host_application_includes_only_permitted_companion_sidebars(self):
+		self.boot.get_app_rail_host_map.return_value = {"healthcare": "erpnext"}
+		source = {
+			"Clinical": sidebar("healthcare", "Healthcare", link("Patient")),
+			"Users": sidebar("frappe", "Core", link("User")),
+		}
+		with (
+			patch.object(self.api, "projection", return_value=(self.api.NavigationPolicy(), source)),
+			patch.object(self.api, "registered_apps", return_value=[{"name": "erpnext", "title": "ERPNext"}]),
+		):
+			result = self.api.get_application("erpnext")
+		self.assertTrue(result["supported"])
+		self.assertEqual([module["name"] for module in result["modules"]], ["Healthcare"])
