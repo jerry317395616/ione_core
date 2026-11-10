@@ -150,6 +150,16 @@ class TestConsoleRoles(TestCase):
 		doc.apply_fieldlevel_read_permissions.assert_not_called()
 		doc.as_dict.assert_not_called()
 
+	def test_detail_uses_the_same_strict_query_scope_as_the_list(self):
+		doc = Mock()
+		self.frappe.get_doc = Mock(return_value=doc)
+		self.results([])
+		with self.assertRaises(self.frappe.PermissionError):
+			self.api.get_role("Hidden Role")
+		doc.apply_fieldlevel_read_permissions.assert_not_called()
+		doc.as_dict.assert_not_called()
+		self.assertFalse(self.query.call_args.kwargs["ignore_permissions"])
+
 	def test_native_reserved_rules_include_automatic_roles_without_classifying_custom_names(self):
 		self.assertTrue(self.api.present(Row(name="Desk User"))["is_reserved"])
 		self.assertFalse(self.api.present(Row(name="康复系统管理员", is_custom=0))["is_reserved"])

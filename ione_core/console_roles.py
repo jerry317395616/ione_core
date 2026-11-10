@@ -123,11 +123,31 @@ def get_roles(
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def get_role(role):
 	require_reader()
-	if not isinstance(role, str) or not role or len(role) > 140:
-		frappe.throw(frappe._("Invalid role"), frappe.ValidationError)
-	doc = frappe.get_doc("Role", role)
-	doc.check_permission("read")
+	doc = get_readable_role(role)
 	doc.apply_fieldlevel_read_permissions()
 	values = doc.as_dict()
 	frappe.local.response_headers["Cache-Control"] = "private, no-store"
 	return present({key: values[key] for key in DETAIL_FIELDS if key in values})
+
+
+def get_readable_role(role, for_update=False):
+	if not isinstance(role, str) or not role or len(role) > 140:
+		frappe.throw(frappe._("Invalid role"), frappe.ValidationError)
+	doc = frappe.get_doc("Role", role, for_update=for_update)
+	# A native document read can fall back to link selection. Use the same strict
+	# owner/user/share conditions as the listing before returning any field values.
+	if (
+		not RoleReadQuery()
+		.get_query(
+			table="Role",
+			fields=["name"],
+			filters={"name": role},
+			ignore_permissions=False,
+			db_query_compat=True,
+			limit=1,
+		)
+		.run()
+	):
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	doc.check_permission("read")
+	return doc
