@@ -84,6 +84,11 @@ has_permission = {
 }
 
 doc_events = {
+	"Department": {
+		"on_update": "ione_core.console_departments.tree_changed",
+		"after_delete": "ione_core.console_departments.tree_changed",
+		"after_rename": "ione_core.console_departments.tree_changed",
+	},
 	"Custom DocPerm": {
 		"on_update": "ione_core.permission_cache.schedule_refresh",
 		"after_delete": "ione_core.permission_cache.schedule_refresh",
