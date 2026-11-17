@@ -118,6 +118,7 @@ class NavigationPolicy:
 		)
 
 	def filter_sidebars(self, sidebars):
+		sidebars = filter_app_navigation(sidebars)
 		if self.administrator:
 			return sidebars
 		candidates = {}
@@ -145,6 +146,13 @@ class NavigationPolicy:
 			if sidebar.get("app") in apps
 			and any(self.allows(row.get("link_type"), row.get("link_to")) for row in sidebar["items"])
 		}
+
+
+def filter_app_navigation(sidebars):
+	"""App-owned feature availability applies to every account, including Administrator."""
+	for hook in frappe.get_hooks("ione_navigation_filters"):
+		sidebars = frappe.get_attr(hook)(sidebars)
+	return sidebars
 
 
 def prune_sections(rows):
@@ -323,11 +331,25 @@ def get_application(app_name):
 
 def filter_boot(bootinfo):
 	"""Apply the same policy to native Desk, including its dock and route maps."""
-	if frappe.session.user in ("Guest", "Administrator"):
+	if frappe.session.user == "Guest":
 		return
 	from frappe.boot import build_entity_module_map, get_app_data, get_app_rail_host_map
 	from frappe.desk.doctype.dock.dock import get_app_entry_set
 	from frappe.desk.doctype.sidebar.sidebar import build_canonical_shells
+
+	if frappe.session.user == "Administrator":
+		original = bootinfo.get("module_sidebars") or {}
+		sidebars = filter_app_navigation(original)
+		if sidebars is original:
+			return
+		bootinfo["module_sidebars"] = sidebars
+		bootinfo["entity_module"] = build_entity_module_map(sidebars)
+		bootinfo["canonical_shell"], bootinfo["home_shell"] = build_canonical_shells(
+			sidebars, bootinfo["entity_module"], NavigationPolicy().views
+		)
+		# This account keeps its native app/dock visibility. The app feature hook
+		# narrows menu content, and never grants or removes business permissions.
+		return
 
 	policy, sidebars = projection(bootinfo.get("module_sidebars"))
 	apps = {app["name"]: app for app in registered_apps(policy, sidebars)}

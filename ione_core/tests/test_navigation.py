@@ -81,9 +81,11 @@ class TestNavigation(TestCase):
 		self.installed.get_setup_wizard_not_required_apps = Mock(return_value=[])
 		self.frappe.get_active_apps = Mock(return_value=["frappe", "erpnext", "healthcare"])
 		self.frappe.get_hooks = Mock(
-			side_effect=lambda key, app_name: [
-				{"name": app_name, "title": app_name, "route": "/desk/" + app_name}
-			]
+			side_effect=lambda key, app_name=None: (
+				[]
+				if key == "ione_navigation_filters"
+				else [{"name": app_name, "title": app_name, "route": "/desk/" + app_name}]
+			)
 		)
 		self.desktop = ModuleType("ione_core.desktop_i18n")
 		self.desktop.get_hidden_apps = Mock(return_value=set())
@@ -353,3 +355,38 @@ class TestNavigation(TestCase):
 			result = self.api.get_application("erpnext")
 		self.assertTrue(result["supported"])
 		self.assertEqual([module["name"] for module in result["modules"]], ["Healthcare"])
+
+	def feature_hook(self, transform):
+		self.frappe.get_hooks.side_effect = lambda key, app_name=None: (
+			["app.feature_filter"] if key == "ione_navigation_filters" else []
+		)
+		self.frappe.get_attr = Mock(return_value=transform)
+
+	def test_administrator_also_obeys_app_feature_availability(self):
+		self.frappe.session.user = "Administrator"
+		self.feature_hook(lambda rows: {"Users": rows["Users"]})
+		source = {
+			"Users": sidebar("frappe", "Users", link("User")),
+			"Hidden": sidebar("rehab", "Rehab", link("Account")),
+		}
+		self.assertEqual(set(self.api.NavigationPolicy().filter_sidebars(source)), {"Users"})
+
+	def test_feature_hook_cannot_replace_native_business_permission_checks(self):
+		self.feature_hook(lambda rows: rows)
+		source = {"Accounts": sidebar("erpnext", "Accounts", link("Account"))}
+		self.assertEqual(self.api.NavigationPolicy().filter_sidebars(source), {})
+
+	def test_administrator_boot_filters_content_but_preserves_other_app_metadata(self):
+		self.frappe.session.user = "Administrator"
+		self.feature_hook(lambda rows: {"Users": rows["Users"]})
+		apps = [{"app_name": "frappe"}, {"app_name": "erpnext"}]
+		payload = {
+			"module_sidebars": {
+				"Users": sidebar("frappe", "Users", link("User")),
+				"Hidden": sidebar("rehab", "Rehab", link("Account")),
+			},
+			"app_data": apps,
+		}
+		self.api.filter_boot(payload)
+		self.assertEqual(set(payload["module_sidebars"]), {"Users"})
+		self.assertIs(payload["app_data"], apps)
