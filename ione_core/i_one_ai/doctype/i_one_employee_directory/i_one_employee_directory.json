@@ -1,0 +1,15 @@
+{
+ "doctype": "DocType",
+ "name": "I-ONE Employee Directory",
+ "module": "I ONE AI",
+ "engine": "InnoDB",
+ "field_order": ["usage"],
+ "fields": [
+  {"fieldname": "usage", "fieldtype": "HTML", "label": "用途", "options": "新前端员工基础档案的权限入口，档案保存于原生 Employee。"}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "create": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

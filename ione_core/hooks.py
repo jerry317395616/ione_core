@@ -47,6 +47,10 @@ after_install = "ione_core.setup.install.after_install"
 after_migrate = "ione_core.setup.install.after_migrate"
 after_app_install = "ione_core.setup.install.after_app_install"
 
+extend_doctype_class = {
+	"Employee": ["ione_core.console_employees.EmployeeDirectoryMixin"],
+}
+
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "like", "I-ONE %"]]},
 ]
