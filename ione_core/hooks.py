@@ -49,6 +49,7 @@ after_app_install = "ione_core.setup.install.after_app_install"
 
 extend_doctype_class = {
 	"Employee": ["ione_core.console_employees.EmployeeDirectoryMixin"],
+	"File": ["ione_core.suite_file_access.PrivateFileDownload"],
 }
 
 fixtures = [
