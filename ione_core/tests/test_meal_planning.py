@@ -114,6 +114,32 @@ class MealPlanningTests(unittest.TestCase):
 	def tearDown(self):
 		self.modules.stop()
 
+	def test_existing_dishes_keep_their_codes_and_only_clear_unambiguous_prefixes(self):
+		fields = self.module.SLOT_FIELDS
+		path = Path(__file__).parents[1] / "meal_dish_catalog.py"
+		spec = importlib.util.spec_from_file_location("synthetic_dish_catalog", path)
+		catalog = importlib.util.module_from_spec(spec)
+		with patch.dict(sys.modules, {"ione_core.meal_planning": self.module}):
+			spec.loader.exec_module(catalog)
+		dishes = [
+			Doc(name="P-01", item_name="早餐组合：小米粥　蒸南瓜"),
+			Doc(name="P-02", item_name="早点组合：纯牛奶"),
+			Doc(name="P-03", item_name="午点组合：苹果"),
+			Doc(name="P-04", item_name="早点组合：苹果"),
+			Doc(name="P-05", item_name="早点酥", **{fields["晚餐"]: 1}),
+			Doc(name="P-06", item_name="午餐组合：面条"),
+		]
+		history = {
+			"P-01": {"早餐", "午餐"}, "P-02": {"早点"}, "P-03": {"午点"},
+			"P-04": {"早点"}, "P-05": {"早点"}, "P-06": {"早餐"},
+		}
+		asserted = catalog.catalog_changes(dishes, history, ["纯牛奶", *(r.item_name for r in dishes)])
+		self.assertEqual(asserted, {
+			"P-01": {fields["早餐"]: 1, fields["午餐"]: 1, "item_name": "小米粥 蒸南瓜"},
+			"P-02": {fields["早点"]: 1}, "P-03": {fields["午点"]: 1},
+			"P-04": {fields["早点"]: 1}, "P-06": {fields["早餐"]: 1},
+		})
+
 	def make_week(self, meals=True):
 		week = Doc(name="synthetic-week", owner="operator@example.test", company="School A", week_start="2026-10-26", week_end="2026-10-30", raw_material_warehouse="Raw A", academic_year="2026-2027", academic_term="Autumn", revision=1, source_week=None, docstatus=0, population_snapshot="{}", population_as_of=None, population_basis="expected", material_request=None, procurement_snapshot=None, stock_reviewed=0, meals=[])
 		if meals:

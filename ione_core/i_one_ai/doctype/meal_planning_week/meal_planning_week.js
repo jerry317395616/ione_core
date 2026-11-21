@@ -148,12 +148,18 @@
 				{ fieldname: "notice", fieldtype: "HTML", options: `<p class="text-muted">${escape(
 					"下表为本餐完整菜品配方列表。调整后将替换本餐菜品；生产数量由计划人数确定。"
 				)}</p>` },
+				{ fieldname: "show_all_dishes", fieldtype: "Check", label: __("显示全部餐次的菜品") },
 				{ fieldname: "boms", fieldtype: "Table", label: __("菜品配方"), reqd: 1,
 					in_place_edit: true, fields: [
 						{ fieldname: "bom", fieldtype: "Link", label: __("菜品配方"), options: "BOM",
-							reqd: 1, in_list_view: 1, get_query: () => ({
-								filters: { docstatus: 1, is_active: 1, company: frm.doc.company },
-							}) },
+							reqd: 1, in_list_view: 1, get_query: () => {
+								const meal = meals.find((row) => label(row) === dialog.get_value("meal"));
+								return {
+									query: "ione_core.meal_planning.search_meal_recipes",
+									filters: { week_name: frm.doc.name, meal_type: meal?.meal_type,
+										include_all: dialog.get_value("show_all_dishes") || 0 },
+								};
+							} },
 					] },
 			],
 			primary_action_label: __("保存本餐菜品"),

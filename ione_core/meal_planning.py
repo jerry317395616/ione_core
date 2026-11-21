@@ -13,6 +13,10 @@ from frappe import _
 from frappe.utils import cint, getdate, now_datetime
 
 SLOTS = ("早餐", "早点", "午餐", "午点", "晚餐")
+SLOT_FIELDS = dict(zip(SLOTS, (
+	"custom_meal_slot_breakfast", "custom_meal_slot_morning_snack", "custom_meal_slot_lunch",
+	"custom_meal_slot_afternoon_snack", "custom_meal_slot_dinner",
+), strict=True))
 COLORS = ("#e9b949", "#66b88a", "#5b8bd9", "#a887d5", "#e58b64")
 _MANAGED = ContextVar("meal_planning_managed_update", default=False)
 _HEADER = ("company", "week_start", "week_end", "raw_material_warehouse", "academic_year", "academic_term")
@@ -531,6 +535,51 @@ def copy_next_week(name, target_week_start=None):
 		).insert()
 	initialize_week(doc.name)
 	return {"name": doc.name}
+
+
+@frappe.whitelist(methods=["GET", "POST"])
+def search_meal_recipes(doctype, txt, searchfield, start, page_len, filters):
+	"""Find executable recipes in the selected week, with optional meal suggestions."""
+	from frappe.database.query import Engine
+	from frappe.query_builder.functions import Coalesce
+
+	filters = _json(filters)
+	if doctype != "BOM" or not isinstance(filters, dict) or filters.get("meal_type") not in SLOTS:
+		return []
+	week_name = filters.get("week_name")
+	if not isinstance(week_name, str) or not week_name:
+		return []
+	week = _week(week_name)
+	_planner(week)
+	item = frappe.qb.DocType("Item")
+	bom = frappe.qb.DocType("BOM")
+	items = Engine().get_query(
+		"Item", fields=["name"], filters={"disabled": 0, "is_purchase_item": 0}, ignore_permissions=False,
+	)
+	slot = SLOT_FIELDS[filters["meal_type"]]
+	if not cint(filters.get("include_all")) and all(frappe.db.has_column("Item", field) for field in SLOT_FIELDS.values()):
+		unassigned = None
+		for field in SLOT_FIELDS.values():
+			empty = Coalesce(getattr(item, field), 0) == 0
+			unassigned = empty if unassigned is None else unassigned & empty
+		items = items.where((getattr(item, slot) == 1) | unassigned)
+	query = Engine().get_query(
+		"BOM", fields=["name", "item"],
+		filters={"docstatus": 1, "is_active": 1, "quantity": 1, "company": week.company},
+		ignore_permissions=False, order_by="item_name asc, name asc",
+	).where(bom.item.isin(items))
+	search = str(txt or "").strip()[:140]
+	if search:
+		term = "%" + search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+		by_name = frappe.qb.from_(item).select(item.name).where(item.item_name.like(term) | item.name.like(term))
+		query = query.where(bom.name.like(term) | bom.item.isin(by_name))
+	rows = query.limit(max(1, min(cint(page_len), 50))).offset(max(0, cint(start))).run(as_dict=True)
+	if not rows:
+		return []
+	names = frappe.get_list("Item", filters={"name": ["in", sorted({row.item for row in rows})]},
+		fields=["name", "item_name"], limit_page_length=0)
+	labels = {row.name: row.item_name for row in names}
+	return [(row.name, labels.get(row.item) or row.item) for row in rows]
 
 
 @frappe.whitelist(methods=["POST"])
