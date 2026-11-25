@@ -4,8 +4,10 @@ import csv
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
+from unittest.mock import Mock
 
 from ione_core.translation_overrides import (
+	_site_catalog_path,
 	build_translation_sync_plan,
 	merge_site_translations,
 	read_translation_catalog,
@@ -14,6 +16,16 @@ from ione_core.translation_overrides import (
 
 
 class TestTranslationOverrides(TestCase):
+	def test_catalog_path_uses_site_app_only_when_registered_for_chinese(self):
+		frappe = Mock()
+		frappe.get_hooks.return_value = []
+		self.assertIsNone(_site_catalog_path(frappe, "zh"))
+		frappe.get_hooks.return_value = ["tongjianyun"]
+		frappe.get_app_path.return_value = "/apps/tongjianyun/translations/zh.csv"
+		self.assertEqual(_site_catalog_path(frappe, "zh"), frappe.get_app_path.return_value)
+		frappe.get_app_path.assert_called_once_with("tongjianyun", "translations", "zh.csv")
+		self.assertIsNone(_site_catalog_path(frappe, "en"))
+
 	def test_catalog_reader_supports_context_and_escaped_newlines(self):
 		with TemporaryDirectory() as directory:
 			path = Path(directory) / "zh.csv"

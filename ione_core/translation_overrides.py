@@ -9,6 +9,12 @@ from typing import Any
 TranslationKey = tuple[str, str]
 
 
+def _site_catalog_path(frappe, language: str) -> str | None:
+	"""Use the packaged Chinese catalog of the site application that owns it, if any."""
+	apps = frappe.get_hooks("ione_core_translation_app") if language == "zh" else []
+	return frappe.get_app_path(apps[-1], "translations", "zh.csv") if apps else None
+
+
 def read_translation_catalog(path: str | Path | None = None) -> dict[TranslationKey, str]:
 	"""Read the packaged Frappe CSV catalog keyed by source text and context."""
 	catalog_path = Path(path) if path else Path(__file__).with_name("translations") / "zh.csv"
@@ -88,6 +94,7 @@ def export_site_translation_catalog(
 	"""Append site-level translations to the packaged application catalog."""
 	import frappe
 
+	path = path or _site_catalog_path(frappe, language)
 	catalog = read_translation_catalog(path)
 	packaged = len(catalog)
 	rows = frappe.get_all(
@@ -157,7 +164,7 @@ def sync_translation_overrides(language: str = "zh") -> dict[str, int]:
 
 	# This catalog is trusted application data. Preserve literal technical tags such as
 	# <head> and <agent_memory>, which Frappe's HTML sanitizer would otherwise remove.
-	catalog = read_translation_catalog()
+	catalog = read_translation_catalog(_site_catalog_path(frappe, language))
 	existing = frappe.get_all(
 		"Translation",
 		filters={"language": language},
